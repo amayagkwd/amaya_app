@@ -15,7 +15,7 @@
     "react-router-dom": "^7.17.0",
     "recharts": "^3.8.1",
     "uuid": "^14.0.0",
-    "vite-plugin-pwa": "^0.20.5",
+    "vite-plugin-pwa": "^0.21.1",
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
