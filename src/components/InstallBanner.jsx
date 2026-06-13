@@ -13,6 +13,13 @@ export default function InstallBanner() {
     const checkMobile = window.innerWidth <= 768
     setIsMobile(checkMobile)
 
+    console.log('🔍 InstallBanner Debug:', {
+      isMobile: checkMobile,
+      userAgent: window.navigator.userAgent,
+      displayMode: window.matchMedia('(display-mode: standalone)').matches,
+      standalone: window.navigator.standalone
+    })
+
     // Detect iOS devices
     const ua = window.navigator.userAgent.toLowerCase()
     const isIOSDevice = /iphone|ipad|ipod/.test(ua)
@@ -22,24 +29,40 @@ export default function InstallBanner() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true
 
+    console.log('📱 Device Check:', {
+      isIOS: isIOSDevice,
+      isStandalone,
+      shouldShowIOSHint: isIOSDevice && checkMobile && !isStandalone
+    })
+
     // Show iOS hint if on iOS mobile and not already installed
     if (isIOSDevice && checkMobile && !isStandalone) {
+      console.log('✅ Showing iOS install hint')
       setShowIOSInstallHint(true)
     }
 
     // Listen for beforeinstallprompt event (Android/Desktop)
     const handleBeforeInstallPrompt = (e) => {
-      console.log('beforeinstallprompt fired')
+      console.log('🎉 beforeinstallprompt fired!')
       e.preventDefault()
       setDeferredPrompt(e)
       
       // Only show install button for non-iOS devices on mobile
       if (!isIOSDevice && checkMobile && !isStandalone) {
+        console.log('✅ Showing Android install button')
         setShowInstallBtn(true)
       }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    // Force show banner for testing (remove after debugging)
+    setTimeout(() => {
+      if (!isIOSDevice && checkMobile && !isStandalone && !deferredPrompt) {
+        console.log('⚠️ No beforeinstallprompt after 3s - PWA criteria not met')
+        console.log('Check: HTTPS, manifest.json, service worker, icons')
+      }
+    }, 3000)
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -95,8 +118,28 @@ export default function InstallBanner() {
           boxShadow: '0 -2px 16px rgba(0,0,0,0.15)',
           border: '2px solid #fff'
         }}>
-          <div style={{ fontSize: '17px', fontWeight: 600, color: '#fff' }}>
-            Install App
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: '#fff',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div style={{ fontSize: '17px', fontWeight: 600, color: '#fff' }}>
+              Install App
+            </div>
           </div>
           <button
             onClick={installPWA}
@@ -156,8 +199,28 @@ export default function InstallBanner() {
             cursor: 'pointer'
           }}
         >
-          <div style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>
-            Install App
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: '#fff',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>
+              Install App
+            </div>
           </div>
           <button
             onClick={(e) => {
