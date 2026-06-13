@@ -7,10 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
       devOptions: {
-        enabled: false
+        enabled: true
       },
+      includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'AMAYA',
         short_name: 'AMAYA',
@@ -49,9 +49,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        navigateFallback: 'index.html',
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.openweathermap\.org\/.*/i,
@@ -60,7 +59,7 @@ export default defineConfig({
               cacheName: 'weather-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60
+                maxAgeSeconds: 3600
               }
             }
           }
