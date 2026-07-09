@@ -56,18 +56,9 @@ export default function Maps({ data, updateStore }) {
     })
   }
 
-  const validateCoords = (coords) => {
-    if (!coords.trim()) return false
-    const parts = coords.split(',')
-    if (parts.length !== 2) return false
-    const lat = parseFloat(parts[0].trim())
-    const lng = parseFloat(parts[1].trim())
-    return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
-  }
-
   const canSave = formData.name.trim() && 
-    (formData.locationType === 'one' ? validateCoords(formData.location1) : 
-     (validateCoords(formData.location1) && validateCoords(formData.location2)))
+    (formData.locationType === 'one' ? formData.location1.trim() : 
+     (formData.location1.trim() && formData.location2.trim()))
 
   const handleSave = () => {
     if (!canSave) return
@@ -223,7 +214,7 @@ export default function Maps({ data, updateStore }) {
               type="text"
               value={formData.location1}
               onChange={(e) => setFormData({ ...formData, location1: e.target.value })}
-              placeholder="28.6139, 77.2090"
+              placeholder={formData.locationType === 'one' ? 'e.g. Charminar Hyderabad' : 'e.g. Inorbit Mall Hyderabad'}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -232,9 +223,12 @@ export default function Maps({ data, updateStore }) {
                 fontSize: '15px',
                 boxSizing: 'border-box',
                 outline: 'none',
-                marginBottom: '8px'
+                marginBottom: '4px'
               }}
             />
+            <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+              Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
+            </p>
             <input
               type="text"
               value={formData.location1Label}
@@ -261,7 +255,7 @@ export default function Maps({ data, updateStore }) {
                 type="text"
                 value={formData.location2}
                 onChange={(e) => setFormData({ ...formData, location2: e.target.value })}
-                placeholder="28.6139, 77.2090"
+                placeholder="e.g. Charminar Hyderabad"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -270,9 +264,12 @@ export default function Maps({ data, updateStore }) {
                   fontSize: '15px',
                   boxSizing: 'border-box',
                   outline: 'none',
-                  marginBottom: '8px'
+                  marginBottom: '4px'
                 }}
               />
+              <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+                Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
+              </p>
               <input
                 type="text"
                 value={formData.location2Label}

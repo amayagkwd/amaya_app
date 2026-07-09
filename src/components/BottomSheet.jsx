@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { showToast } from './Toast'
 import { getCurrencyByCountry } from '../utils/countries'
+import uuidv4 from '../utils/uuid'
 
-export default function BottomSheet({ isOpen, onClose, categories, onSave, data }) {
+export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore }) {
   const navigate = useNavigate()
   const [type, setType] = useState('expense')
   const [amount, setAmount] = useState('')
@@ -158,6 +159,8 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data 
             onToggle={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
             onClose={() => setCategoryDropdownOpen(false)}
             onAddCategory={handleAddCategory}
+            type={type}
+            updateStore={updateStore}
           />
         </div>
         
@@ -222,14 +225,16 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data 
   )
 }
 
-function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggle, onClose, onAddCategory }) {
+function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggle, onClose, onAddCategory, type, updateStore }) {
   const dropdownRef = useRef(null)
   const selectedOption = options.find(opt => opt.id === value)
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
   
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         onClose()
+        setIsAddingCategory(false)
       }
     }
     
@@ -242,6 +247,7 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
   const handleSelect = (optionId) => {
     onChange(optionId)
     onClose()
+    setIsAddingCategory(false)
   }
   
   return (
@@ -327,30 +333,183 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
             )}
           </div>
           
+          {!isAddingCategory ? (
+            <button
+              onClick={() => setIsAddingCategory(true)}
+              type="button"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                borderTop: '1px dashed #e5e5e3',
+                background: 'transparent',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontSize: '15px',
+                color: '#4f46e5',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <span style={{ fontSize: '18px' }}>+</span>
+              <span>Add Category</span>
+            </button>
+          ) : (
+            <AddCategoryForm 
+              onClose={() => setIsAddingCategory(false)}
+              onSelect={handleSelect}
+              type={type}
+              updateStore={updateStore}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
+  const [newName, setNewName] = useState('')
+  const [classification, setClassification] = useState('need')
+  const inputRef = useRef(null)
+  
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+  
+  const handleAdd = () => {
+    if (!newName.trim()) return
+    
+    const newCategory = {
+      id: uuidv4(),
+      name: newName.trim(),
+      type,
+      classification: type === 'expense' ? classification : null,
+      isDefault: false
+    }
+    
+    updateStore(current => ({
+      ...current,
+      payments: {
+        ...current.payments,
+        categories: [...current.payments.categories, newCategory]
+      }
+    }))
+    
+    onSelect(newCategory.id)
+    onClose()
+  }
+  
+  return (
+    <div style={{
+      borderTop: '1px dashed #e5e5e3',
+      padding: '16px',
+      background: '#f9f9f7'
+    }}>
+      <input
+        ref={inputRef}
+        type="text"
+        value={newName}
+        onChange={e => setNewName(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') handleAdd()
+          if (e.key === 'Escape') onClose()
+        }}
+        placeholder="Category name"
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          border: '1px solid #e5e5e3',
+          borderRadius: '6px',
+          fontSize: '14px',
+          marginBottom: '12px',
+          boxSizing: 'border-box',
+          background: '#fff'
+        }}
+      />
+      
+      {type === 'expense' && (
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          marginBottom: '12px' 
+        }}>
           <button
-            onClick={onAddCategory}
+            onClick={() => setClassification('need')}
             type="button"
             style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: 'none',
-              borderTop: '1px dashed #e5e5e3',
-              background: 'transparent',
-              textAlign: 'left',
+              flex: 1,
+              padding: '8px',
+              background: classification === 'need' ? '#4f46e5' : '#fff',
+              color: classification === 'need' ? '#fff' : '#1a1a1a',
+              border: '1px solid #e5e5e3',
+              borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '15px',
-              color: '#4f46e5',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+              fontSize: '13px',
+              fontWeight: 500
             }}
           >
-            <span style={{ fontSize: '18px' }}>+</span>
-            <span>Add Category</span>
+            Need
+          </button>
+          <button
+            onClick={() => setClassification('want')}
+            type="button"
+            style={{
+              flex: 1,
+              padding: '8px',
+              background: classification === 'want' ? '#4f46e5' : '#fff',
+              color: classification === 'want' ? '#fff' : '#1a1a1a',
+              border: '1px solid #e5e5e3',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 500
+            }}
+          >
+            Want
           </button>
         </div>
       )}
+      
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button
+          onClick={handleAdd}
+          type="button"
+          disabled={!newName.trim()}
+          style={{
+            flex: 1,
+            padding: '10px 16px',
+            background: newName.trim() ? '#4f46e5' : '#e5e5e3',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: newName.trim() ? 'pointer' : 'not-allowed',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
+        >
+          Add
+        </button>
+        <button
+          onClick={onClose}
+          type="button"
+          style={{
+            flex: 1,
+            padding: '10px 16px',
+            background: '#fff',
+            color: '#1a1a1a',
+            border: '1px solid #e5e5e3',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   )
 }

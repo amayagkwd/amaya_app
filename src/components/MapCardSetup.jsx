@@ -10,16 +10,7 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
   
   if (!isOpen) return null
   
-  const validateCoords = (coords) => {
-    if (!coords.trim()) return false
-    const parts = coords.split(',')
-    if (parts.length !== 2) return false
-    const lat = parseFloat(parts[0].trim())
-    const lng = parseFloat(parts[1].trim())
-    return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
-  }
-  
-  const canSave = cardName.trim() && validateCoords(location1) && validateCoords(location2)
+  const canSave = cardName.trim() && location1.trim() && location2.trim()
   
   const handleSave = () => {
     if (canSave) {
@@ -99,7 +90,7 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             type="text"
             value={location1}
             onChange={(e) => setLocation1(e.target.value)}
-            placeholder="28.6139, 77.2090"
+            placeholder="e.g. Inorbit Mall Hyderabad"
             style={{
               width: '100%',
               padding: '12px',
@@ -108,9 +99,12 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
               fontSize: '15px',
               boxSizing: 'border-box',
               outline: 'none',
-              marginBottom: '8px'
+              marginBottom: '4px'
             }}
           />
+          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+            Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
+          </p>
           <input
             type="text"
             value={location1Label}
@@ -136,7 +130,7 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             type="text"
             value={location2}
             onChange={(e) => setLocation2(e.target.value)}
-            placeholder="28.6139, 77.2090"
+            placeholder="e.g. Charminar Hyderabad"
             style={{
               width: '100%',
               padding: '12px',
@@ -145,9 +139,12 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
               fontSize: '15px',
               boxSizing: 'border-box',
               outline: 'none',
-              marginBottom: '8px'
+              marginBottom: '4px'
             }}
           />
+          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+            Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
+          </p>
           <input
             type="text"
             value={location2Label}

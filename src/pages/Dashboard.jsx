@@ -66,11 +66,33 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     const travelmode = mapCard.transportMode === 'car' ? 'driving' : 'two-wheeler'
     
     if (mapCard.locationType === 'one') {
-      // Use current location as origin
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${mapCard.location1}&travelmode=${travelmode}`
-      window.open(url, '_blank')
+      // Try to get current GPS location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords
+            const destination = encodeURIComponent(mapCard.location1)
+            const url = `https://www.google.com/maps/dir/?api=1&origin=${latitude},${longitude}&destination=${destination}&travelmode=${travelmode}`
+            window.open(url, '_blank')
+          },
+          (error) => {
+            // GPS failed or denied, fall back to destination only
+            const destination = encodeURIComponent(mapCard.location1)
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=${travelmode}`
+            window.open(url, '_blank')
+          }
+        )
+      } else {
+        // Geolocation not supported, use destination only
+        const destination = encodeURIComponent(mapCard.location1)
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=${travelmode}`
+        window.open(url, '_blank')
+      }
     } else {
-      const url = `https://www.google.com/maps/dir/?api=1&origin=${mapCard.location1}&destination=${mapCard.location2}&travelmode=${travelmode}`
+      // Two location mode - encode both locations
+      const origin = encodeURIComponent(mapCard.location1)
+      const destination = encodeURIComponent(mapCard.location2)
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=${travelmode}`
       window.open(url, '_blank')
     }
   }

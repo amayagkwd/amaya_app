@@ -145,6 +145,7 @@ function AppContent() {
         categories={data.payments.categories}
         onSave={addTransaction}
         data={data}
+        updateStore={updateStore}
       />
       
       <InstallBanner />
