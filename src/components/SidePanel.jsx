@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 
-export default function SidePanel({ isOpen, onClose, hasWeatherCard, hasCounterCard }) {
+export default function SidePanel({ isOpen, onClose }) {
   const navigate = useNavigate()
   
   const handleNavigate = (path) => {
@@ -36,14 +36,6 @@ export default function SidePanel({ isOpen, onClose, hasWeatherCard, hasCounterC
         padding: '20px'
       }}>
         <MenuItem label="Profile" onClick={() => handleNavigate('/profile')} />
-        <MenuItem label="Payments" onClick={() => handleNavigate('/payments')} />
-        <MenuItem label="Maps" onClick={() => handleNavigate('/maps')} />
-        {hasWeatherCard && (
-          <MenuItem label="Weather" onClick={() => handleNavigate('/weather')} />
-        )}
-        {hasCounterCard && (
-          <MenuItem label="Counter" onClick={() => handleNavigate('/counter')} />
-        )}
       </div>
     </>
   )

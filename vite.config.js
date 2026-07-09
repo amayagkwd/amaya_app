@@ -12,9 +12,9 @@ export default defineConfig({
       },
       includeAssets: ['favicon.svg', '192.png', '512.png'],
       manifest: {
-        name: 'AMAYA',
-        short_name: 'AMAYA',
-        description: 'AMAYA - Your personal finance and productivity app',
+        name: 'Tracker',
+        short_name: 'Tracker',
+        description: 'Tracker - Your personal finance and productivity app',
         start_url: '/',
         scope: '/',
         theme_color: '#4f46e5',

@@ -184,8 +184,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
               }}
               style={{
                 padding: '4px 12px',
-                background: 'transparent',
-                color: '#4f46e5',
+                background: '#4f46e5',
+                color: '#fff',
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '13px',

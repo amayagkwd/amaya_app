@@ -4,6 +4,7 @@ import { useStore } from './hooks/useStore'
 import { usePayments } from './hooks/usePayments'
 import TopBar from './components/TopBar'
 import SidePanel from './components/SidePanel'
+import BottomNav from './components/BottomNav'
 import BottomSheet from './components/BottomSheet'
 import Toast from './components/Toast'
 import OnboardingModal from './components/OnboardingModal'
@@ -90,6 +91,7 @@ function AppContent() {
         maxWidth: '480px',
         margin: '0 auto',
         paddingTop: '60px',
+        paddingBottom: '70px',
         minHeight: 'calc(100vh - 60px)'
       }}>
         <Routes>
@@ -102,11 +104,11 @@ function AppContent() {
         </Routes>
       </main>
       
+      <BottomNav activeCards={data.cards} />
+      
       <SidePanel
         isOpen={sidePanelOpen}
         onClose={() => setSidePanelOpen(false)}
-        hasWeatherCard={data.cards.includes('weather')}
-        hasCounterCard={data.cards.includes('counter')}
       />
       
       {showFAB && (
@@ -114,7 +116,7 @@ function AppContent() {
           onClick={handleFABClick}
           style={{
             position: 'fixed',
-            bottom: '20px',
+            bottom: '90px',
             right: '20px',
             width: '56px',
             height: '56px',
