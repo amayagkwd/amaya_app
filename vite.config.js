@@ -10,7 +10,7 @@ export default defineConfig({
       devOptions: {
         enabled: true
       },
-      includeAssets: ['favicon.svg', 'icon-192.png', '192.png', 'icon-512.png', '512.png'],
+      includeAssets: ['favicon.svg', '192.png', '512.png'],
       manifest: {
         name: 'AMAYA',
         short_name: 'AMAYA',
@@ -23,28 +23,16 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
             src: '/192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: '/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
+            purpose: 'any maskable'
           },
           {
             src: '/512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'maskable'
+            purpose: 'any maskable'
           }
         ]
       },
