@@ -9,7 +9,7 @@ export function usePayments(data, updateStore) {
         ...current.payments,
         transactions: [
           ...current.payments.transactions,
-          { ...transaction, id: uuidv4() }
+          { ...transaction, id: uuidv4(), timestamp: Date.now() }
         ]
       }
     }))

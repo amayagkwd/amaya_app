@@ -40,7 +40,13 @@ export default function Payments({ data, updateStore, onDelete }) {
   const groupedTransactions = useMemo(() => {
     const groups = {}
     transactions
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => {
+        // First sort by date (newest dates first)
+        const dateCompare = new Date(b.date) - new Date(a.date)
+        if (dateCompare !== 0) return dateCompare
+        // Within same date, sort by timestamp (newest first)
+        return (b.timestamp || 0) - (a.timestamp || 0)
+      })
       .forEach(t => {
         if (!groups[t.date]) groups[t.date] = []
         groups[t.date].push(t)
@@ -132,7 +138,9 @@ export default function Payments({ data, updateStore, onDelete }) {
       payments: {
         ...current.payments,
         transactions: current.payments.transactions.map(t =>
-          t.id === updatedTransaction.id ? updatedTransaction : t
+          t.id === updatedTransaction.id 
+            ? { ...updatedTransaction, timestamp: t.timestamp || Date.now() } 
+            : t
         )
       }
     }))
@@ -352,11 +360,16 @@ export default function Payments({ data, updateStore, onDelete }) {
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            fontSize: '18px',
-                            padding: '4px'
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
                           }}
                         >
-                          ✏️
+                          <img 
+                            src="/edit-pencil-01-svgrepo-com.svg" 
+                            alt="Edit"
+                            style={{ width: '18px', height: '18px' }} 
+                          />
                         </button>
                         <button
                           onClick={() => handleDelete(t.id)}
@@ -364,11 +377,16 @@ export default function Payments({ data, updateStore, onDelete }) {
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            fontSize: '18px',
-                            padding: '4px'
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
                           }}
                         >
-                          🗑️
+                          <img 
+                            src="/trash-blank-alt-svgrepo-com.svg" 
+                            alt="Delete"
+                            style={{ width: '18px', height: '18px' }} 
+                          />
                         </button>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from './hooks/useStore'
 import { usePayments } from './hooks/usePayments'
 import TopBar from './components/TopBar'
@@ -24,6 +24,7 @@ function AppContent() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [cardSelectionOpen, setCardSelectionOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   
   // Handle daily reset for counter
   useEffect(() => {
@@ -85,7 +86,7 @@ function AppContent() {
       background: '#f9f9f7',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
-      <TopBar onMenuClick={() => setSidePanelOpen(true)} appName={data.profile.name} />
+      <TopBar onMenuClick={() => setSidePanelOpen(true)} />
       
       <main style={{
         maxWidth: '480px',

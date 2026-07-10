@@ -202,11 +202,16 @@ function CategorySection({ title, categories, onDelete, onRename, hasTransaction
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '16px',
-                padding: '4px'
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center'
               }}
             >
-              ✏️
+              <img 
+                src="/edit-pencil-01-svgrepo-com.svg" 
+                alt="Edit"
+                style={{ width: '16px', height: '16px' }} 
+              />
             </button>
             {!category.isDefault && (
               <button
@@ -217,12 +222,17 @@ function CategorySection({ title, categories, onDelete, onRename, hasTransaction
                   background: 'none',
                   border: 'none',
                   cursor: hasTransactions(category.id) ? 'not-allowed' : 'pointer',
-                  fontSize: '16px',
                   padding: '4px',
-                  opacity: hasTransactions(category.id) ? 0.3 : 1
+                  opacity: hasTransactions(category.id) ? 0.3 : 1,
+                  display: 'flex',
+                  alignItems: 'center'
                 }}
               >
-                🗑️
+                <img 
+                  src="/trash-blank-alt-svgrepo-com.svg" 
+                  alt="Delete"
+                  style={{ width: '16px', height: '16px' }} 
+                />
               </button>
             )}
           </div>

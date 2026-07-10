@@ -434,11 +434,15 @@ export default function Maps({ data, updateStore }) {
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '18px',
-                        color: '#6b7280'
+                        display: 'flex',
+                        alignItems: 'center'
                       }}
                     >
-                      ✏️
+                      <img 
+                        src="/edit-pencil-01-svgrepo-com.svg" 
+                        alt="Edit"
+                        style={{ width: '18px', height: '18px' }} 
+                      />
                     </button>
                     <button
                       onClick={() => handleDelete(index)}
@@ -447,11 +451,15 @@ export default function Maps({ data, updateStore }) {
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
-                        fontSize: '18px',
-                        color: '#ef4444'
+                        display: 'flex',
+                        alignItems: 'center'
                       }}
                     >
-                      🗑️
+                      <img 
+                        src="/trash-blank-alt-svgrepo-com.svg" 
+                        alt="Delete"
+                        style={{ width: '18px', height: '18px', filter: 'invert(36%) sepia(96%) saturate(3582%) hue-rotate(346deg) brightness(97%) contrast(95%)' }} 
+                      />
                     </button>
                   </div>
                 </div>

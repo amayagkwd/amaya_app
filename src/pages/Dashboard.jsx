@@ -143,11 +143,23 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   
   return (
     <div style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', margin: '0 0 4px 0' }}>
+      <div style={{ marginBottom: '28px' }}>
+        <h2 style={{ 
+          fontSize: '32px', 
+          margin: '0 0 6px 0',
+          fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2
+        }}>
           {getGreeting(data.profile.name)}
         </h2>
-        <p style={{ color: '#6b7280', margin: 0, fontSize: '14px' }}>
+        <p style={{ 
+          color: '#9ca3af', 
+          margin: 0, 
+          fontSize: '15px',
+          fontWeight: 500
+        }}>
           {getTodayDate()}
         </p>
       </div>
@@ -157,10 +169,12 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           onClick={() => navigate('/payments')}
           style={{
           padding: '16px',
-          background: '#fff',
+          background: 'linear-gradient(to bottom, #ffffff, #fefeff)',
           borderRadius: '12px',
           marginBottom: '20px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(79, 70, 229, 0.08)'
         }}>
           <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600 }}>
             Payments
@@ -212,7 +226,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 background: '#fff',
                 borderRadius: '12px',
                 textAlign: 'center',
-                height: '100%'
+                height: '100%',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)'
               }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600 }}>
                   Maps
