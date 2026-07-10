@@ -3,6 +3,7 @@ import uuidv4 from '../utils/uuid'
 
 export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
   const [activeAddSection, setActiveAddSection] = useState(null)
+  const [deleteWarning, setDeleteWarning] = useState(null)
   
   useEffect(() => {
     if (autoOpenType) {
@@ -15,6 +16,28 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
   
   const hasTransactions = (categoryId) => {
     return data.payments.transactions.some(t => t.categoryId === categoryId)
+  }
+  
+  const handleDeleteClick = (category) => {
+    if (hasTransactions(category.id)) {
+      setDeleteWarning(category)
+    } else {
+      handleDelete(category.id)
+    }
+  }
+  
+  const handleConfirmDelete = () => {
+    if (deleteWarning) {
+      updateStore(current => ({
+        ...current,
+        payments: {
+          ...current.payments,
+          categories: current.payments.categories.filter(c => c.id !== deleteWarning.id),
+          transactions: current.payments.transactions.filter(t => t.categoryId !== deleteWarning.id)
+        }
+      }))
+      setDeleteWarning(null)
+    }
   }
   
   const handleDelete = (id) => {
@@ -58,7 +81,7 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
       <CategorySection
         title="Income"
         categories={incomeCategories}
-        onDelete={handleDelete}
+        onDeleteClick={handleDeleteClick}
         onRename={handleRename}
         hasTransactions={hasTransactions}
         updateStore={updateStore}
@@ -71,7 +94,7 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
       <CategorySection
         title="Expense"
         categories={expenseCategories}
-        onDelete={handleDelete}
+        onDeleteClick={handleDeleteClick}
         onRename={handleRename}
         hasTransactions={hasTransactions}
         updateStore={updateStore}
@@ -81,11 +104,78 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
         onStartAdding={() => setActiveAddSection('expense')}
         onCancelAdding={() => setActiveAddSection(null)}
       />
+      
+      {deleteWarning && (
+        <>
+          <div
+            onClick={() => setDeleteWarning(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 100
+            }}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: '#fff',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '400px',
+            zIndex: 101
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: 600 }}>
+              Delete Category?
+            </h3>
+            <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#6b7280', lineHeight: 1.5 }}>
+              Deleting this category will delete all the transactions labelled as this category.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setDeleteWarning(null)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: '#f3f4f6',
+                  color: '#6b7280',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: '#ef4444',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
-function CategorySection({ title, categories, onDelete, onRename, hasTransactions, updateStore, type, toggleClassification, isAddingActive, onStartAdding, onCancelAdding }) {
+function CategorySection({ title, categories, onDeleteClick, onRename, hasTransactions, updateStore, type, toggleClassification, isAddingActive, onStartAdding, onCancelAdding }) {
   const [newName, setNewName] = useState('')
   const [newClassification, setNewClassification] = useState('need')
   const [editing, setEditing] = useState(null)
@@ -198,40 +288,21 @@ function CategorySection({ title, categories, onDelete, onRename, hasTransaction
             )}
             <button
               onClick={() => startEdit(category)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center'
-              }}
+              className="btn-edit btn-edit-small"
             >
               <img 
                 src="/edit-pencil-01-svgrepo-com.svg" 
                 alt="Edit"
-                style={{ width: '16px', height: '16px' }} 
               />
             </button>
             {!category.isDefault && (
               <button
-                onClick={() => onDelete(category.id)}
-                disabled={hasTransactions(category.id)}
-                title={hasTransactions(category.id) ? 'Cannot delete category with transactions' : ''}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: hasTransactions(category.id) ? 'not-allowed' : 'pointer',
-                  padding: '4px',
-                  opacity: hasTransactions(category.id) ? 0.3 : 1,
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
+                onClick={() => onDeleteClick(category)}
+                className="btn-delete btn-delete-small"
               >
                 <img 
                   src="/trash-blank-alt-svgrepo-com.svg" 
                   alt="Delete"
-                  style={{ width: '16px', height: '16px' }} 
                 />
               </button>
             )}

@@ -259,29 +259,39 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
               data.mapCards.map((mapCard, index) => (
                 <div
                   key={index}
+                  onClick={() => handleMapCardClick(mapCard)}
                   style={{
-                    padding: '12px',
+                    padding: '0',
                     background: '#fff',
                     borderRadius: '12px',
                     position: 'relative',
-                    height: '100%'
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                 >
                   <button
-                    onClick={() => navigate('/maps')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate('/maps')
+                    }}
                     style={{
                       position: 'absolute',
                       top: '8px',
                       right: '8px',
                       padding: '4px',
-                      background: 'transparent',
+                      background: 'rgba(255, 255, 255, 0.9)',
                       border: 'none',
+                      borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#9ca3af',
+                      color: '#6b7280',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      zIndex: 2
                     }}
                     title="Edit"
                   >
@@ -290,31 +300,36 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
-                  <div 
-                    onClick={() => handleMapCardClick(mapCard)}
-                    style={{ cursor: 'pointer', paddingRight: '20px' }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600 }}>
-                          {mapCard.name}
-                        </h3>
-                        {mapCard.locationType === 'one' ? (
-                          <p style={{ margin: 0, fontSize: '11px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            Current location → {mapCard.location1Label || 'Destination'}
-                          </p>
-                        ) : (
-                          mapCard.location1Label && mapCard.location2Label && (
-                            <p style={{ margin: 0, fontSize: '11px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {mapCard.location1Label} → {mapCard.location2Label}
-                            </p>
-                          )
-                        )}
-                      </div>
-                      <span style={{ fontSize: '16px', opacity: 0.6, flexShrink: 0 }}>
-                        {mapCard.transportMode === 'car' ? '🚗' : '🏍️'}
-                      </span>
-                    </div>
+                  
+                  <div style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img 
+                      src="/map_start.svg" 
+                      alt="Map"
+                      style={{ width: '20px', height: '20px', flexShrink: 0 }}
+                    />
+                    <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1a1a1a', flex: 1 }}>
+                      {mapCard.name}
+                    </h3>
+                  </div>
+                  
+                  <div style={{ 
+                    width: '100%', 
+                    height: '140px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#f9fafb',
+                    padding: '12px'
+                  }}>
+                    <img 
+                      src="/map_image.png" 
+                      alt="Map preview"
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
                   </div>
                 </div>
               ))
@@ -331,7 +346,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 background: '#fff',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                height: '100%'
+                height: '100%',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)'
               }}
             >
               <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600 }}>
@@ -430,7 +446,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             padding: '16px',
             background: '#fff',
             borderRadius: '12px',
-            marginBottom: '20px'
+            marginBottom: '20px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>

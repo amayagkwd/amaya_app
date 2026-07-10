@@ -429,36 +429,20 @@ export default function Maps({ data, updateStore }) {
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => handleStartEdit(index)}
-                      style={{
-                        padding: '8px',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
+                      className="btn-edit"
                     >
                       <img 
                         src="/edit-pencil-01-svgrepo-com.svg" 
                         alt="Edit"
-                        style={{ width: '18px', height: '18px' }} 
                       />
                     </button>
                     <button
                       onClick={() => handleDelete(index)}
-                      style={{
-                        padding: '8px',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
+                      className="btn-delete"
                     >
                       <img 
                         src="/trash-blank-alt-svgrepo-com.svg" 
                         alt="Delete"
-                        style={{ width: '18px', height: '18px', filter: 'invert(36%) sepia(96%) saturate(3582%) hue-rotate(346deg) brightness(97%) contrast(95%)' }} 
                       />
                     </button>
                   </div>

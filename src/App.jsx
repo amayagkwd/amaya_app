@@ -91,9 +91,9 @@ function AppContent() {
       <main style={{
         maxWidth: '480px',
         margin: '0 auto',
-        paddingTop: '60px',
+        paddingTop: '70px',
         paddingBottom: '70px',
-        minHeight: 'calc(100vh - 60px)'
+        minHeight: 'calc(100vh - 70px)'
       }}>
         <Routes>
           <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} />} />

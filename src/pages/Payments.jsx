@@ -356,36 +356,20 @@ export default function Payments({ data, updateStore, onDelete }) {
                         </span>
                         <button
                           onClick={() => handleEdit(t)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
+                          className="btn-edit"
                         >
                           <img 
                             src="/edit-pencil-01-svgrepo-com.svg" 
                             alt="Edit"
-                            style={{ width: '18px', height: '18px' }} 
                           />
                         </button>
                         <button
                           onClick={() => handleDelete(t.id)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
+                          className="btn-delete"
                         >
                           <img 
                             src="/trash-blank-alt-svgrepo-com.svg" 
                             alt="Delete"
-                            style={{ width: '18px', height: '18px' }} 
                           />
                         </button>
                       </div>
