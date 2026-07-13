@@ -24,7 +24,7 @@ export default function TopBar({ onMenuClick }) {
     }}>
       {showBackButton ? (
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/', { replace: true })}
           style={{
             background: 'none',
             border: 'none',
