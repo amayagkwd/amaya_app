@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getGreeting, getTodayDate } from '../utils/formatDate'
 import { formatCurrency } from '../utils/formatCurrency'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
+import DashboardCard from '../components/DashboardCard'
 
 // Weather code mapping to emoji
 const getWeatherEmoji = (code) => {
@@ -26,6 +27,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [currentNote, setCurrentNote] = useState('')
   const [pendingAction, setPendingAction] = useState(null)
+  const [draggingCardId, setDraggingCardId] = useState(null)
   
   const stats = useMemo(() => {
     const now = new Date()
@@ -41,6 +43,51 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const hasMapsCard = data.cards.includes('maps')
   const hasWeatherCard = data.cards.includes('weather')
   const hasCounterCard = data.cards.includes('counter')
+
+  const getCardSize = (cardType) => {
+    return data.cardSizes?.[cardType] || 'half'
+  }
+
+  const handleCardSizeChange = (cardType, newSize) => {
+    updateStore(current => ({
+      ...current,
+      cardSizes: {
+        ...current.cardSizes,
+        [cardType]: newSize
+      }
+    }))
+  }
+
+  const handleDragStart = (cardId) => {
+    setDraggingCardId(cardId)
+  }
+
+  const handleDragEnd = () => {
+    setDraggingCardId(null)
+  }
+
+  const handleDrop = (sourceId, targetId) => {
+    if (sourceId === targetId) return
+
+    updateStore(current => {
+      const newCards = [...current.cards]
+      const sourceIndex = newCards.indexOf(sourceId)
+      const targetIndex = newCards.indexOf(targetId)
+
+      if (sourceIndex === -1 || targetIndex === -1) return current
+
+      newCards.splice(sourceIndex, 1)
+      const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
+      newCards.splice(adjustedTargetIndex, 0, sourceId)
+
+      return {
+        ...current,
+        cards: newCards
+      }
+    })
+
+    setDraggingCardId(null)
+  }
 
   useEffect(() => {
     if (hasWeatherCard) {
@@ -165,61 +212,81 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
       </div>
       
       {hasPaymentsCard && (
-        <div 
-          onClick={() => navigate('/payments')}
-          style={{
-          padding: '16px',
-          background: 'linear-gradient(to bottom, #ffffff, #fefeff)',
-          borderRadius: '12px',
-          marginBottom: '20px',
-          cursor: 'pointer',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.08)',
-          border: '1px solid rgba(79, 70, 229, 0.08)'
-        }}>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600 }}>
-            Payments
-          </h3>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 500,
-            color: stats.balance >= 0 ? '#10b981' : '#f43f5e',
-            marginBottom: '6px'
+        <DashboardCard
+          cardId="payments"
+          size={getCardSize('payments')}
+          onSizeChange={(size) => handleCardSizeChange('payments', size)}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+          isDragging={draggingCardId === 'payments'}
+          isDragOver={false}
+          style={{ marginBottom: '20px' }}
+        >
+          <div 
+            onClick={() => navigate('/payments')}
+            style={{
+            padding: '16px',
+            background: 'linear-gradient(to bottom, #ffffff, #fefeff)',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(79, 70, 229, 0.08)'
           }}>
-            {formatCurrency(stats.balance, data.profile.country)}
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600 }}>
+              Payments
+            </h3>
+            <div style={{
+              fontSize: '24px',
+              fontWeight: 500,
+              color: stats.balance >= 0 ? '#10b981' : '#f43f5e',
+              marginBottom: '6px'
+            }}>
+              {formatCurrency(stats.balance, data.profile.country)}
+            </div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+              ↑ {formatCurrency(stats.income, data.profile.country)} income  ↓ {formatCurrency(stats.expenses, data.profile.country)} expenses
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenBottomSheet()
+                }}
+                style={{
+                  padding: '4px 12px',
+                  background: '#4f46e5',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span style={{ fontSize: '14px' }}>+</span>
+                <span>New payment</span>
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
-            ↑ {formatCurrency(stats.income, data.profile.country)} income  ↓ {formatCurrency(stats.expenses, data.profile.country)} expenses
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onOpenBottomSheet()
-              }}
-              style={{
-                padding: '4px 12px',
-                background: '#4f46e5',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              <span style={{ fontSize: '14px' }}>+</span>
-              <span>New payment</span>
-            </button>
-          </div>
-        </div>
+        </DashboardCard>
       )}
       
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
         {hasMapsCard && (
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <DashboardCard
+            cardId="maps"
+            size={getCardSize('maps')}
+            onSizeChange={(size) => handleCardSizeChange('maps', size)}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
+            isDragging={draggingCardId === 'maps'}
+            isDragOver={false}
+          >
             {data.mapCards.length === 0 ? (
               <div style={{
                 padding: '12px',
@@ -334,11 +401,20 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 </div>
               ))
             )}
-          </div>
+          </DashboardCard>
         )}
         
         {hasWeatherCard && (
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <DashboardCard
+            cardId="weather"
+            size={getCardSize('weather')}
+            onSizeChange={(size) => handleCardSizeChange('weather', size)}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
+            isDragging={draggingCardId === 'weather'}
+            isDragOver={false}
+          >
             <div
               onClick={() => navigate('/weather')}
               style={{
@@ -436,20 +512,30 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 </div>
               )}
             </div>
-          </div>
+          </DashboardCard>
         )}
       </div>
 
       {hasCounterCard && (
-        <div
-          style={{
-            padding: '16px',
-            background: '#fff',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)'
-          }}
+        <DashboardCard
+          cardId="counter"
+          size={getCardSize('counter')}
+          onSizeChange={(size) => handleCardSizeChange('counter', size)}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDrop={handleDrop}
+          isDragging={draggingCardId === 'counter'}
+          isDragOver={false}
+          style={{ marginBottom: '20px' }}
         >
+          <div
+            style={{
+              padding: '16px',
+              background: '#fff',
+              borderRadius: '12px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)'
+            }}
+          >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ 
               margin: 0, 
@@ -532,7 +618,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
               </button>
             </div>
           )}
-        </div>
+          </div>
+        </DashboardCard>
       )}
       
       {data.cards.length === 0 && (

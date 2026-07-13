@@ -29,11 +29,15 @@ export default function BottomNav({ activeCards }) {
   
   const handleNavClick = (path) => {
     if (path === '/') {
-      // When navigating to home, replace current entry and clear forward history
-      navigate('/', { replace: true })
+      // When navigating to home from another page, replace to avoid back button going to that page
+      if (location.pathname !== '/') {
+        navigate('/', { replace: true })
+      }
     } else {
-      // For other nav items, replace to avoid stacking
-      navigate(path, { replace: true })
+      // For other nav items, use normal navigation so phone back button works
+      if (location.pathname !== path) {
+        navigate(path)
+      }
     }
   }
   

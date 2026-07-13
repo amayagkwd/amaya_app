@@ -13,6 +13,7 @@ const initialState = {
     transactions: []
   },
   cards: [],
+  cardSizes: {},
   mapCards: [],
   weatherSettings: {
     showTemperature: true,
