@@ -27,7 +27,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [currentNote, setCurrentNote] = useState('')
   const [pendingAction, setPendingAction] = useState(null)
-  const [draggingCardId, setDraggingCardId] = useState(null)
   
   const stats = useMemo(() => {
     const now = new Date()
@@ -56,37 +55,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
         [cardType]: newSize
       }
     }))
-  }
-
-  const handleDragStart = (cardId) => {
-    setDraggingCardId(cardId)
-  }
-
-  const handleDragEnd = () => {
-    setDraggingCardId(null)
-  }
-
-  const handleDrop = (sourceId, targetId) => {
-    if (sourceId === targetId) return
-
-    updateStore(current => {
-      const newCards = [...current.cards]
-      const sourceIndex = newCards.indexOf(sourceId)
-      const targetIndex = newCards.indexOf(targetId)
-
-      if (sourceIndex === -1 || targetIndex === -1) return current
-
-      newCards.splice(sourceIndex, 1)
-      const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex
-      newCards.splice(adjustedTargetIndex, 0, sourceId)
-
-      return {
-        ...current,
-        cards: newCards
-      }
-    })
-
-    setDraggingCardId(null)
   }
 
   useEffect(() => {
@@ -216,11 +184,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           cardId="payments"
           size={getCardSize('payments')}
           onSizeChange={(size) => handleCardSizeChange('payments', size)}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          isDragging={draggingCardId === 'payments'}
-          isDragOver={false}
           style={{ marginBottom: '20px' }}
         >
           <div 
@@ -281,11 +244,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             cardId="maps"
             size={getCardSize('maps')}
             onSizeChange={(size) => handleCardSizeChange('maps', size)}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            isDragging={draggingCardId === 'maps'}
-            isDragOver={false}
           >
             {data.mapCards.length === 0 ? (
               <div style={{
@@ -409,11 +367,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             cardId="weather"
             size={getCardSize('weather')}
             onSizeChange={(size) => handleCardSizeChange('weather', size)}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            isDragging={draggingCardId === 'weather'}
-            isDragOver={false}
           >
             <div
               onClick={() => navigate('/weather')}
@@ -521,11 +474,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           cardId="counter"
           size={getCardSize('counter')}
           onSizeChange={(size) => handleCardSizeChange('counter', size)}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDrop={handleDrop}
-          isDragging={draggingCardId === 'counter'}
-          isDragOver={false}
           style={{ marginBottom: '20px' }}
         >
           <div
