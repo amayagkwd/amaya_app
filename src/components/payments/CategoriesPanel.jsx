@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import uuidv4 from '../utils/uuid'
+import uuidv4 from '../../utils/uuid'
 
 export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
   const [activeAddSection, setActiveAddSection] = useState(null)

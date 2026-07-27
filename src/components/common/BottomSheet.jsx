@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { showToast } from './Toast'
-import { getCurrencyByCountry } from '../utils/countries'
-import uuidv4 from '../utils/uuid'
+import { getCurrencyByCountry } from '../../utils/countries'
+import uuidv4 from '../../utils/uuid'
 
 export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore }) {
   const navigate = useNavigate()

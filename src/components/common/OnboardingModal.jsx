@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { countries } from '../utils/countries'
+import { countries } from '../../utils/countries'
 
 export default function OnboardingModal({ onComplete }) {
   const [name, setName] = useState('')

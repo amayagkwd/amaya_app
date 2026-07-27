@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getGreeting, getTodayDate } from '../utils/formatDate'
 import { formatCurrency } from '../utils/formatCurrency'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
-import DashboardCard from '../components/DashboardCard'
+import DashboardCard from '../components/dashboard/DashboardCard'
 
 // Weather code mapping to emoji
 const getWeatherEmoji = (code) => {
