@@ -9,6 +9,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
   const [selectedDay, setSelectedDay] = useState(null)
   const [currentChartIndex, setCurrentChartIndex] = useState(0)
   const [currentWeek, setCurrentWeek] = useState(0)
+  const [legendOpen, setLegendOpen] = useState({})
   const carouselRef = useRef(null)
   const weekCarouselRef = useRef(null)
   
@@ -31,6 +32,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
       const containerWidth = carouselRef.current.offsetWidth
       const index = Math.round(scrollLeft / containerWidth)
       setCurrentChartIndex(index)
+      setLegendOpen({}) // Close all legends on scroll
     }
   }
   
@@ -465,6 +467,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
               title="Income Breakdown"
               chartData={incomeBreakdown ? { ...incomeBreakdown, country } : null}
               colors={COLORS}
+              legendOpen={legendOpen['income'] || false}
+              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, income: !prev['income'] }))}
             />
           </div>
           
@@ -478,6 +482,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
               title="Expense Breakdown"
               chartData={expenseBreakdown ? { ...expenseBreakdown, country } : null}
               colors={COLORS.slice().reverse()}
+              legendOpen={legendOpen['expense'] || false}
+              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, expense: !prev['expense'] }))}
             />
           </div>
           
@@ -491,6 +497,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
               title="Needs vs Wants"
               chartData={needsVsWants ? { ...needsVsWants, country } : null}
               colors={['#4f46e5', '#f43f5e']}
+              legendOpen={legendOpen['needs'] || false}
+              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, needs: !prev['needs'] }))}
             />
           </div>
         </div>
@@ -523,7 +531,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
   )
 }
 
-function ChartCard({ title, chartData, colors, style }) {
+function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend }) {
   if (!chartData) {
     return (
       <div style={{ 
@@ -586,34 +594,55 @@ function ChartCard({ title, chartData, colors, style }) {
         </div>
       </div>
       
-      <div style={{ marginTop: '16px' }}>
-        {chartData.data.map((entry, index) => (
-          <div 
-            key={entry.name}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 0',
-              fontSize: '13px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                background: colors[index % colors.length]
-              }} />
-              <span style={{ color: '#1a1a1a' }}>{entry.name}</span>
+      <button
+        onClick={onToggleLegend}
+        style={{
+          marginTop: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '14px',
+          color: '#1a1a1a',
+          fontWeight: 500,
+          padding: '0'
+        }}
+      >
+        Legend <span style={{ fontSize: '16px', transform: legendOpen ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}>⌵</span>
+      </button>
+      
+      {legendOpen && (
+        <div style={{ marginTop: '12px' }}>
+          {chartData.data.map((entry, index) => (
+            <div 
+              key={entry.name}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 0',
+                fontSize: '13px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: colors[index % colors.length]
+                }} />
+                <span style={{ color: '#1a1a1a' }}>{entry.name}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{formatCurrency(entry.value, chartData.country)}</span>
+                <span style={{ color: '#6b7280', minWidth: '35px', textAlign: 'right' }}>{entry.percentage}%</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{formatCurrency(entry.value, chartData.country)}</span>
-              <span style={{ color: '#6b7280', minWidth: '35px', textAlign: 'right' }}>{entry.percentage}%</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

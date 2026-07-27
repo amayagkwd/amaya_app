@@ -205,7 +205,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           willChange: 'transform'
         }}>
           <div 
-            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}
+            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0', boxSizing: 'border-box' }}
           >
             <PaymentsSetup 
               data={data} 
@@ -227,7 +227,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           </div>
           
           <div 
-            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}
+            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0', boxSizing: 'border-box' }}
           >
             <PaymentsCharts
               allTransactions={allTransactions}
