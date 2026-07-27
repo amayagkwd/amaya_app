@@ -81,10 +81,6 @@ export default function Payments({ data, updateStore, onDelete }) {
   
   const onTouchMove = (e) => {
     setTouchEnd(e.targetTouches[0].clientX)
-    if (touchStart && !isTransitioning) {
-      const distance = e.targetTouches[0].clientX - touchStart
-      setSlideOffset(distance * 0.5)
-    }
   }
   
   const onTouchEnd = () => {
@@ -97,19 +93,11 @@ export default function Payments({ data, updateStore, onDelete }) {
     const currentIndex = SECTIONS.indexOf(activeSection)
     
     if (isLeftSwipe && currentIndex < SECTIONS.length - 1) {
-      setIsTransitioning(true)
       setActiveSection(SECTIONS[currentIndex + 1])
-      setTimeout(() => {
-        setIsTransitioning(false)
-        setSlideOffset(0)
-      }, 300)
+      setSlideOffset(0)
     } else if (isRightSwipe && currentIndex > 0) {
-      setIsTransitioning(true)
       setActiveSection(SECTIONS[currentIndex - 1])
-      setTimeout(() => {
-        setIsTransitioning(false)
-        setSlideOffset(0)
-      }, 300)
+      setSlideOffset(0)
     } else {
       setSlideOffset(0)
     }
@@ -255,9 +243,10 @@ export default function Payments({ data, updateStore, onDelete }) {
       >
         <div style={{
           display: 'flex',
-          transform: `translateX(calc(-${SECTIONS.indexOf(activeSection) * (100/3)}% + ${slideOffset}px))`,
-          transition: isTransitioning || slideOffset === 0 ? 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
-          width: '300%'
+          transform: `translateX(calc(-${SECTIONS.indexOf(activeSection) * (100/3)}%))`,
+          transition: 'transform 0.3s ease-out',
+          width: '300%',
+          willChange: 'transform'
         }}>
           <div style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}>
             <PaymentsSetup 
