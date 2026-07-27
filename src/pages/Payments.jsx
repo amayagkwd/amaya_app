@@ -10,7 +10,7 @@ import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
 
 const SECTIONS = ['setup', 'history', 'charts']
 
-export default function Payments({ data, updateStore, onDelete }) {
+export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
   const location = useLocation()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [activeSection, setActiveSection] = useState('history')
@@ -107,8 +107,9 @@ export default function Payments({ data, updateStore, onDelete }) {
   }
   
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <>
+      <div style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h2 style={{ fontSize: '24px', margin: 0 }}>Payments</h2>
           <div style={{ position: 'relative' }}>
@@ -284,7 +285,32 @@ export default function Payments({ data, updateStore, onDelete }) {
           onClose={() => setEditingTransaction(null)}
         />
       )}
-    </div>
+      </div>
+      
+      <button
+        onClick={onOpenBottomSheet}
+        style={{
+          position: 'fixed',
+          bottom: '80px',
+          right: '20px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: '#4f46e5',
+          border: 'none',
+          color: '#fff',
+          fontSize: '28px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50
+        }}
+      >
+        +
+      </button>
+    </>
   )
 }
 

@@ -21,7 +21,7 @@ const getWeatherEmoji = (code) => {
   return '🌤️'
 }
 
-export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
+export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddCard }) {
   const navigate = useNavigate()
   const [weatherData, setWeatherData] = useState(null)
   const [showNoteModal, setShowNoteModal] = useState(false)
@@ -157,27 +157,28 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   }
   
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '28px' }}>
-        <h2 style={{ 
-          fontSize: '32px', 
-          margin: '0 0 6px 0',
-          fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-          fontWeight: 700,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2
-        }}>
-          {getGreeting(data.profile.name)}
-        </h2>
-        <p style={{ 
-          color: '#9ca3af', 
-          margin: 0, 
-          fontSize: '15px',
-          fontWeight: 500
-        }}>
-          {getTodayDate()}
-        </p>
-      </div>
+    <>
+      <div style={{ padding: '20px' }}>
+        <div style={{ marginBottom: '28px' }}>
+          <h2 style={{ 
+            fontSize: '32px', 
+            margin: '0 0 6px 0',
+            fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2
+          }}>
+            {getGreeting(data.profile.name)}
+          </h2>
+          <p style={{ 
+            color: '#9ca3af', 
+            margin: 0, 
+            fontSize: '15px',
+            fontWeight: 500
+          }}>
+            {getTodayDate()}
+          </p>
+        </div>
       
       {hasPaymentsCard && (
         <DashboardCard
@@ -207,32 +208,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             }}>
               {formatCurrency(stats.balance, data.profile.country)}
             </div>
-            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+            <div style={{ fontSize: '13px', color: '#6b7280' }}>
               ↑ {formatCurrency(stats.income, data.profile.country)} income  ↓ {formatCurrency(stats.expenses, data.profile.country)} expenses
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpenBottomSheet()
-                }}
-                style={{
-                  padding: '4px 12px',
-                  background: '#4f46e5',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <span style={{ fontSize: '14px' }}>+</span>
-                <span>New payment</span>
-              </button>
             </div>
           </div>
         </DashboardCard>
@@ -375,7 +352,9 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 background: '#fff',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                height: '100%',
+                height: '184px',
+                display: 'flex',
+                flexDirection: 'column',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06)'
               }}
             >
@@ -467,6 +446,36 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             </div>
           </DashboardCard>
         )}
+        
+        <div
+          onClick={onAddCard}
+          style={{
+            padding: '12px',
+            background: '#fff',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            height: '184px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed #4f46e5',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '32px', 
+              color: '#4f46e5', 
+              marginBottom: '4px',
+              fontWeight: 300
+            }}>
+              +
+            </div>
+            <div style={{ fontSize: '12px', color: '#4f46e5', fontWeight: 500 }}>
+              Add Card
+            </div>
+          </div>
+        </div>
       </div>
 
       {hasCounterCard && (
@@ -670,6 +679,33 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           </div>
         </>
       )}
-    </div>
+      </div>
+      
+      {hasPaymentsCard && (
+        <button
+          onClick={onOpenBottomSheet}
+          style={{
+            position: 'fixed',
+            bottom: '80px',
+            right: '20px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: '#4f46e5',
+            border: 'none',
+            color: '#fff',
+            fontSize: '28px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50
+          }}
+        >
+          +
+        </button>
+      )}
+    </>
   )
 }

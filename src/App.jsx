@@ -96,8 +96,8 @@ function AppContent() {
         minHeight: 'calc(100vh - 70px)'
       }}>
         <Routes>
-          <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} />} />
-          <Route path="/payments" element={<Payments data={data} updateStore={updateStore} onDelete={deleteTransaction} />} />
+          <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} onAddCard={handleFABClick} />} />
+          <Route path="/payments" element={<Payments data={data} updateStore={updateStore} onDelete={deleteTransaction} onOpenBottomSheet={() => setBottomSheetOpen(true)} />} />
           <Route path="/profile" element={<Profile data={data} updateStore={updateStore} />} />
           <Route path="/maps" element={<Maps data={data} updateStore={updateStore} />} />
           <Route path="/weather" element={<Weather data={data} updateStore={updateStore} />} />
@@ -112,28 +112,7 @@ function AppContent() {
         onClose={() => setSidePanelOpen(false)}
       />
       
-      {showFAB && (
-        <button
-          onClick={handleFABClick}
-          style={{
-            position: 'fixed',
-            bottom: '90px',
-            right: '20px',
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            background: '#4f46e5',
-            color: '#fff',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
-            zIndex: 99
-          }}
-        >
-          +
-        </button>
-      )}
+
       
       <CardSelectionModal
         isOpen={cardSelectionOpen}
