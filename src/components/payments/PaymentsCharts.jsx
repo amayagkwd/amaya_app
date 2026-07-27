@@ -219,14 +219,6 @@ export default function PaymentsCharts({ allTransactions, categories, country })
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
-            onWheel={(e) => {
-              e.stopPropagation()
-              const container = weekCarouselRef.current
-              if (container) {
-                container.scrollLeft += e.deltaY
-                e.preventDefault()
-              }
-            }}
             style={{
               display: 'flex',
               overflowX: 'scroll',
@@ -446,14 +438,6 @@ export default function PaymentsCharts({ allTransactions, categories, country })
           onTouchStart={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
-          onWheel={(e) => {
-            e.stopPropagation()
-            const container = carouselRef.current
-            if (container) {
-              container.scrollLeft += e.deltaY
-              e.preventDefault()
-            }
-          }}
           style={{
             display: 'flex',
             overflowX: 'scroll',

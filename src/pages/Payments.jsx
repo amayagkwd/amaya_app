@@ -154,17 +154,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           {SECTIONS.map(section => (
             <button
               key={section}
-              onClick={() => {
-                setActiveSection(section)
-                if (containerRef.current) {
-                  const index = SECTIONS.indexOf(section)
-                  const containerWidth = containerRef.current.offsetWidth
-                  containerRef.current.scrollTo({
-                    left: index * containerWidth,
-                    behavior: 'smooth'
-                  })
-                }
-              }}
+              onClick={() => setActiveSection(section)}
               style={{
                 flex: 1,
                 padding: '12px 0',
@@ -201,64 +191,50 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
       <div 
         ref={containerRef}
         style={{
-          overflow: 'auto',
+          overflow: 'hidden',
           position: 'relative',
           minHeight: '400px',
-          width: '100%',
-          scrollSnapType: 'x mandatory',
-          display: 'flex',
-          overflowX: 'scroll',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'auto'
-        }}
-        onScroll={(e) => {
-          const scrollLeft = e.currentTarget.scrollLeft
-          const containerWidth = e.currentTarget.offsetWidth
-          const index = Math.round(scrollLeft / containerWidth)
-          const newSection = SECTIONS[index]
-          if (newSection && newSection !== activeSection) {
-            setActiveSection(newSection)
-          }
+          width: '100%'
         }}
       >
-        <style>
-          {`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}
-        </style>
-        <div 
-          style={{ minWidth: '100%', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-        >
-          <PaymentsSetup 
-            data={data} 
-            updateStore={updateStore}
-            autoOpenType={location.state?.categoryType}
-          />
-        </div>
-        
-        <div 
-          style={{ minWidth: '100%', flexShrink: 0, padding: '0', boxSizing: 'border-box', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-        >
-          <PaymentsHistory
-            allTransactions={allTransactions}
-            categories={data.payments.categories}
-            country={data.profile.country}
-            onDelete={onDelete}
-            onEdit={handleEdit}
-          />
-        </div>
-        
-        <div 
-          style={{ minWidth: '100%', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-        >
-          <PaymentsCharts
-            allTransactions={allTransactions}
-            categories={data.payments.categories}
-            country={data.profile.country}
-          />
+        <div style={{
+          display: 'flex',
+          transform: `translateX(calc(-${SECTIONS.indexOf(activeSection) * (100/3)}%))`,
+          transition: 'transform 0.3s ease-out',
+          width: '300%',
+          willChange: 'transform'
+        }}>
+          <div 
+            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}
+          >
+            <PaymentsSetup 
+              data={data} 
+              updateStore={updateStore}
+              autoOpenType={location.state?.categoryType}
+            />
+          </div>
+          
+          <div 
+            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0', boxSizing: 'border-box' }}
+          >
+            <PaymentsHistory
+              allTransactions={allTransactions}
+              categories={data.payments.categories}
+              country={data.profile.country}
+              onDelete={onDelete}
+              onEdit={handleEdit}
+            />
+          </div>
+          
+          <div 
+            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}
+          >
+            <PaymentsCharts
+              allTransactions={allTransactions}
+              categories={data.payments.categories}
+              country={data.profile.country}
+            />
+          </div>
         </div>
       </div>
       
