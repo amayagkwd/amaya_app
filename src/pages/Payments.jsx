@@ -16,13 +16,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   const [activeSection, setActiveSection] = useState('history')
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
-  const [touchStart, setTouchStart] = useState(null)
-  const [touchEnd, setTouchEnd] = useState(null)
-  const [slideOffset, setSlideOffset] = useState(0)
-  const [isTransitioning, setIsTransitioning] = useState(false)
   const containerRef = useRef(null)
-  
-  const minSwipeDistance = 50
   
   useEffect(() => {
     if (location.state?.openSetup) {
@@ -72,38 +66,6 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   const handleMonthSelect = (date) => {
     setSelectedDate(date)
     setMonthDropdownOpen(false)
-  }
-  
-  const onTouchStart = (e) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
-  
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-  
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-    
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-    
-    const currentIndex = SECTIONS.indexOf(activeSection)
-    
-    if (isLeftSwipe && currentIndex < SECTIONS.length - 1) {
-      setActiveSection(SECTIONS[currentIndex + 1])
-      setSlideOffset(0)
-    } else if (isRightSwipe && currentIndex > 0) {
-      setActiveSection(SECTIONS[currentIndex - 1])
-      setSlideOffset(0)
-    } else {
-      setSlideOffset(0)
-    }
-    
-    setTouchStart(null)
-    setTouchEnd(null)
   }
   
   return (
@@ -193,9 +155,15 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
             <button
               key={section}
               onClick={() => {
-                setIsTransitioning(true)
                 setActiveSection(section)
-                setTimeout(() => setIsTransitioning(false), 300)
+                if (containerRef.current) {
+                  const index = SECTIONS.indexOf(section)
+                  const containerWidth = containerRef.current.offsetWidth
+                  containerRef.current.scrollTo({
+                    left: index * containerWidth,
+                    behavior: 'smooth'
+                  })
+                }
               }}
               style={{
                 flex: 1,
@@ -232,48 +200,65 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
       
       <div 
         ref={containerRef}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
         style={{
-          overflow: 'hidden',
+          overflow: 'auto',
           position: 'relative',
           minHeight: '400px',
-          width: '100%'
+          width: '100%',
+          scrollSnapType: 'x mandatory',
+          display: 'flex',
+          overflowX: 'scroll',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'auto'
+        }}
+        onScroll={(e) => {
+          const scrollLeft = e.currentTarget.scrollLeft
+          const containerWidth = e.currentTarget.offsetWidth
+          const index = Math.round(scrollLeft / containerWidth)
+          const newSection = SECTIONS[index]
+          if (newSection && newSection !== activeSection) {
+            setActiveSection(newSection)
+          }
         }}
       >
-        <div style={{
-          display: 'flex',
-          transform: `translateX(calc(-${SECTIONS.indexOf(activeSection) * (100/3)}%))`,
-          transition: 'transform 0.3s ease-out',
-          width: '300%',
-          willChange: 'transform'
-        }}>
-          <div style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}>
-            <PaymentsSetup 
-              data={data} 
-              updateStore={updateStore}
-              autoOpenType={location.state?.categoryType}
-            />
-          </div>
-          
-          <div style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}>
-            <PaymentsHistory
-              allTransactions={allTransactions}
-              categories={data.payments.categories}
-              country={data.profile.country}
-              onDelete={onDelete}
-              onEdit={handleEdit}
-            />
-          </div>
-          
-          <div style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box' }}>
-            <PaymentsCharts
-              allTransactions={allTransactions}
-              categories={data.payments.categories}
-              country={data.profile.country}
-            />
-          </div>
+        <style>
+          {`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}
+        </style>
+        <div 
+          style={{ minWidth: '100%', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+        >
+          <PaymentsSetup 
+            data={data} 
+            updateStore={updateStore}
+            autoOpenType={location.state?.categoryType}
+          />
+        </div>
+        
+        <div 
+          style={{ minWidth: '100%', flexShrink: 0, padding: '0', boxSizing: 'border-box', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+        >
+          <PaymentsHistory
+            allTransactions={allTransactions}
+            categories={data.payments.categories}
+            country={data.profile.country}
+            onDelete={onDelete}
+            onEdit={handleEdit}
+          />
+        </div>
+        
+        <div 
+          style={{ minWidth: '100%', flexShrink: 0, padding: '0 20px 0 0', boxSizing: 'border-box', scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+        >
+          <PaymentsCharts
+            allTransactions={allTransactions}
+            categories={data.payments.categories}
+            country={data.profile.country}
+          />
         </div>
       </div>
       

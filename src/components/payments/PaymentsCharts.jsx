@@ -216,6 +216,17 @@ export default function PaymentsCharts({ allTransactions, categories, country })
           <div 
             ref={weekCarouselRef}
             onScroll={handleWeekScroll}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            onWheel={(e) => {
+              e.stopPropagation()
+              const container = weekCarouselRef.current
+              if (container) {
+                container.scrollLeft += e.deltaY
+                e.preventDefault()
+              }
+            }}
             style={{
               display: 'flex',
               overflowX: 'scroll',
@@ -223,7 +234,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
               gap: '0px',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
+              WebkitOverflowScrolling: 'auto'
             }}
           >
             {weeklyData.weeks.map((week, weekIndex) => (
@@ -231,7 +242,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
                 key={weekIndex}
                 style={{ 
                   minWidth: '100%', 
-                  scrollSnapAlign: 'center',
+                  scrollSnapAlign: 'start',
+                  scrollSnapStop: 'always',
                   padding: '0 2px'
                 }}
               >
@@ -431,6 +443,17 @@ export default function PaymentsCharts({ allTransactions, categories, country })
         <div 
           ref={carouselRef}
           onScroll={handleCarouselScroll}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          onWheel={(e) => {
+            e.stopPropagation()
+            const container = carouselRef.current
+            if (container) {
+              container.scrollLeft += e.deltaY
+              e.preventDefault()
+            }
+          }}
           style={{
             display: 'flex',
             overflowX: 'scroll',
@@ -438,7 +461,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
             gap: '0px',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
+            WebkitOverflowScrolling: 'auto'
           }}
         >
           <style>
@@ -450,7 +473,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
           </style>
           <div style={{ 
             minWidth: '100%', 
-            scrollSnapAlign: 'center',
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
             padding: '0 2px'
           }}>
             <ChartCard
@@ -462,7 +486,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
           
           <div style={{ 
             minWidth: '100%', 
-            scrollSnapAlign: 'center',
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
             padding: '0 2px'
           }}>
             <ChartCard
@@ -474,7 +499,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
           
           <div style={{ 
             minWidth: '100%', 
-            scrollSnapAlign: 'center',
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
             padding: '0 2px'
           }}>
             <ChartCard
