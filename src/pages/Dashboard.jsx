@@ -259,7 +259,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
         {hasMapsCard && (
           <DashboardCard
             cardId="maps"
-            size={getCardSize('maps')}
+            size="half"
             onSizeChange={(size) => handleCardSizeChange('maps', size)}
           >
             {data.mapCards.length === 0 ? (
@@ -434,7 +434,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
         {hasWeatherCard && (
           <DashboardCard
             cardId="weather"
-            size={getCardSize('weather')}
+            size="half"
             onSizeChange={(size) => handleCardSizeChange('weather', size)}
           >
             <div

@@ -125,6 +125,7 @@ export default function DashboardCard({
         style={{
           gridColumn: size === 'full' ? 'span 2' : 'span 1',
           position: 'relative',
+          minWidth: 0,
           transform: isSelected ? 'scale(1.03)' : 'scale(1)',
           transition: 'transform 200ms ease-out',
           zIndex: isSelected ? 200 : 1,
