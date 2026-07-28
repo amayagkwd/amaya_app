@@ -270,7 +270,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                 WebkitBackdropFilter: 'blur(20px)',
                 borderRadius: '24px',
                 textAlign: 'center',
-                height: '220px',
+                height: '200px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -338,7 +338,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                     display: 'flex',
                     flexDirection: 'column',
                     transition: 'all 0.3s ease',
-                    height: '220px'
+                    height: '200px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(28, 33, 40, 0.8)'
@@ -446,7 +446,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                 WebkitBackdropFilter: 'blur(20px)',
                 borderRadius: '24px',
                 cursor: 'pointer',
-                height: '220px',
+                height: '200px',
                 display: 'flex',
                 flexDirection: 'column',
                 border: '1px solid rgba(139, 146, 176, 0.15)',
@@ -579,7 +579,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
             WebkitBackdropFilter: 'blur(20px)',
             borderRadius: '24px',
             cursor: 'pointer',
-            height: '220px',
+            height: '200px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
