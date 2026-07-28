@@ -16,6 +16,7 @@ import Profile from './pages/Profile'
 import Maps from './pages/Maps'
 import Weather from './pages/Weather'
 import Counter from './pages/Counter'
+import theme from './theme'
 
 function AppContent() {
   const [data, updateStore] = useStore()
@@ -83,17 +84,17 @@ function AppContent() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#f9f9f7',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      background: theme.colors.bgPrimary,
+      fontFamily: theme.typography.fontFamily
     }}>
       <TopBar onMenuClick={() => setSidePanelOpen(true)} />
       
       <main style={{
-        maxWidth: '480px',
+        maxWidth: theme.layout.maxWidth,
         margin: '0 auto',
-        paddingTop: '70px',
-        paddingBottom: '70px',
-        minHeight: 'calc(100vh - 70px)'
+        paddingTop: theme.layout.topBarHeight,
+        paddingBottom: theme.layout.bottomNavHeight,
+        minHeight: `calc(100vh - ${theme.layout.topBarHeight})`
       }}>
         <Routes>
           <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} onAddCard={handleFABClick} />} />

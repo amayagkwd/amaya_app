@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { showToast } from './Toast'
 import { getCurrencyByCountry } from '../../utils/countries'
 import uuidv4 from '../../utils/uuid'
+import theme from '../../theme'
 
 export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore }) {
   const navigate = useNavigate()
@@ -56,7 +57,7 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(0,0,0,0.7)',
           zIndex: 300
         }}
       />
@@ -65,36 +66,40 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
         bottom: 0,
         left: 0,
         right: 0,
-        background: '#fff',
-        borderRadius: '16px 16px 0 0',
-        padding: '20px',
+        background: theme.colors.bgModal,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: `${theme.borderRadius.xl} ${theme.borderRadius.xl} 0 0`,
+        padding: theme.spacing.xl,
         zIndex: 301,
-        maxWidth: '480px',
+        maxWidth: theme.layout.maxWidth,
         margin: '0 auto',
         maxHeight: '80vh',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        borderBottom: 'none'
       }}>
         <div style={{
           width: '40px',
           height: '4px',
-          background: '#e5e5e3',
+          background: theme.colors.borderMedium,
           borderRadius: '2px',
-          margin: '0 auto 20px'
+          margin: `0 auto ${theme.spacing.xl}`
         }} />
         
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
           <button
             onClick={() => setType('income')}
             style={{
               flex: 1,
-              padding: '12px',
-              background: type === 'income' ? '#4f46e5' : '#f9f9f7',
-              color: type === 'income' ? '#fff' : '#1a1a1a',
-              border: 'none',
-              borderRadius: '8px',
+              padding: theme.spacing.md,
+              background: type === 'income' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              border: type === 'income' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
               cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.medium
             }}
           >
             Income
@@ -103,22 +108,22 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
             onClick={() => setType('expense')}
             style={{
               flex: 1,
-              padding: '12px',
-              background: type === 'expense' ? '#4f46e5' : '#f9f9f7',
-              color: type === 'expense' ? '#fff' : '#1a1a1a',
-              border: 'none',
-              borderRadius: '8px',
+              padding: theme.spacing.md,
+              background: type === 'expense' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              border: type === 'expense' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
               cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.medium
             }}
           >
             Expense
           </button>
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Amount
           </label>
           <input
@@ -130,24 +135,27 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
             placeholder="0"
             style={{
               width: '100%',
-              padding: '12px',
+              padding: theme.spacing.md,
               paddingLeft: '32px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
           <span style={{
             position: 'relative',
             top: '-38px',
             left: '12px',
-            color: '#6b7280'
+            color: theme.colors.textSecondary
           }}>₹</span>
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Category
           </label>
           <CustomDropdown
@@ -164,8 +172,8 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
           />
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Date
           </label>
           <input
@@ -174,17 +182,20 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
             onChange={e => setDate(e.target.value)}
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Note (optional)
           </label>
           <input
@@ -194,11 +205,14 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
             placeholder="e.g. California burrito"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
         </div>
@@ -208,14 +222,15 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
           disabled={!canSave}
           style={{
             width: '100%',
-            padding: '16px',
-            background: canSave ? '#4f46e5' : '#e5e5e3',
-            color: '#fff',
+            padding: theme.spacing.lg,
+            background: canSave ? theme.colors.accentPurple : theme.colors.bgCardDark,
+            color: theme.colors.textPrimary,
             border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 500,
-            cursor: canSave ? 'pointer' : 'not-allowed'
+            borderRadius: theme.borderRadius.sm,
+            fontSize: theme.typography.h5,
+            fontWeight: theme.typography.medium,
+            cursor: canSave ? 'pointer' : 'not-allowed',
+            opacity: canSave ? 1 : 0.5
           }}
         >
           Save
@@ -257,25 +272,26 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
         type="button"
         style={{
           width: '100%',
-          padding: '12px',
-          border: '1px solid #e5e5e3',
-          borderRadius: '8px',
-          fontSize: '16px',
+          padding: theme.spacing.md,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          borderRadius: theme.borderRadius.sm,
+          fontSize: theme.typography.h5,
           boxSizing: 'border-box',
-          background: '#fff',
+          background: theme.colors.bgCardDark,
           textAlign: 'left',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          color: selectedOption ? '#1a1a1a' : '#9ca3af'
+          color: selectedOption ? theme.colors.textPrimary : theme.colors.textMuted,
+          outline: 'none'
         }}
       >
         <span>{selectedOption ? selectedOption.name : placeholder}</span>
         <span style={{ 
-          fontSize: '12px',
+          fontSize: theme.typography.caption,
           transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.2s'
+          transition: theme.transitions.fast
         }}>
           ▼
         </span>
@@ -288,10 +304,12 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
           left: 0,
           right: 0,
           marginTop: '4px',
-          background: '#fff',
-          border: '1px solid #e5e5e3',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          background: theme.colors.bgModal,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          borderRadius: theme.borderRadius.sm,
+          boxShadow: theme.shadows.card,
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column'
@@ -302,9 +320,9 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
           }}>
             {options.length === 0 ? (
               <div style={{
-                padding: '32px 16px',
-                color: '#9ca3af',
-                fontSize: '14px',
+                padding: `${theme.spacing.xxxl} ${theme.spacing.lg}`,
+                color: theme.colors.textMuted,
+                fontSize: theme.typography.body,
                 textAlign: 'center'
               }}>
                 No categories yet
@@ -317,14 +335,15 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
                   type="button"
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: `${theme.spacing.md} ${theme.spacing.lg}`,
                     border: 'none',
-                    background: value === option.id ? '#f9f9f7' : 'transparent',
+                    background: value === option.id ? theme.colors.bgCardHover : 'transparent',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    fontSize: '15px',
-                    color: '#1a1a1a',
-                    borderBottom: '1px solid #f3f4f6'
+                    fontSize: theme.typography.h6,
+                    color: theme.colors.textPrimary,
+                    borderBottom: `1px solid ${theme.colors.borderSubtle}`,
+                    outline: 'none'
                   }}
                 >
                   {option.name}
@@ -339,21 +358,22 @@ function CustomDropdown({ value, onChange, options, placeholder, isOpen, onToggl
               type="button"
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: `${theme.spacing.md} ${theme.spacing.lg}`,
                 border: 'none',
-                borderTop: '1px dashed #e5e5e3',
+                borderTop: `1px dashed ${theme.colors.borderDashed}`,
                 background: 'transparent',
                 textAlign: 'left',
                 cursor: 'pointer',
-                fontSize: '15px',
-                color: '#4f46e5',
-                fontWeight: 500,
+                fontSize: theme.typography.h6,
+                color: theme.colors.accentPurple,
+                fontWeight: theme.typography.medium,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: theme.spacing.sm,
+                outline: 'none'
               }}
             >
-              <span style={{ fontSize: '18px' }}>+</span>
+              <span style={{ fontSize: theme.typography.h4 }}>+</span>
               <span>Add Category</span>
             </button>
           ) : (
@@ -404,9 +424,9 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
   
   return (
     <div style={{
-      borderTop: '1px dashed #e5e5e3',
-      padding: '16px',
-      background: '#f9f9f7'
+      borderTop: `1px dashed ${theme.colors.borderDashed}`,
+      padding: theme.spacing.lg,
+      background: theme.colors.bgCardDark
     }}>
       <input
         ref={inputRef}
@@ -420,35 +440,37 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
         placeholder="Category name"
         style={{
           width: '100%',
-          padding: '10px 12px',
-          border: '1px solid #e5e5e3',
+          padding: `${theme.spacing.md} ${theme.spacing.md}`,
+          border: `1px solid ${theme.colors.borderSubtle}`,
           borderRadius: '6px',
-          fontSize: '14px',
-          marginBottom: '12px',
+          fontSize: theme.typography.body,
+          marginBottom: theme.spacing.md,
           boxSizing: 'border-box',
-          background: '#fff'
+          background: theme.colors.bgCard,
+          color: theme.colors.textPrimary,
+          outline: 'none'
         }}
       />
       
       {type === 'expense' && (
         <div style={{ 
           display: 'flex', 
-          gap: '8px', 
-          marginBottom: '12px' 
+          gap: theme.spacing.sm, 
+          marginBottom: theme.spacing.md
         }}>
           <button
             onClick={() => setClassification('need')}
             type="button"
             style={{
               flex: 1,
-              padding: '8px',
-              background: classification === 'need' ? '#4f46e5' : '#fff',
-              color: classification === 'need' ? '#fff' : '#1a1a1a',
-              border: '1px solid #e5e5e3',
+              padding: theme.spacing.sm,
+              background: classification === 'need' ? theme.colors.accentPurple : theme.colors.bgCard,
+              color: theme.colors.textPrimary,
+              border: `1px solid ${theme.colors.borderSubtle}`,
               borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500
+              fontSize: theme.typography.bodySmall,
+              fontWeight: theme.typography.medium
             }}
           >
             Need
@@ -458,14 +480,14 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
             type="button"
             style={{
               flex: 1,
-              padding: '8px',
-              background: classification === 'want' ? '#4f46e5' : '#fff',
-              color: classification === 'want' ? '#fff' : '#1a1a1a',
-              border: '1px solid #e5e5e3',
+              padding: theme.spacing.sm,
+              background: classification === 'want' ? theme.colors.accentPurple : theme.colors.bgCard,
+              color: theme.colors.textPrimary,
+              border: `1px solid ${theme.colors.borderSubtle}`,
               borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500
+              fontSize: theme.typography.bodySmall,
+              fontWeight: theme.typography.medium
             }}
           >
             Want
@@ -473,21 +495,22 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
         </div>
       )}
       
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: theme.spacing.sm }}>
         <button
           onClick={handleAdd}
           type="button"
           disabled={!newName.trim()}
           style={{
             flex: 1,
-            padding: '10px 16px',
-            background: newName.trim() ? '#4f46e5' : '#e5e5e3',
-            color: '#fff',
+            padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+            background: newName.trim() ? theme.colors.accentPurple : theme.colors.bgCard,
+            color: theme.colors.textPrimary,
             border: 'none',
             borderRadius: '6px',
             cursor: newName.trim() ? 'pointer' : 'not-allowed',
-            fontSize: '14px',
-            fontWeight: 500
+            fontSize: theme.typography.body,
+            fontWeight: theme.typography.medium,
+            opacity: newName.trim() ? 1 : 0.5
           }}
         >
           Add
@@ -497,14 +520,14 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
           type="button"
           style={{
             flex: 1,
-            padding: '10px 16px',
-            background: '#fff',
-            color: '#1a1a1a',
-            border: '1px solid #e5e5e3',
+            padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+            background: theme.colors.bgCard,
+            color: theme.colors.textPrimary,
+            border: `1px solid ${theme.colors.borderSubtle}`,
             borderRadius: '6px',
             cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 500
+            fontSize: theme.typography.body,
+            fontWeight: theme.typography.medium
           }}
         >
           Cancel

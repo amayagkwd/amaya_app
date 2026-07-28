@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import theme from '../../theme'
 
 export default function TopBar({ onMenuClick }) {
   const navigate = useNavigate()
@@ -7,19 +8,19 @@ export default function TopBar({ onMenuClick }) {
   
   return (
     <div style={{
-      minHeight: '70px',
-      background: '#fff',
-      borderBottom: '1px solid #e5e5e3',
+      minHeight: theme.layout.topBarHeight,
+      background: theme.colors.bgSecondary,
+      borderBottom: 'none',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '16px 20px',
+      justifyContent: 'center',
+      padding: `${theme.spacing.xl} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
-      zIndex: 100,
-      maxWidth: '480px',
+      zIndex: theme.zIndex.topBar,
+      maxWidth: theme.layout.maxWidth,
       margin: '0 auto'
     }}>
       {showBackButton ? (
@@ -31,56 +32,62 @@ export default function TopBar({ onMenuClick }) {
             cursor: 'pointer',
             padding: '8px',
             fontSize: '24px',
-            color: '#1a1a1a'
+            color: '#ffffff',
+            position: 'absolute',
+            left: '20px'
           }}
         >
           ←
         </button>
-      ) : (
-        <div style={{ flex: 1 }}>
-          <h1 style={{ 
-            fontSize: '22px', 
-            fontWeight: 700, 
-            color: '#1a1a1a', 
-            margin: 0,
-            fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-            letterSpacing: '-0.01em',
-            lineHeight: 1.2
-          }}>
-            Tracker
-          </h1>
-          <p style={{ 
-            fontSize: '13px', 
-            color: '#64748b',
-            margin: '2px 0 0 0',
-            fontStyle: 'italic',
-            fontWeight: 400,
-            letterSpacing: '0.01em'
-          }}>
-            This application has no limitation.
-          </p>
-        </div>
+      ) : null}
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{ 
+          fontSize: theme.typography.h4, 
+          fontWeight: theme.typography.bold, 
+          color: theme.colors.textPrimary, 
+          margin: 0,
+          fontFamily: theme.typography.fontFamilyHeading,
+          letterSpacing: '0.1em',
+          lineHeight: 1.4,
+          textTransform: 'uppercase'
+        }}>
+          Tracker
+        </h1>
+        <p style={{ 
+          fontSize: theme.typography.micro, 
+          color: theme.colors.textSecondary,
+          margin: '4px 0 0 0',
+          fontWeight: theme.typography.medium,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase'
+        }}>
+          This application has no limitation
+        </p>
+      </div>
+      {!showBackButton && (
+        <button
+          onClick={onMenuClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            opacity: 0.6,
+            transition: 'opacity 0.2s',
+            position: 'absolute',
+            right: '20px'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+        >
+          <div style={{ width: '22px', height: '2.5px', background: '#ffffff', borderRadius: '2px' }} />
+          <div style={{ width: '22px', height: '2.5px', background: '#ffffff', borderRadius: '2px' }} />
+          <div style={{ width: '22px', height: '2.5px', background: '#ffffff', borderRadius: '2px' }} />
+        </button>
       )}
-      <button
-        onClick={onMenuClick}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '3px',
-          opacity: 0.5,
-          transition: 'opacity 0.2s'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
-      >
-        <div style={{ width: '20px', height: '2px', background: '#6b7280', borderRadius: '1px' }} />
-        <div style={{ width: '20px', height: '2px', background: '#6b7280', borderRadius: '1px' }} />
-        <div style={{ width: '20px', height: '2px', background: '#6b7280', borderRadius: '1px' }} />
-      </button>
     </div>
   )
 }

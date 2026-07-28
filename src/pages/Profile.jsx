@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { exportData } from '../store'
+import theme from '../theme'
 
 export default function Profile({ data, updateStore }) {
   const [saved, setSaved] = useState({})
@@ -27,8 +28,8 @@ export default function Profile({ data, updateStore }) {
   }
   
   return (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ fontSize: '24px', margin: '0 0 24px 0' }}>Profile</h2>
+    <div style={{ padding: theme.spacing.xl }}>
+      <h2 style={{ fontSize: theme.typography.h2, margin: `0 0 ${theme.spacing.xxl} 0`, color: theme.colors.textPrimary }}>Profile</h2>
       
       <ProfileField
         label="Name"
@@ -72,14 +73,14 @@ export default function Profile({ data, updateStore }) {
         onClick={exportData}
         style={{
           width: '100%',
-          padding: '16px',
-          marginTop: '32px',
-          background: '#4f46e5',
-          color: '#fff',
+          padding: theme.spacing.lg,
+          marginTop: theme.spacing.xxxl,
+          background: theme.colors.accentPurple,
+          color: theme.colors.textPrimary,
           border: 'none',
-          borderRadius: '8px',
-          fontSize: '16px',
-          fontWeight: 500,
+          borderRadius: theme.borderRadius.sm,
+          fontSize: theme.typography.h5,
+          fontWeight: theme.typography.medium,
           cursor: 'pointer'
         }}
       >
@@ -92,15 +93,18 @@ export default function Profile({ data, updateStore }) {
 function ProfileField({ label, value, isEditing, editValue, onEditValueChange, onEdit, onSave, onCancel, saved, type = 'text', displayValue }) {
   return (
     <div style={{
-      background: '#fff',
-      padding: '20px',
-      borderRadius: '12px',
-      marginBottom: '16px',
-      border: saved ? '2px solid #10b981' : '1px solid #e5e5e3',
-      transition: 'border-color 0.3s'
+      background: theme.colors.bgCard,
+      backdropFilter: theme.backdropFilter,
+      WebkitBackdropFilter: theme.backdropFilter,
+      padding: theme.spacing.xl,
+      borderRadius: theme.borderRadius.lg,
+      marginBottom: theme.spacing.lg,
+      border: saved ? `2px solid ${theme.colors.success}` : `1px solid ${theme.colors.borderSubtle}`,
+      transition: theme.transitions.normal,
+      boxShadow: theme.shadows.card
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <label style={{ fontSize: '14px', color: '#6b7280', fontWeight: 500 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.sm }}>
+        <label style={{ fontSize: theme.typography.body, color: theme.colors.textSecondary, fontWeight: theme.typography.medium }}>
           {label}
         </label>
         {!isEditing && (
@@ -109,10 +113,10 @@ function ProfileField({ label, value, isEditing, editValue, onEditValueChange, o
             style={{
               background: 'none',
               border: 'none',
-              color: '#4f46e5',
+              color: theme.colors.accentPurple,
               cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.medium,
               padding: '4px 8px'
             }}
           >
@@ -130,26 +134,29 @@ function ProfileField({ label, value, isEditing, editValue, onEditValueChange, o
             autoFocus
             style={{
               width: '100%',
-              padding: '10px',
-              border: '2px solid #4f46e5',
-              borderRadius: '8px',
-              fontSize: '16px',
-              marginBottom: '12px',
-              boxSizing: 'border-box'
+              padding: theme.spacing.md,
+              border: `2px solid ${theme.colors.accentPurple}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              marginBottom: theme.spacing.md,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
             <button
               onClick={onSave}
               style={{
                 flex: 1,
-                padding: '10px',
-                background: '#4f46e5',
-                color: '#fff',
+                padding: theme.spacing.md,
+                background: theme.colors.accentPurple,
+                color: theme.colors.textPrimary,
                 border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
                 cursor: 'pointer'
               }}
             >
@@ -159,13 +166,13 @@ function ProfileField({ label, value, isEditing, editValue, onEditValueChange, o
               onClick={onCancel}
               style={{
                 flex: 1,
-                padding: '10px',
-                background: '#f3f4f6',
-                color: '#6b7280',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
+                padding: theme.spacing.md,
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textSecondary,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
                 cursor: 'pointer'
               }}
             >
@@ -175,11 +182,11 @@ function ProfileField({ label, value, isEditing, editValue, onEditValueChange, o
         </div>
       ) : (
         <>
-          <div style={{ fontSize: '18px', fontWeight: 500, color: '#1a1a1a' }}>
+          <div style={{ fontSize: theme.typography.h4, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
             {displayValue || value}
           </div>
           {saved && (
-            <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
+            <div style={{ fontSize: theme.typography.caption, color: theme.colors.success, marginTop: '4px' }}>
               ✓ Saved
             </div>
           )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import theme from '../theme'
 
 // Weather code mapping to emoji and description
 const getWeatherInfo = (code) => {
@@ -126,17 +127,21 @@ export default function Weather({ data, updateStore }) {
   const weatherInfo = currentWeatherCode !== undefined ? getWeatherInfo(currentWeatherCode) : null
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ fontSize: '24px', margin: '0 0 24px 0' }}>Weather</h2>
+    <div style={{ padding: theme.spacing.xl }}>
+      <h2 style={{ fontSize: theme.typography.h2, margin: `0 0 ${theme.spacing.xxl} 0`, color: theme.colors.textPrimary }}>Weather</h2>
 
       {loading && (
         <div style={{
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '16px',
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.xl,
+          marginBottom: theme.spacing.lg,
           textAlign: 'center',
-          color: '#6b7280'
+          color: theme.colors.textSecondary,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card
         }}>
           Loading weather data...
         </div>
@@ -144,12 +149,16 @@ export default function Weather({ data, updateStore }) {
 
       {error && (
         <div style={{
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '16px',
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.xl,
+          marginBottom: theme.spacing.lg,
           textAlign: 'center',
-          color: '#ef4444'
+          color: theme.colors.error,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card
         }}>
           {error}
         </div>
@@ -157,25 +166,29 @@ export default function Weather({ data, updateStore }) {
 
       {!loading && !error && weatherData && (
         <div style={{
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '12px',
-          marginBottom: '16px',
-          textAlign: 'center'
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.md,
+          marginBottom: theme.spacing.lg,
+          textAlign: 'center',
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card
         }}>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600, color: '#6b7280' }}>
+          <h3 style={{ margin: `0 0 ${theme.spacing.sm} 0`, fontSize: theme.typography.body, fontWeight: theme.typography.semiBold, color: theme.colors.textSecondary }}>
             Current Weather
           </h3>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.md }}>
             {showTemperature && currentTemp !== undefined && (
-              <div style={{ fontSize: '24px', fontWeight: 600, color: '#1a1a1a' }}>
+              <div style={{ fontSize: theme.typography.h2, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
                 {Math.round(currentTemp)}°C
               </div>
             )}
             {showWeather && weatherInfo && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                 <span style={{ fontSize: '28px' }}>{weatherInfo.emoji}</span>
-                <span style={{ fontSize: '12px', color: '#6b7280' }}>{weatherInfo.description}</span>
+                <span style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary }}>{weatherInfo.description}</span>
               </div>
             )}
           </div>
@@ -183,22 +196,26 @@ export default function Weather({ data, updateStore }) {
       )}
 
       <div style={{
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '12px',
-        marginBottom: '16px'
+        background: theme.colors.bgCard,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: theme.borderRadius.lg,
+        padding: theme.spacing.md,
+        marginBottom: theme.spacing.lg,
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        boxShadow: theme.shadows.card
       }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: theme.spacing.sm }}>
           <div style={{ 
             flex: 1,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '8px',
-            background: '#f9fafb',
-            borderRadius: '8px'
+            padding: theme.spacing.sm,
+            background: theme.colors.bgCardDark,
+            borderRadius: theme.borderRadius.sm
           }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>
+            <div style={{ fontSize: theme.typography.bodySmall, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
               Show Temperature
             </div>
             <button
@@ -208,21 +225,21 @@ export default function Weather({ data, updateStore }) {
                 height: '26px',
                 borderRadius: '13px',
                 border: 'none',
-                background: showTemperature ? '#4f46e5' : '#e5e5e3',
+                background: showTemperature ? theme.colors.accentPurple : theme.colors.borderMedium,
                 cursor: 'pointer',
                 position: 'relative',
-                transition: 'background 0.2s'
+                transition: theme.transitions.fast
               }}
             >
               <div style={{
                 width: '22px',
                 height: '22px',
                 borderRadius: '50%',
-                background: '#fff',
+                background: theme.colors.textPrimary,
                 position: 'absolute',
                 top: '2px',
                 left: showTemperature ? '20px' : '2px',
-                transition: 'left 0.2s',
+                transition: theme.transitions.fast,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }} />
             </button>
@@ -233,11 +250,11 @@ export default function Weather({ data, updateStore }) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '8px',
-            background: '#f9fafb',
-            borderRadius: '8px'
+            padding: theme.spacing.sm,
+            background: theme.colors.bgCardDark,
+            borderRadius: theme.borderRadius.sm
           }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1a1a1a' }}>
+            <div style={{ fontSize: theme.typography.bodySmall, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
               Show Weather
             </div>
             <button
@@ -247,21 +264,21 @@ export default function Weather({ data, updateStore }) {
                 height: '26px',
                 borderRadius: '13px',
                 border: 'none',
-                background: showWeather ? '#4f46e5' : '#e5e5e3',
+                background: showWeather ? theme.colors.accentPurple : theme.colors.borderMedium,
                 cursor: 'pointer',
                 position: 'relative',
-                transition: 'background 0.2s'
+                transition: theme.transitions.fast
               }}
             >
               <div style={{
                 width: '22px',
                 height: '22px',
                 borderRadius: '50%',
-                background: '#fff',
+                background: theme.colors.textPrimary,
                 position: 'absolute',
                 top: '2px',
                 left: showWeather ? '20px' : '2px',
-                transition: 'left 0.2s',
+                transition: theme.transitions.fast,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }} />
             </button>
@@ -271,22 +288,26 @@ export default function Weather({ data, updateStore }) {
 
       <div style={{
         height: '1px',
-        background: '#e5e5e3',
-        marginBottom: '16px'
+        background: theme.colors.borderSubtle,
+        marginBottom: theme.spacing.lg
       }} />
 
       <div style={{
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '12px'
+        background: theme.colors.bgCard,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: theme.borderRadius.lg,
+        padding: theme.spacing.md,
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        boxShadow: theme.shadows.card
       }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '12px'
+          marginBottom: theme.spacing.md
         }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a' }}>
+          <div style={{ fontSize: theme.typography.body, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
             Rain Check
           </div>
           <button
@@ -296,32 +317,32 @@ export default function Weather({ data, updateStore }) {
               height: '32px',
               borderRadius: '16px',
               border: 'none',
-              background: rainCheck ? '#4f46e5' : '#e5e5e3',
+              background: rainCheck ? theme.colors.accentPurple : theme.colors.borderMedium,
               cursor: 'pointer',
               position: 'relative',
-              transition: 'background 0.2s'
+              transition: theme.transitions.fast
             }}
           >
             <div style={{
               width: '28px',
               height: '28px',
               borderRadius: '50%',
-              background: '#fff',
+              background: theme.colors.textPrimary,
               position: 'absolute',
               top: '2px',
               left: rainCheck ? '22px' : '2px',
-              transition: 'left 0.2s',
+              transition: theme.transitions.fast,
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }} />
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: theme.spacing.sm, alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
             <label style={{ 
               display: 'block', 
-              fontSize: '11px', 
-              color: '#6b7280', 
+              fontSize: theme.typography.tiny, 
+              color: theme.colors.textSecondary, 
               marginBottom: '4px' 
             }}>
               Start Time
@@ -334,28 +355,28 @@ export default function Weather({ data, updateStore }) {
               style={{
                 width: '100%',
                 padding: '6px',
-                border: '1px solid #e5e5e3',
+                border: `1px solid ${theme.colors.borderSubtle}`,
                 borderRadius: '6px',
-                fontSize: '12px',
-                background: rainCheck ? '#fff' : '#f9fafb',
-                color: rainCheck ? '#1a1a1a' : '#9ca3af',
+                fontSize: theme.typography.caption,
+                background: rainCheck ? theme.colors.bgCardDark : theme.colors.bgSecondary,
+                color: rainCheck ? theme.colors.textPrimary : theme.colors.textMuted,
                 cursor: rainCheck ? 'pointer' : 'not-allowed',
                 boxSizing: 'border-box'
               }}
             />
           </div>
           <div style={{ 
-            fontSize: '14px', 
-            color: '#6b7280', 
-            marginTop: '16px' 
+            fontSize: theme.typography.body, 
+            color: theme.colors.textSecondary, 
+            marginTop: theme.spacing.lg
           }}>
             →
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ 
               display: 'block', 
-              fontSize: '11px', 
-              color: '#6b7280', 
+              fontSize: theme.typography.tiny, 
+              color: theme.colors.textSecondary, 
               marginBottom: '4px' 
             }}>
               End Time
@@ -368,11 +389,11 @@ export default function Weather({ data, updateStore }) {
               style={{
                 width: '100%',
                 padding: '6px',
-                border: '1px solid #e5e5e3',
+                border: `1px solid ${theme.colors.borderSubtle}`,
                 borderRadius: '6px',
-                fontSize: '12px',
-                background: rainCheck ? '#fff' : '#f9fafb',
-                color: rainCheck ? '#1a1a1a' : '#9ca3af',
+                fontSize: theme.typography.caption,
+                background: rainCheck ? theme.colors.bgCardDark : theme.colors.bgSecondary,
+                color: rainCheck ? theme.colors.textPrimary : theme.colors.textMuted,
                 cursor: rainCheck ? 'pointer' : 'not-allowed',
                 boxSizing: 'border-box'
               }}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import theme from '../theme'
 
 export default function Maps({ data, updateStore }) {
   const [editingIndex, setEditingIndex] = useState(null)
@@ -103,27 +104,27 @@ export default function Maps({ data, updateStore }) {
   const showForm = isCreating || editingIndex !== null
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', margin: 0 }}>Maps</h2>
+    <div style={{ padding: theme.spacing.xl }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xxl }}>
+        <h2 style={{ fontSize: theme.typography.h2, margin: 0, color: theme.colors.textPrimary }}>Maps</h2>
         {!showForm && (
           <button
             onClick={handleStartCreate}
             style={{
-              padding: '10px 16px',
-              background: '#4f46e5',
-              color: '#fff',
+              padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+              background: theme.colors.accentPurple,
+              color: theme.colors.textPrimary,
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.medium,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
             }}
           >
-            <span style={{ fontSize: '16px' }}>+</span>
+            <span style={{ fontSize: theme.typography.h5 }}>+</span>
             <span>Add new map</span>
           </button>
         )}
@@ -131,17 +132,21 @@ export default function Maps({ data, updateStore }) {
 
       {showForm ? (
         <div style={{
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '20px'
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.xxl,
+          marginBottom: theme.spacing.xl,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card
         }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 600 }}>
+          <h3 style={{ margin: `0 0 ${theme.spacing.xl} 0`, fontSize: theme.typography.h4, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
             {editingIndex !== null ? 'Edit Map' : 'Create New Map'}
           </h3>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+          <div style={{ marginBottom: theme.spacing.lg }}>
+            <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
               Map name *
             </label>
             <input
@@ -151,34 +156,36 @@ export default function Maps({ data, updateStore }) {
               placeholder="e.g. Morning Commute"
               style={{
                 width: '100%',
-                padding: '12px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '15px',
+                padding: theme.spacing.md,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.h6,
                 boxSizing: 'border-box',
-                outline: 'none'
+                outline: 'none',
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             />
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+          <div style={{ marginBottom: theme.spacing.lg }}>
+            <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
               Location type
             </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, locationType: 'one' })}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: formData.locationType === 'one' ? '#4f46e5' : '#f9f9f7',
-                  color: formData.locationType === 'one' ? '#fff' : '#1a1a1a',
-                  border: 'none',
-                  borderRadius: '8px',
+                  padding: theme.spacing.md,
+                  background: formData.locationType === 'one' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: formData.locationType === 'one' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
                 }}
               >
                 One Location
@@ -188,26 +195,26 @@ export default function Maps({ data, updateStore }) {
                 onClick={() => setFormData({ ...formData, locationType: 'two' })}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: formData.locationType === 'two' ? '#4f46e5' : '#f9f9f7',
-                  color: formData.locationType === 'two' ? '#fff' : '#1a1a1a',
-                  border: 'none',
-                  borderRadius: '8px',
+                  padding: theme.spacing.md,
+                  background: formData.locationType === 'two' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: formData.locationType === 'two' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
                 }}
               >
                 Two Locations
               </button>
             </div>
-            <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
+            <p style={{ margin: `${theme.spacing.sm} 0 0 0`, fontSize: theme.typography.bodySmall, color: theme.colors.textSecondary }}>
               {formData.locationType === 'one' ? 'Navigate from your current location' : 'Navigate between two specific locations'}
             </p>
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+          <div style={{ marginBottom: theme.spacing.lg }}>
+            <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
               {formData.locationType === 'one' ? 'Destination *' : 'Location 1 *'}
             </label>
             <input
@@ -217,16 +224,18 @@ export default function Maps({ data, updateStore }) {
               placeholder={formData.locationType === 'one' ? 'e.g. Charminar Hyderabad' : 'e.g. Inorbit Mall Hyderabad'}
               style={{
                 width: '100%',
-                padding: '12px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '15px',
+                padding: theme.spacing.md,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.h6,
                 boxSizing: 'border-box',
                 outline: 'none',
-                marginBottom: '4px'
+                marginBottom: '4px',
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             />
-            <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+            <p style={{ margin: `0 0 ${theme.spacing.sm} 0`, fontSize: theme.typography.caption, color: theme.colors.textMuted }}>
               Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
             </p>
             <input
@@ -236,19 +245,21 @@ export default function Maps({ data, updateStore }) {
               placeholder={formData.locationType === 'one' ? 'e.g. Office' : 'e.g. Home'}
               style={{
                 width: '100%',
-                padding: '12px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '15px',
+                padding: theme.spacing.md,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.h6,
                 boxSizing: 'border-box',
-                outline: 'none'
+                outline: 'none',
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             />
           </div>
 
           {formData.locationType === 'two' && (
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
                 Location 2 *
               </label>
               <input
@@ -258,16 +269,18 @@ export default function Maps({ data, updateStore }) {
                 placeholder="e.g. Charminar Hyderabad"
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  border: '1px solid #e5e5e3',
-                  borderRadius: '8px',
-                  fontSize: '15px',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h6,
                   boxSizing: 'border-box',
                   outline: 'none',
-                  marginBottom: '4px'
+                  marginBottom: '4px',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary
                 }}
               />
-              <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+              <p style={{ margin: `0 0 ${theme.spacing.sm} 0`, fontSize: theme.typography.caption, color: theme.colors.textMuted }}>
                 Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
               </p>
               <input
@@ -277,35 +290,37 @@ export default function Maps({ data, updateStore }) {
                 placeholder="e.g. Office"
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  border: '1px solid #e5e5e3',
-                  borderRadius: '8px',
-                  fontSize: '15px',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h6,
                   boxSizing: 'border-box',
-                  outline: 'none'
+                  outline: 'none',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary
                 }}
               />
             </div>
           )}
 
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+          <div style={{ marginBottom: theme.spacing.xxl }}>
+            <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
               Transport mode
             </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, transportMode: 'car' })}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: formData.transportMode === 'car' ? '#4f46e5' : '#f9f9f7',
-                  color: formData.transportMode === 'car' ? '#fff' : '#1a1a1a',
-                  border: 'none',
-                  borderRadius: '8px',
+                  padding: theme.spacing.md,
+                  background: formData.transportMode === 'car' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: formData.transportMode === 'car' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
                 }}
               >
                 🚗 Car
@@ -315,14 +330,14 @@ export default function Maps({ data, updateStore }) {
                 onClick={() => setFormData({ ...formData, transportMode: 'bike' })}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: formData.transportMode === 'bike' ? '#4f46e5' : '#f9f9f7',
-                  color: formData.transportMode === 'bike' ? '#fff' : '#1a1a1a',
-                  border: 'none',
-                  borderRadius: '8px',
+                  padding: theme.spacing.md,
+                  background: formData.transportMode === 'bike' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: formData.transportMode === 'bike' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
                 }}
               >
                 🏍️ Bike
@@ -330,18 +345,18 @@ export default function Maps({ data, updateStore }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
             <button
               onClick={handleCancel}
               style={{
                 flex: 1,
-                padding: '12px',
-                background: '#f3f4f6',
-                color: '#6b7280',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
+                padding: theme.spacing.md,
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textSecondary,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
                 cursor: 'pointer'
               }}
             >
@@ -352,14 +367,15 @@ export default function Maps({ data, updateStore }) {
               disabled={!canSave}
               style={{
                 flex: 1,
-                padding: '12px',
-                background: canSave ? '#4f46e5' : '#e5e5e3',
-                color: '#fff',
+                padding: theme.spacing.md,
+                background: canSave ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                color: theme.colors.textPrimary,
                 border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: canSave ? 'pointer' : 'not-allowed'
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
+                cursor: canSave ? 'pointer' : 'not-allowed',
+                opacity: canSave ? 1 : 0.5
               }}
             >
               {editingIndex !== null ? 'Save Changes' : 'Create Map'}
@@ -370,23 +386,27 @@ export default function Maps({ data, updateStore }) {
         <>
           {data.mapCards.length === 0 ? (
             <div style={{
-              background: '#fff',
-              borderRadius: '12px',
+              background: theme.colors.bgCard,
+              backdropFilter: theme.backdropFilter,
+              WebkitBackdropFilter: theme.backdropFilter,
+              borderRadius: theme.borderRadius.lg,
               padding: '40px 20px',
               textAlign: 'center',
-              color: '#6b7280'
+              color: theme.colors.textSecondary,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              boxShadow: theme.shadows.card
             }}>
-              <p style={{ margin: '0 0 16px 0', fontSize: '15px' }}>No maps yet</p>
+              <p style={{ margin: `0 0 ${theme.spacing.lg} 0`, fontSize: theme.typography.h6 }}>No maps yet</p>
               <button
                 onClick={handleStartCreate}
                 style={{
-                  padding: '10px 20px',
-                  background: '#4f46e5',
-                  color: '#fff',
+                  padding: `${theme.spacing.md} ${theme.spacing.xl}`,
+                  background: theme.colors.accentPurple,
+                  color: theme.colors.textPrimary,
                   border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 500,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium,
                   cursor: 'pointer'
                 }}
               >
@@ -394,55 +414,63 @@ export default function Maps({ data, updateStore }) {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
               {data.mapCards.map((mapCard, index) => (
                 <div
                   key={index}
                   style={{
-                    background: '#fff',
-                    borderRadius: '12px',
-                    padding: '20px',
+                    background: theme.colors.bgCard,
+                    backdropFilter: theme.backdropFilter,
+                    WebkitBackdropFilter: theme.backdropFilter,
+                    borderRadius: theme.borderRadius.lg,
+                    padding: theme.spacing.xl,
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'flex-start'
+                    alignItems: 'flex-start',
+                    border: `1px solid ${theme.colors.borderSubtle}`,
+                    boxShadow: theme.shadows.card
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 600 }}>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: theme.typography.h4, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
                       {mapCard.name}
                     </h3>
                     {mapCard.locationType === 'one' ? (
-                      <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
+                      <p style={{ margin: 0, fontSize: theme.typography.bodySmall, color: theme.colors.textSecondary }}>
                         Current location → {mapCard.location1Label || 'Destination'}
                       </p>
                     ) : (
                       mapCard.location1Label && mapCard.location2Label && (
-                        <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
+                        <p style={{ margin: 0, fontSize: theme.typography.bodySmall, color: theme.colors.textSecondary }}>
                           {mapCard.location1Label} → {mapCard.location2Label}
                         </p>
                       )
                     )}
-                    <div style={{ marginTop: '8px', fontSize: '13px', color: '#6b7280' }}>
+                    <div style={{ marginTop: theme.spacing.sm, fontSize: theme.typography.bodySmall, color: theme.colors.textSecondary }}>
                       {mapCard.transportMode === 'car' ? '🚗 Car' : '🏍️ Bike'}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: theme.spacing.sm }}>
                     <button
                       onClick={() => handleStartEdit(index)}
                       className="btn-edit"
+                      style={{ outline: 'none' }}
                     >
                       <img 
                         src="/edit-pencil-01-svgrepo-com.svg" 
                         alt="Edit"
+                        style={{ filter: 'invert(60%) sepia(10%) saturate(500%) hue-rotate(194deg) brightness(95%) contrast(85%)' }}
                       />
                     </button>
                     <button
                       onClick={() => handleDelete(index)}
                       className="btn-delete"
+                      style={{ outline: 'none' }}
                     >
                       <img 
                         src="/trash-blank-alt-svgrepo-com.svg" 
                         alt="Delete"
+                        style={{ filter: 'invert(50%) sepia(20%) saturate(1000%) hue-rotate(320deg) brightness(100%) contrast(90%)' }}
                       />
                     </button>
                   </div>

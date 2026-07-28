@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import theme from '../../theme'
 
 export default function MapCardSetup({ isOpen, onClose, onSave }) {
   const [cardName, setCardName] = useState('')
@@ -39,7 +40,7 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(0,0,0,0.7)',
           zIndex: 500
         }}
       />
@@ -48,21 +49,25 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        background: '#fff',
-        borderRadius: '16px',
-        padding: '24px',
+        background: theme.colors.bgModal,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: theme.borderRadius.xl,
+        padding: theme.spacing.xxl,
         zIndex: 501,
         maxWidth: '420px',
         width: '90%',
         maxHeight: '80vh',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        boxShadow: theme.shadows.strong
       }}>
-        <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 600 }}>
+        <h3 style={{ margin: `0 0 ${theme.spacing.xl} 0`, fontSize: theme.typography.h3, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
           Create Maps Card
         </h3>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
             Card name *
           </label>
           <input
@@ -72,18 +77,20 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             placeholder="e.g. Morning Commute"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '15px',
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h6,
               boxSizing: 'border-box',
-              outline: 'none'
+              outline: 'none',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary
             }}
           />
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
             Location 1 *
           </label>
           <input
@@ -93,16 +100,18 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             placeholder="e.g. Inorbit Mall Hyderabad"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '15px',
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h6,
               boxSizing: 'border-box',
               outline: 'none',
-              marginBottom: '4px'
+              marginBottom: '4px',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary
             }}
           />
-          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+          <p style={{ margin: `0 0 ${theme.spacing.sm} 0`, fontSize: theme.typography.caption, color: theme.colors.textMuted }}>
             Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
           </p>
           <input
@@ -112,18 +121,20 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             placeholder="e.g. Home"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '15px',
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h6,
               boxSizing: 'border-box',
-              outline: 'none'
+              outline: 'none',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary
             }}
           />
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
             Location 2 *
           </label>
           <input
@@ -133,16 +144,18 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             placeholder="e.g. Charminar Hyderabad"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '15px',
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h6,
               boxSizing: 'border-box',
               outline: 'none',
-              marginBottom: '4px'
+              marginBottom: '4px',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary
             }}
           />
-          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#9ca3af' }}>
+          <p style={{ margin: `0 0 ${theme.spacing.sm} 0`, fontSize: theme.typography.caption, color: theme.colors.textMuted }}>
             Be specific — add area and city for best results (e.g. BSR Mens PG Madhapur Hyderabad)
           </p>
           <input
@@ -152,34 +165,36 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             placeholder="e.g. Office"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '15px',
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h6,
               boxSizing: 'border-box',
-              outline: 'none'
+              outline: 'none',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary
             }}
           />
         </div>
         
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#1a1a1a' }}>
+        <div style={{ marginBottom: theme.spacing.xxl }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textPrimary }}>
             Transport mode
           </label>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
             <button
               type="button"
               onClick={() => setTransportMode('car')}
               style={{
                 flex: 1,
-                padding: '12px',
-                background: transportMode === 'car' ? '#4f46e5' : '#f9f9f7',
-                color: transportMode === 'car' ? '#fff' : '#1a1a1a',
-                border: 'none',
-                borderRadius: '8px',
+                padding: theme.spacing.md,
+                background: transportMode === 'car' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                color: theme.colors.textPrimary,
+                border: transportMode === 'car' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium
               }}
             >
               🚗 Car
@@ -189,14 +204,14 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
               onClick={() => setTransportMode('bike')}
               style={{
                 flex: 1,
-                padding: '12px',
-                background: transportMode === 'bike' ? '#4f46e5' : '#f9f9f7',
-                color: transportMode === 'bike' ? '#fff' : '#1a1a1a',
-                border: 'none',
-                borderRadius: '8px',
+                padding: theme.spacing.md,
+                background: transportMode === 'bike' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                color: theme.colors.textPrimary,
+                border: transportMode === 'bike' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
                 cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium
               }}
             >
               🏍️ Bike
@@ -204,18 +219,18 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: theme.spacing.sm }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '12px',
-              background: '#f3f4f6',
-              color: '#6b7280',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
+              padding: theme.spacing.md,
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textSecondary,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.medium,
               cursor: 'pointer'
             }}
           >
@@ -226,14 +241,15 @@ export default function MapCardSetup({ isOpen, onClose, onSave }) {
             disabled={!canSave}
             style={{
               flex: 1,
-              padding: '12px',
-              background: canSave ? '#4f46e5' : '#e5e5e3',
-              color: '#fff',
+              padding: theme.spacing.md,
+              background: canSave ? theme.colors.accentPurple : theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: canSave ? 'pointer' : 'not-allowed'
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.medium,
+              cursor: canSave ? 'pointer' : 'not-allowed',
+              opacity: canSave ? 1 : 0.5
             }}
           >
             Done

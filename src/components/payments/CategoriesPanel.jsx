@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import uuidv4 from '../../utils/uuid'
+import theme from '../../theme'
 
 export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
   const [activeAddSection, setActiveAddSection] = useState(null)
@@ -112,7 +113,9 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0,0,0,0.5)',
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
               zIndex: 100
             }}
           />
@@ -121,32 +124,37 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            background: '#fff',
-            borderRadius: '12px',
-            padding: '24px',
+            background: theme.colors.bgModal,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            borderRadius: theme.borderRadius.xxxl,
+            padding: theme.spacing.xxl,
             width: '90%',
             maxWidth: '400px',
-            zIndex: 101
+            zIndex: 101,
+            border: `1px solid ${theme.colors.borderSubtle}`,
+            boxShadow: theme.shadows.strong
           }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: 600 }}>
+            <h3 style={{ margin: `0 0 ${theme.spacing.md} 0`, fontSize: theme.typography.h4, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
               Delete Category?
             </h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#6b7280', lineHeight: 1.5 }}>
+            <p style={{ margin: `0 0 ${theme.spacing.xl} 0`, fontSize: theme.typography.body, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
               Deleting this category will delete all the transactions labelled as this category.
             </p>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
               <button
                 onClick={() => setDeleteWarning(null)}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: '#f3f4f6',
-                  color: '#6b7280',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
+                  padding: theme.spacing.md,
+                  background: theme.colors.bgCard,
+                  color: theme.colors.textSecondary,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.lg,
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium,
+                  cursor: 'pointer',
+                  outline: 'none'
                 }}
               >
                 Cancel
@@ -155,19 +163,20 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
                 onClick={handleConfirmDelete}
                 style={{
                   flex: 1,
-                  padding: '12px',
-                  background: '#ef4444',
-                  color: '#fff',
+                  padding: theme.spacing.md,
+                  background: theme.colors.accentPink,
+                  color: theme.colors.textPrimary,
                   border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
+                  borderRadius: theme.borderRadius.lg,
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium,
+                  cursor: 'pointer',
+                  outline: 'none'
                 }}
               >
                 Delete
               </button>
-            </div>
+              </div>
           </div>
         </>
       )}
@@ -218,8 +227,8 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
   }
   
   return (
-    <div style={{ marginBottom: '32px' }}>
-      <h3 style={{ fontSize: '14px', marginBottom: '12px', color: '#6b7280', fontWeight: 500 }}>{title}</h3>
+    <div style={{ marginBottom: theme.spacing.xxxl }}>
+      <h3 style={{ fontSize: theme.typography.body, marginBottom: theme.spacing.md, color: theme.colors.textSecondary, fontWeight: theme.typography.medium }}>{title}</h3>
       
       {categories.map(category => (
         <div
@@ -228,13 +237,17 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px',
-            background: '#f9f9f7',
-            borderRadius: '8px',
-            marginBottom: '8px'
+            padding: theme.spacing.md,
+            background: theme.colors.bgCard,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            borderRadius: theme.borderRadius.lg,
+            marginBottom: theme.spacing.sm,
+            border: `1px solid ${theme.colors.borderSubtle}`,
+            boxShadow: theme.shadows.card
           }}
         >
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
             {editing === category.id ? (
               <input
                 value={editName}
@@ -245,20 +258,23 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
                 style={{
                   flex: 1,
                   padding: '4px 8px',
-                  border: '1px solid #e5e5e3',
-                  borderRadius: '4px',
-                  fontSize: '14px'
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.body,
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
                 }}
               />
             ) : (
               <>
-                <span style={{ fontSize: '14px' }}>{category.name}</span>
+                <span style={{ fontSize: theme.typography.body, color: theme.colors.textPrimary }}>{category.name}</span>
                 {category.isDefault && (
                   <span style={{
-                    fontSize: '10px',
+                    fontSize: theme.typography.micro,
                     padding: '2px 6px',
-                    background: '#e5e5e3',
-                    color: '#6b7280',
+                    background: theme.colors.bgCardDark,
+                    color: theme.colors.textSecondary,
                     borderRadius: '4px'
                   }}>
                     default
@@ -268,19 +284,21 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
             )}
           </div>
           
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: theme.spacing.sm, alignItems: 'center' }}>
             {type === 'expense' && (
               <button
                 onClick={() => toggleClassification(category.id)}
                 style={{
                   padding: '4px 8px',
-                  background: category.classification === 'need' ? '#4f46e5' : '#f43f5e',
-                  color: '#fff',
+                  background: category.classification === 'need' ? theme.colors.accentPurple : theme.colors.accentPink,
+                  color: theme.colors.textPrimary,
                   border: 'none',
                   borderRadius: '12px',
-                  fontSize: '11px',
+                  fontSize: theme.typography.tiny,
                   cursor: 'pointer',
-                  textTransform: 'capitalize'
+                  textTransform: 'capitalize',
+                  fontWeight: theme.typography.medium,
+                  outline: 'none'
                 }}
               >
                 {category.classification}
@@ -289,20 +307,24 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
             <button
               onClick={() => startEdit(category)}
               className="btn-edit btn-edit-small"
+              style={{ outline: 'none' }}
             >
               <img 
                 src="/edit-pencil-01-svgrepo-com.svg" 
                 alt="Edit"
+                style={{ filter: 'invert(60%) sepia(10%) saturate(500%) hue-rotate(194deg) brightness(95%) contrast(85%)' }}
               />
             </button>
             {!category.isDefault && (
               <button
                 onClick={() => onDeleteClick(category)}
                 className="btn-delete btn-delete-small"
+                style={{ outline: 'none' }}
               >
                 <img 
                   src="/trash-blank-alt-svgrepo-com.svg" 
                   alt="Delete"
+                  style={{ filter: 'invert(50%) sepia(20%) saturate(1000%) hue-rotate(320deg) brightness(100%) contrast(90%)' }}
                 />
               </button>
             )}
@@ -311,7 +333,7 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
       ))}
       
       {isAddingActive ? (
-        <div style={{ marginTop: '8px' }}>
+        <div style={{ marginTop: theme.spacing.sm }}>
           <input
             value={newName}
             onChange={e => setNewName(e.target.value)}
@@ -320,26 +342,30 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
             autoFocus
             style={{
               width: '100%',
-              padding: '8px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '14px',
-              marginBottom: '8px'
+              padding: theme.spacing.sm,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.lg,
+              fontSize: theme.typography.body,
+              marginBottom: theme.spacing.sm,
+              background: theme.colors.bgCard,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
           {type === 'expense' && (
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
               <button
                 onClick={() => setNewClassification('need')}
                 style={{
                   flex: 1,
-                  padding: '8px',
-                  background: newClassification === 'need' ? '#4f46e5' : '#f9f9f7',
-                  color: newClassification === 'need' ? '#fff' : '#1a1a1a',
-                  border: 'none',
-                  borderRadius: '8px',
+                  padding: theme.spacing.sm,
+                  background: newClassification === 'need' ? theme.colors.accentPurple : theme.colors.bgCard,
+                  color: theme.colors.textPrimary,
+                  border: `1px solid ${newClassification === 'need' ? 'transparent' : theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.lg,
                   cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: theme.typography.body,
+                  outline: 'none'
                 }}
               >
                 Need
@@ -348,31 +374,34 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
                 onClick={() => setNewClassification('want')}
                 style={{
                   flex: 1,
-                  padding: '8px',
-                  background: newClassification === 'want' ? '#4f46e5' : '#f9f9f7',
-                  color: newClassification === 'want' ? '#fff' : '#1a1a1a',
-                  border: 'none',
-                  borderRadius: '8px',
+                  padding: theme.spacing.sm,
+                  background: newClassification === 'want' ? theme.colors.accentPurple : theme.colors.bgCard,
+                  color: theme.colors.textPrimary,
+                  border: `1px solid ${newClassification === 'want' ? 'transparent' : theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.lg,
                   cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: theme.typography.body,
+                  outline: 'none'
                 }}
               >
                 Want
               </button>
             </div>
           )}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
             <button
               onClick={handleAdd}
               style={{
                 flex: 1,
-                padding: '8px 16px',
-                background: '#4f46e5',
-                color: '#fff',
+                padding: `${theme.spacing.sm} ${theme.spacing.lg}`,
+                background: theme.colors.accentPurple,
+                color: theme.colors.textPrimary,
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: theme.borderRadius.lg,
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
+                outline: 'none'
               }}
             >
               Add
@@ -385,12 +414,14 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
               }}
               style={{
                 flex: 1,
-                padding: '8px 16px',
-                background: '#f9f9f7',
-                border: 'none',
-                borderRadius: '8px',
+                padding: `${theme.spacing.sm} ${theme.spacing.lg}`,
+                background: theme.colors.bgCard,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.lg,
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: theme.typography.body,
+                color: theme.colors.textPrimary,
+                outline: 'none'
               }}
             >
               Cancel
@@ -402,14 +433,15 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
           onClick={onStartAdding}
           style={{
             width: '100%',
-            padding: '12px',
-            marginTop: '8px',
-            background: '#f9f9f7',
-            border: '2px dashed #e5e5e3',
-            borderRadius: '8px',
+            padding: theme.spacing.md,
+            marginTop: theme.spacing.sm,
+            background: theme.colors.bgCardDark,
+            border: `2px dashed ${theme.colors.borderMedium}`,
+            borderRadius: theme.borderRadius.lg,
             cursor: 'pointer',
-            fontSize: '14px',
-            color: '#6b7280'
+            fontSize: theme.typography.body,
+            color: theme.colors.textSecondary,
+            outline: 'none'
           }}
         >
           + Add category

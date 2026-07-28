@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import theme from '../../theme'
 
 export default function BottomNav({ activeCards }) {
   const navigate = useNavigate()
@@ -47,15 +48,16 @@ export default function BottomNav({ activeCards }) {
       bottom: 0,
       left: 0,
       right: 0,
-      background: '#fff',
-      borderTop: '1px solid #e5e5e3',
+      background: theme.colors.bgSecondary,
+      borderTop: 'none',
       display: 'flex',
       justifyContent: 'space-evenly',
       alignItems: 'center',
-      padding: '8px 0',
-      maxWidth: '480px',
+      padding: `${theme.spacing.sm} 0 ${theme.spacing.md} 0`,
+      maxWidth: theme.layout.maxWidth,
       margin: '0 auto',
-      zIndex: 100
+      zIndex: theme.zIndex.bottomNav,
+      paddingTop: theme.spacing.md
     }}>
       {navItems.map(item => (
         <button
@@ -64,35 +66,61 @@ export default function BottomNav({ activeCards }) {
           style={{
             background: 'none',
             border: 'none',
-            padding: '8px 16px',
+            padding: '0',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '4px',
-            color: isActive(item.path) ? '#4f46e5' : '#6b7280',
-            transition: 'color 0.2s',
-            minWidth: '60px'
+            gap: '6px',
+            color: isActive(item.path) ? theme.colors.accentPurple : theme.colors.textSecondary,
+            transition: theme.transitions.smooth,
+            minWidth: '70px',
+            position: 'relative',
+            outline: 'none',
+            WebkitTapHighlightColor: 'transparent'
           }}
         >
+          {/* Top indicator line */}
+          <div style={{
+            position: 'absolute',
+            top: '-12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: isActive(item.path) ? '40px' : '0px',
+            height: '4px',
+            background: isActive(item.path) ? theme.colors.accentPurple : 'transparent',
+            borderRadius: '0 0 4px 4px',
+            transition: theme.transitions.smooth,
+            boxShadow: isActive(item.path) ? '0 2px 16px rgba(124, 111, 255, 0.8)' : 'none'
+          }} />
+          
           {item.icon.startsWith('/') ? (
             <img 
               src={item.icon} 
               alt={item.label}
               style={{ 
-                width: '20px', 
-                height: '20px',
+                width: '26px', 
+                height: '26px',
                 filter: isActive(item.path) 
-                  ? 'invert(32%) sepia(94%) saturate(1945%) hue-rotate(231deg) brightness(91%) contrast(91%)'
-                  : 'invert(47%) sepia(8%) saturate(562%) hue-rotate(182deg) brightness(93%) contrast(88%)'
+                  ? 'invert(61%) sepia(52%) saturate(3187%) hue-rotate(222deg) brightness(102%) contrast(101%)'
+                  : 'invert(60%) sepia(10%) saturate(500%) hue-rotate(194deg) brightness(95%) contrast(85%)',
+                transition: 'all 0.3s ease'
               }} 
             />
           ) : (
-            <span style={{ fontSize: '20px' }}>{item.icon}</span>
+            <span style={{ 
+              fontSize: '26px',
+              filter: isActive(item.path) ? 'drop-shadow(0 0 8px rgba(124, 111, 255, 0.6))' : 'none',
+              transition: 'all 0.3s ease'
+            }}>
+              {item.icon}
+            </span>
           )}
           <span style={{ 
-            fontSize: '11px', 
-            fontWeight: isActive(item.path) ? 600 : 400 
+            fontSize: theme.typography.tiny, 
+            fontWeight: isActive(item.path) ? theme.typography.semiBold : theme.typography.medium,
+            letterSpacing: '0.01em',
+            color: isActive(item.path) ? theme.colors.accentPurple : theme.colors.textSecondary
           }}>
             {item.label}
           </span>

@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '../../utils/formatCurrency'
+import theme from '../../theme'
 
 const COLORS = ['#10b981', '#4f46e5', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16']
 
@@ -205,13 +206,23 @@ export default function PaymentsCharts({ allTransactions, categories, country })
     <div>
       {weeklyData.weeks.length > 0 && (
         <div style={{ 
-          background: '#fff',
-          padding: '16px',
-          borderRadius: '12px',
-          marginBottom: '32px',
-          position: 'relative'
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          padding: theme.spacing.lg,
+          borderRadius: theme.borderRadius.lg,
+          marginBottom: theme.spacing.xxxl,
+          position: 'relative',
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card
         }}>
-          <h4 style={{ fontSize: '16px', fontWeight: 500, margin: '0 0 16px 0', textAlign: 'center' }}>
+          <h4 style={{ 
+            fontSize: theme.typography.h5, 
+            fontWeight: theme.typography.medium, 
+            margin: `0 0 ${theme.spacing.lg} 0`, 
+            textAlign: 'center',
+            color: theme.colors.textPrimary 
+          }}>
             Week {currentWeek + 1}
           </h4>
           
@@ -273,18 +284,18 @@ export default function PaymentsCharts({ allTransactions, categories, country })
                             width: '100%',
                             maxWidth: '40px',
                             height: `${heightPixels}px`,
-                            background: '#4f46e5',
+                            background: theme.colors.accentPurple,
                             borderRadius: '4px 4px 0 0',
                             cursor: day.amount > 0 ? 'pointer' : 'default',
-                            transition: 'opacity 0.2s'
+                            transition: theme.transitions.fast
                           }}
                           onMouseEnter={(e) => day.amount > 0 && (e.currentTarget.style.opacity = '0.8')}
                           onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                         />
                         <div style={{ 
-                          fontSize: '12px', 
-                          color: '#6b7280',
-                          marginTop: '8px'
+                          fontSize: theme.typography.caption, 
+                          color: theme.colors.textSecondary,
+                          marginTop: theme.spacing.sm
                         }}>
                           {day.date}
                         </div>
@@ -300,8 +311,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: '8px',
-            marginTop: '16px'
+            gap: theme.spacing.sm,
+            marginTop: theme.spacing.lg
           }}>
             {weeklyData.weeks.map((_, index) => (
               <div
@@ -319,9 +330,9 @@ export default function PaymentsCharts({ allTransactions, categories, country })
                   width: currentWeek === index ? '10px' : '8px',
                   height: currentWeek === index ? '10px' : '8px',
                   borderRadius: '50%',
-                  background: currentWeek === index ? '#4f46e5' : '#d1d5db',
+                  background: currentWeek === index ? theme.colors.accentPurple : theme.colors.borderMedium,
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: theme.transitions.normal,
                   opacity: currentWeek === index ? 1 : 0.6
                 }}
               />
@@ -337,7 +348,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0,0,0,0.5)',
+              background: 'rgba(0,0,0,0.7)',
               zIndex: 300,
               display: 'flex',
               alignItems: 'center',
@@ -349,27 +360,38 @@ export default function PaymentsCharts({ allTransactions, categories, country })
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            background: '#fff',
-            borderRadius: '16px',
-            padding: '20px',
+            background: theme.colors.bgModal,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            borderRadius: theme.borderRadius.xl,
+            padding: theme.spacing.xl,
             zIndex: 301,
             maxWidth: '400px',
             width: '90%',
             maxHeight: '70vh',
             overflowY: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            boxShadow: theme.shadows.strong,
+            border: `1px solid ${theme.colors.borderSubtle}`
           }}>
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center',
-              marginBottom: '16px'
+              marginBottom: theme.spacing.lg
             }}>
               <div>
-                <div style={{ fontSize: '18px', fontWeight: 600, color: '#1a1a1a' }}>
+                <div style={{ 
+                  fontSize: theme.typography.h4, 
+                  fontWeight: theme.typography.semiBold, 
+                  color: theme.colors.textPrimary 
+                }}>
                   {formatCurrency(selectedDay.amount, country)}
                 </div>
-                <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>
+                <div style={{ 
+                  fontSize: theme.typography.body, 
+                  color: theme.colors.textSecondary, 
+                  marginTop: '4px' 
+                }}>
                   {new Date(selectedDay.dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
               </div>
@@ -383,13 +405,13 @@ export default function PaymentsCharts({ allTransactions, categories, country })
                   height: '32px',
                   borderRadius: '50%',
                   border: 'none',
-                  background: '#f3f4f6',
+                  background: theme.colors.bgCardDark,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '20px',
-                  color: '#6b7280',
+                  color: theme.colors.textSecondary,
                   lineHeight: 1
                 }}
               >
@@ -397,31 +419,45 @@ export default function PaymentsCharts({ allTransactions, categories, country })
               </button>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
               {weeklyData.transactionsByDate[selectedDay.dateStr]?.map(txn => {
                 const category = categories.find(c => c.id === txn.categoryId)
                 return (
                   <div 
                     key={txn.id}
                     style={{
-                      background: '#fff',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e5e5e3',
+                      background: theme.colors.bgCard,
+                      padding: theme.spacing.md,
+                      borderRadius: theme.borderRadius.sm,
+                      border: `1px solid ${theme.colors.borderSubtle}`,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center'
                     }}
                   >
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 500, fontSize: '14px' }}>{category?.name || 'Unknown'}</div>
+                      <div style={{ 
+                        fontWeight: theme.typography.medium, 
+                        fontSize: theme.typography.body,
+                        color: theme.colors.textPrimary
+                      }}>
+                        {category?.name || 'Unknown'}
+                      </div>
                       {txn.note && (
-                        <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+                        <div style={{ 
+                          fontSize: theme.typography.bodySmall, 
+                          color: theme.colors.textSecondary, 
+                          marginTop: '4px' 
+                        }}>
                           {txn.note}
                         </div>
                       )}
                     </div>
-                    <span style={{ fontWeight: 500, color: '#f43f5e', fontSize: '14px' }}>
+                    <span style={{ 
+                      fontWeight: theme.typography.medium, 
+                      color: theme.colors.accentPink, 
+                      fontSize: theme.typography.body 
+                    }}>
                       -{formatCurrency(txn.amount, country)}
                     </span>
                   </div>
@@ -507,8 +543,8 @@ export default function PaymentsCharts({ allTransactions, categories, country })
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          gap: '8px',
-          marginTop: '16px'
+          gap: theme.spacing.sm,
+          marginTop: theme.spacing.lg
         }}>
           {[0, 1, 2].map(index => (
             <div
@@ -518,9 +554,9 @@ export default function PaymentsCharts({ allTransactions, categories, country })
                 width: currentChartIndex === index ? '10px' : '8px',
                 height: currentChartIndex === index ? '10px' : '8px',
                 borderRadius: '50%',
-                background: currentChartIndex === index ? '#4f46e5' : '#d1d5db',
+                background: currentChartIndex === index ? theme.colors.accentPurple : theme.colors.borderMedium,
                 cursor: 'pointer',
-                transition: 'all 0.3s ease',
+                transition: theme.transitions.normal,
                 opacity: currentChartIndex === index ? 1 : 0.6
               }}
             />
@@ -535,16 +571,28 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
   if (!chartData) {
     return (
       <div style={{ 
-        background: '#fff',
-        padding: '16px',
-        borderRadius: '12px',
+        background: theme.colors.bgCard,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        padding: theme.spacing.lg,
+        borderRadius: theme.borderRadius.lg,
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        boxShadow: theme.shadows.card,
         ...style
       }}>
-        <h4 style={{ fontSize: '16px', fontWeight: 500, marginBottom: '16px', margin: '0 0 16px 0' }}>{title}</h4>
+        <h4 style={{ 
+          fontSize: theme.typography.h5, 
+          fontWeight: theme.typography.medium, 
+          marginBottom: theme.spacing.lg, 
+          margin: `0 0 ${theme.spacing.lg} 0`,
+          color: theme.colors.textPrimary
+        }}>
+          {title}
+        </h4>
         <div style={{ 
           textAlign: 'center', 
           padding: '60px 20px', 
-          color: '#6b7280'
+          color: theme.colors.textSecondary
         }}>
           No data available
         </div>
@@ -554,12 +602,24 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
   
   return (
     <div style={{ 
-      background: '#fff',
-      padding: '16px',
-      borderRadius: '12px',
+      background: theme.colors.bgCard,
+      backdropFilter: theme.backdropFilter,
+      WebkitBackdropFilter: theme.backdropFilter,
+      padding: theme.spacing.lg,
+      borderRadius: theme.borderRadius.lg,
+      border: `1px solid ${theme.colors.borderSubtle}`,
+      boxShadow: theme.shadows.card,
       ...style
     }}>
-      <h4 style={{ fontSize: '16px', fontWeight: 500, marginBottom: '16px', margin: '0 0 16px 0' }}>{title}</h4>
+      <h4 style={{ 
+        fontSize: theme.typography.h5, 
+        fontWeight: theme.typography.medium, 
+        marginBottom: theme.spacing.lg, 
+        margin: `0 0 ${theme.spacing.lg} 0`,
+        color: theme.colors.textPrimary
+      }}>
+        {title}
+      </h4>
       
       <div style={{ position: 'relative' }}>
         <ResponsiveContainer width="100%" height={220}>
@@ -573,9 +633,10 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
               dataKey="value"
               animationDuration={0}
               isAnimationActive={false}
+              stroke="none"
             >
               {chartData.data.map((entry, index) => (
-                <Cell key={index} fill={colors[index % colors.length]} />
+                <Cell key={index} fill={colors[index % colors.length]} stroke="none" />
               ))}
             </Pie>
           </PieChart>
@@ -588,7 +649,11 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
           textAlign: 'center',
           pointerEvents: 'none'
         }}>
-          <div style={{ fontSize: '20px', fontWeight: 500, color: '#1a1a1a' }}>
+          <div style={{ 
+            fontSize: theme.typography.h3, 
+            fontWeight: theme.typography.medium, 
+            color: theme.colors.textPrimary 
+          }}>
             {formatCurrency(chartData.total, chartData.country)}
           </div>
         </div>
@@ -597,24 +662,24 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
       <button
         onClick={onToggleLegend}
         style={{
-          marginTop: '16px',
+          marginTop: theme.spacing.lg,
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          fontSize: '14px',
-          color: '#1a1a1a',
-          fontWeight: 500,
+          fontSize: theme.typography.body,
+          color: theme.colors.textPrimary,
+          fontWeight: theme.typography.medium,
           padding: '0'
         }}
       >
-        Legend <span style={{ fontSize: '16px', transform: legendOpen ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}>⌵</span>
+        Legend <span style={{ fontSize: theme.typography.h5, transform: legendOpen ? 'rotate(180deg)' : 'rotate(0deg)', display: 'inline-block' }}>⌵</span>
       </button>
       
       {legendOpen && (
-        <div style={{ marginTop: '12px' }}>
+        <div style={{ marginTop: theme.spacing.md }}>
           {chartData.data.map((entry, index) => (
             <div 
               key={entry.name}
@@ -622,22 +687,26 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '8px 0',
-                fontSize: '13px'
+                padding: `${theme.spacing.sm} 0`,
+                fontSize: theme.typography.bodySmall
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
                 <div style={{
                   width: '10px',
                   height: '10px',
                   borderRadius: '50%',
                   background: colors[index % colors.length]
                 }} />
-                <span style={{ color: '#1a1a1a' }}>{entry.name}</span>
+                <span style={{ color: theme.colors.textPrimary }}>{entry.name}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{formatCurrency(entry.value, chartData.country)}</span>
-                <span style={{ color: '#6b7280', minWidth: '35px', textAlign: 'right' }}>{entry.percentage}%</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
+                <span style={{ color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                  {formatCurrency(entry.value, chartData.country)}
+                </span>
+                <span style={{ color: theme.colors.textSecondary, minWidth: '35px', textAlign: 'right' }}>
+                  {entry.percentage}%
+                </span>
               </div>
             </div>
           ))}

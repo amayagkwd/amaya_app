@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import theme from '../../theme'
 
 export default function EditTransactionModal({ transaction, categories, onSave, onClose }) {
   const [amount, setAmount] = useState(transaction.amount.toString())
@@ -28,7 +29,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(0,0,0,0.7)',
           zIndex: 300
         }}
       />
@@ -37,29 +38,33 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
         bottom: 0,
         left: 0,
         right: 0,
-        background: '#fff',
-        borderRadius: '16px 16px 0 0',
-        padding: '20px',
+        background: theme.colors.bgModal,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: `${theme.borderRadius.xl} ${theme.borderRadius.xl} 0 0`,
+        padding: theme.spacing.xl,
         zIndex: 301,
-        maxWidth: '480px',
+        maxWidth: theme.layout.maxWidth,
         margin: '0 auto',
         maxHeight: '80vh',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        borderBottom: 'none'
       }}>
         <div style={{
           width: '40px',
           height: '4px',
-          background: '#e5e5e3',
+          background: theme.colors.borderMedium,
           borderRadius: '2px',
-          margin: '0 auto 20px'
+          margin: `0 auto ${theme.spacing.xl}`
         }} />
         
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 600 }}>
+        <h3 style={{ margin: `0 0 ${theme.spacing.lg} 0`, fontSize: theme.typography.h4, fontWeight: theme.typography.semiBold, color: theme.colors.textPrimary }}>
           Edit Transaction
         </h3>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Amount
           </label>
           <input
@@ -70,17 +75,20 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
             placeholder="0"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Category
           </label>
           <select
@@ -88,12 +96,14 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
             onChange={e => setCategoryId(e.target.value)}
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
               boxSizing: 'border-box',
-              background: '#fff'
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           >
             {filteredCategories.map(cat => (
@@ -102,8 +112,8 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
           </select>
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Date
           </label>
           <input
@@ -112,17 +122,20 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
             onChange={e => setDate(e.target.value)}
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
         </div>
         
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: 500 }}>
+        <div style={{ marginBottom: theme.spacing.lg }}>
+          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
             Note (optional)
           </label>
           <input
@@ -132,27 +145,30 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
             placeholder="e.g. California burrito"
             style={{
               width: '100%',
-              padding: '12px',
-              border: '1px solid #e5e5e3',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
+              padding: theme.spacing.md,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              boxSizing: 'border-box',
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
+              outline: 'none'
             }}
           />
         </div>
         
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: theme.spacing.sm }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '16px',
-              background: '#f3f4f6',
-              color: '#6b7280',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 500,
+              padding: theme.spacing.lg,
+              background: theme.colors.bgCardDark,
+              color: theme.colors.textSecondary,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              fontWeight: theme.typography.medium,
               cursor: 'pointer'
             }}
           >
@@ -163,14 +179,15 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
             disabled={!canSave}
             style={{
               flex: 1,
-              padding: '16px',
-              background: canSave ? '#4f46e5' : '#e5e5e3',
-              color: '#fff',
+              padding: theme.spacing.lg,
+              background: canSave ? theme.colors.accentPurple : theme.colors.bgCardDark,
+              color: theme.colors.textPrimary,
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 500,
-              cursor: canSave ? 'pointer' : 'not-allowed'
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.h5,
+              fontWeight: theme.typography.medium,
+              cursor: canSave ? 'pointer' : 'not-allowed',
+              opacity: canSave ? 1 : 0.5
             }}
           >
             Save Changes

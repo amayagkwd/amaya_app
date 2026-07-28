@@ -7,6 +7,7 @@ import EditTransactionModal from '../components/payments/EditTransactionModal'
 import { formatCurrency } from '../utils/formatCurrency'
 import { getMonthYear } from '../utils/formatDate'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
+import theme from '../theme'
 
 const SECTIONS = ['setup', 'history', 'charts']
 
@@ -70,27 +71,30 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   
   return (
     <>
-      <div style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <h2 style={{ fontSize: '24px', margin: 0 }}>Payments</h2>
+      <div style={{ padding: `${theme.spacing.xl}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl }}>
+          <h2 style={{ fontSize: theme.typography.h2, margin: 0, color: theme.colors.textPrimary, fontFamily: theme.typography.fontFamilyHeading, fontWeight: theme.typography.bold }}>Payments</h2>
+          
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
               style={{
-                padding: '8px 16px',
-                background: '#f9f9f7',
-                border: '1px solid #e5e5e3',
+                padding: `${theme.spacing.sm} ${theme.spacing.lg}`,
+                background: theme.colors.bgCard,
+                border: `1px solid ${theme.colors.borderSubtle}`,
                 borderRadius: '20px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: theme.typography.body,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: theme.spacing.sm,
+                color: theme.colors.textPrimary,
+                fontWeight: theme.typography.medium,
+                outline: 'none'
               }}
             >
               {getMonthYear(selectedDate)}
-              <span style={{ fontSize: '12px' }}>▼</span>
+              <span style={{ fontSize: theme.typography.caption }}>▼</span>
             </button>
             {monthDropdownOpen && (
               <>
@@ -105,12 +109,14 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
                 <div style={{
                   position: 'absolute',
                   top: '100%',
-                  left: 0,
+                  right: 0,
                   marginTop: '4px',
-                  background: '#fff',
-                  border: '1px solid #e5e5e3',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  background: theme.colors.bgModal,
+                  backdropFilter: theme.backdropFilter,
+                  WebkitBackdropFilter: theme.backdropFilter,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  boxShadow: theme.shadows.card,
                   zIndex: 11,
                   minWidth: '150px',
                   maxHeight: '300px',
@@ -122,15 +128,17 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
                       onClick={() => handleMonthSelect(month)}
                       style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        padding: `${theme.spacing.md} ${theme.spacing.lg}`,
                         background: selectedDate.getMonth() === month.getMonth() && 
                                    selectedDate.getFullYear() === month.getFullYear() 
-                                   ? '#f9f9f7' : 'transparent',
+                                   ? theme.colors.bgCardHover : 'transparent',
                         border: 'none',
                         textAlign: 'left',
                         cursor: 'pointer',
-                        fontSize: '14px',
-                        borderBottom: '1px solid #f9f9f7'
+                        fontSize: theme.typography.body,
+                        color: theme.colors.textPrimary,
+                        borderBottom: `1px solid ${theme.colors.borderSubtle}`,
+                        outline: 'none'
                       }}
                     >
                       {getMonthYear(month)}
@@ -141,15 +149,14 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
             )}
           </div>
         </div>
+      
+      <div style={{ display: 'flex', gap: theme.spacing.md, marginBottom: theme.spacing.xl }}>
+        <StatCard label="Income" value={formatCurrency(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
+        <StatCard label="Expenses" value={formatCurrency(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
+        <StatCard label="Balance" value={formatCurrency(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
       </div>
       
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-        <StatCard label="Income" value={formatCurrency(stats.income, data.profile.country)} color="#10b981" />
-        <StatCard label="Expenses" value={formatCurrency(stats.expenses, data.profile.country)} color="#f43f5e" />
-        <StatCard label="Balance" value={formatCurrency(stats.balance, data.profile.country)} color={stats.balance >= 0 ? '#1a1a1a' : '#f43f5e'} />
-      </div>
-      
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: theme.spacing.xxl }}>
         <div style={{ display: 'flex', position: 'relative' }}>
           {SECTIONS.map(section => (
             <button
@@ -157,15 +164,16 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
               onClick={() => setActiveSection(section)}
               style={{
                 flex: 1,
-                padding: '12px 0',
+                padding: `${theme.spacing.md} 0`,
                 background: 'none',
                 border: 'none',
-                color: activeSection === section ? '#1a1a1a' : '#9ca3af',
-                fontWeight: activeSection === section ? 500 : 400,
-                fontSize: '15px',
+                color: activeSection === section ? theme.colors.textPrimary : theme.colors.textSecondary,
+                fontWeight: activeSection === section ? theme.typography.medium : theme.typography.regular,
+                fontSize: theme.typography.h6,
                 cursor: 'pointer',
                 textTransform: 'capitalize',
-                position: 'relative'
+                position: 'relative',
+                outline: 'none'
               }}
             >
               {section}
@@ -174,16 +182,17 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
         </div>
         <div style={{ 
           height: '2px', 
-          background: '#e5e5e3',
+          background: theme.colors.borderSubtle,
           position: 'relative'
         }}>
           <div style={{
             position: 'absolute',
             height: '2px',
-            background: '#4f46e5',
+            background: theme.colors.accentPurple,
             width: '33.333%',
             left: activeSection === 'setup' ? '0%' : activeSection === 'history' ? '33.333%' : '66.666%',
-            transition: 'left 0.3s ease'
+            transition: 'left 0.3s ease',
+            boxShadow: `0 0 8px ${theme.colors.accentPurple}`
           }} />
         </div>
       </div>
@@ -252,21 +261,33 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
         onClick={onOpenBottomSheet}
         style={{
           position: 'fixed',
-          bottom: '80px',
-          right: '20px',
-          width: '56px',
-          height: '56px',
+          bottom: '100px',
+          right: '24px',
+          width: '68px',
+          height: '68px',
           borderRadius: '50%',
-          background: '#4f46e5',
+          background: 'linear-gradient(135deg, #7c6fff 0%, #a78bff 100%)',
           border: 'none',
           color: '#fff',
-          fontSize: '28px',
+          fontSize: '36px',
           cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
+          boxShadow: theme.shadows.fab,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 50
+          zIndex: theme.zIndex.fab,
+          transition: theme.transitions.smooth,
+          fontWeight: theme.typography.light,
+          lineHeight: 1,
+          outline: 'none'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)'
+          e.currentTarget.style.boxShadow = theme.shadows.fabHover
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1) translateY(0)'
+          e.currentTarget.style.boxShadow = theme.shadows.fab
         }}
       >
         +
@@ -279,13 +300,17 @@ function StatCard({ label, value, color }) {
   return (
     <div style={{
       flex: 1,
-      background: '#fff',
-      padding: '16px',
-      borderRadius: '12px',
-      textAlign: 'center'
+      background: theme.colors.bgCard,
+      backdropFilter: theme.backdropFilter,
+      WebkitBackdropFilter: theme.backdropFilter,
+      padding: theme.spacing.lg,
+      borderRadius: theme.borderRadius.lg,
+      textAlign: 'center',
+      border: `1px solid ${theme.colors.borderSubtle}`,
+      boxShadow: theme.shadows.card
     }}>
-      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>{label}</div>
-      <div style={{ fontSize: '20px', fontWeight: 500, color }}>{value}</div>
+      <div style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary, marginBottom: theme.spacing.sm, fontWeight: theme.typography.medium }}>{label}</div>
+      <div style={{ fontSize: theme.typography.h3, fontWeight: theme.typography.semiBold, color }}>{value}</div>
     </div>
   )
 }
