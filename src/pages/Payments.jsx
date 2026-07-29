@@ -87,6 +87,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
                 fontSize: theme.typography.body,
                 display: 'flex',
                 alignItems: 'center',
+                WebkitTapHighlightColor: 'transparent',
                 gap: theme.spacing.sm,
                 color: theme.colors.textPrimary,
                 fontWeight: theme.typography.medium,

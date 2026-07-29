@@ -70,3 +70,17 @@ export function exportData() {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+export function importData(file, callback) {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData))
+      callback(true, importedData)
+    } catch (error) {
+      callback(false, null)
+    }
+  }
+  reader.readAsText(file)
+}
