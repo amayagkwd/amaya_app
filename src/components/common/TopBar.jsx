@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import theme from '../../theme'
 
-export default function TopBar({ onMenuClick }) {
+export default function TopBar() {
   const navigate = useNavigate()
   const location = useLocation()
   const showBackButton = location.pathname !== '/'
@@ -64,30 +64,6 @@ export default function TopBar({ onMenuClick }) {
           This application has no limitation
         </p>
       </div>
-      {!showBackButton && (
-        <button
-          onClick={onMenuClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            opacity: 0.6,
-            transition: 'opacity 0.2s',
-            position: 'absolute',
-            right: '20px'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
-        >
-          <div style={{ width: '22px', height: '2.5px', background: '#ffffff', borderRadius: '2px' }} />
-          <div style={{ width: '22px', height: '2.5px', background: '#ffffff', borderRadius: '2px' }} />
-          <div style={{ width: '22px', height: '2.5px', background: '#ffffff', borderRadius: '2px' }} />
-        </button>
-      )}
     </div>
   )
 }

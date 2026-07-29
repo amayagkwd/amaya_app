@@ -5,6 +5,7 @@ import { getGreeting, getTodayDate } from '../utils/formatDate'
 import { formatCurrency } from '../utils/formatCurrency'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
 import DashboardCard from '../components/dashboard/DashboardCard'
+import FAB from '../components/common/FAB'
 import theme, { componentStyles } from '../theme'
 
 // Weather code mapping to emoji
@@ -43,20 +44,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
   const hasMapsCard = data.cards.includes('maps')
   const hasWeatherCard = data.cards.includes('weather')
   const hasCounterCard = data.cards.includes('counter')
-
-  const getCardSize = (cardType) => {
-    return data.cardSizes?.[cardType] || 'half'
-  }
-
-  const handleCardSizeChange = (cardType, newSize) => {
-    updateStore(current => ({
-      ...current,
-      cardSizes: {
-        ...current.cardSizes,
-        [cardType]: newSize
-      }
-    }))
-  }
 
   useEffect(() => {
     if (hasWeatherCard) {
@@ -185,8 +172,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
       {hasPaymentsCard && (
         <DashboardCard
           cardId="payments"
-          size={getCardSize('payments')}
-          onSizeChange={(size) => handleCardSizeChange('payments', size)}
+          size="full"
           style={{ marginBottom: '20px' }}
         >
           <div 
@@ -194,7 +180,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
             style={{
             ...componentStyles.card,
             cursor: 'pointer',
-            position: 'relative'
+            position: 'relative',
+            padding: '16px'
           }}
           onMouseEnter={(e) => {
             Object.assign(e.currentTarget.style, componentStyles.cardHover)
@@ -205,49 +192,49 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
             e.currentTarget.style.boxShadow = theme.shadows.card
           }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg }}>
-              <h3 style={{ margin: 0, fontSize: theme.typography.h6, fontWeight: theme.typography.medium, color: theme.colors.textOnDark, letterSpacing: '0.01em' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.md }}>
+              <h3 style={{ margin: 0, fontSize: theme.typography.body, fontWeight: theme.typography.medium, color: theme.colors.textOnDark, letterSpacing: '0.01em' }}>
                 Payments
               </h3>
             </div>
             <div style={{
-              fontSize: '42px',
+              fontSize: '32px',
               fontWeight: 800,
               color: stats.balance >= 0 ? theme.colors.accentCyan : theme.colors.accentPink,
-              marginBottom: theme.spacing.lg,
+              marginBottom: theme.spacing.md,
               fontFamily: theme.typography.fontFamily,
               letterSpacing: '-0.04em',
               lineHeight: 1
             }}>
               {formatCurrency(stats.balance, data.profile.country)}
             </div>
-            <div style={{ display: 'flex', gap: theme.spacing.md, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: theme.spacing.sm, flexWrap: 'wrap' }}>
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 14px',
+                gap: '4px',
+                padding: '4px 10px',
                 background: 'rgba(0, 229, 204, 0.15)',
                 borderRadius: theme.borderRadius.md,
-                fontSize: theme.typography.bodySmall,
+                fontSize: theme.typography.caption,
                 fontWeight: theme.typography.semiBold,
                 color: theme.colors.accentCyan
               }}>
-                <span style={{ fontSize: '14px' }}>↑</span>
+                <span style={{ fontSize: '12px' }}>↑</span>
                 {formatCurrency(stats.income, data.profile.country)}
               </div>
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 14px',
+                gap: '4px',
+                padding: '4px 10px',
                 background: 'rgba(255, 107, 157, 0.15)',
                 borderRadius: theme.borderRadius.md,
-                fontSize: theme.typography.bodySmall,
+                fontSize: theme.typography.caption,
                 fontWeight: theme.typography.semiBold,
                 color: theme.colors.accentPink
               }}>
-                <span style={{ fontSize: '14px' }}>↓</span>
+                <span style={{ fontSize: '12px' }}>↓</span>
                 {formatCurrency(stats.expenses, data.profile.country)}
               </div>
             </div>
@@ -260,7 +247,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
           <DashboardCard
             cardId="maps"
             size="half"
-            onSizeChange={(size) => handleCardSizeChange('maps', size)}
           >
             {data.mapCards.length === 0 ? (
               <div style={{
@@ -435,7 +421,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
           <DashboardCard
             cardId="weather"
             size="half"
-            onSizeChange={(size) => handleCardSizeChange('weather', size)}
           >
             <div
               onClick={() => navigate('/weather')}
@@ -483,10 +468,10 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                 </h3>
               </div>
               {weatherData ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '16px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                   {/* Temperature and Weather Icon - Side by Side */}
                   {(data.weatherSettings?.showTemperature || data.weatherSettings?.showWeather) && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
                       {data.weatherSettings?.showTemperature && weatherData.current?.temperature_2m !== undefined && (
                         <div style={{ fontSize: '48px', fontWeight: 700, color: '#ffffff', lineHeight: 1, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
                           {Math.round(weatherData.current.temperature_2m)}°
@@ -570,60 +555,11 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
           </DashboardCard>
         )}
         
-        <div
-          onClick={onAddCard}
-          style={{
-            padding: '20px',
-            background: 'rgba(20, 25, 32, 0.4)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            cursor: 'pointer',
-            height: '200px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px dashed rgba(124, 111, 255, 0.3)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(124, 111, 255, 0.12)'
-            e.currentTarget.style.borderColor = 'rgba(124, 111, 255, 0.5)'
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.5)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(20, 25, 32, 0.4)'
-            e.currentTarget.style.borderColor = 'rgba(124, 111, 255, 0.3)'
-            e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)'
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              fontSize: '56px', 
-              color: '#7c6fff', 
-              marginBottom: '8px',
-              fontWeight: 300,
-              lineHeight: 1
-            }}>
-              +
-            </div>
-            <div style={{ fontSize: '14px', color: '#7c6fff', fontWeight: 600, letterSpacing: '0.01em' }}>
-              Add Card
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {hasCounterCard && (
-        <DashboardCard
-          cardId="counter"
-          size={getCardSize('counter')}
-          onSizeChange={(size) => handleCardSizeChange('counter', size)}
-          style={{ marginBottom: '20px' }}
-        >
+        {hasCounterCard && (
+          <DashboardCard
+            cardId="counter"
+            size="half"
+          >
           <div
             style={{
               padding: '24px',
@@ -632,7 +568,10 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
               WebkitBackdropFilter: 'blur(20px)',
               borderRadius: '24px',
               border: '1px solid rgba(139, 146, 176, 0.2)',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)'
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+              height: '200px',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -747,7 +686,54 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
           )}
           </div>
         </DashboardCard>
-      )}
+        )}
+        
+        <div
+          onClick={onAddCard}
+          style={{
+            padding: '20px',
+            background: 'rgba(20, 25, 32, 0.4)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            cursor: 'pointer',
+            height: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed rgba(124, 111, 255, 0.3)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(124, 111, 255, 0.12)'
+            e.currentTarget.style.borderColor = 'rgba(124, 111, 255, 0.5)'
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.5)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(20, 25, 32, 0.4)'
+            e.currentTarget.style.borderColor = 'rgba(124, 111, 255, 0.3)'
+            e.currentTarget.style.transform = 'translateY(0)'
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '56px', 
+              color: '#7c6fff', 
+              marginBottom: '8px',
+              fontWeight: 300,
+              lineHeight: 1
+            }}>
+              +
+            </div>
+            <div style={{ fontSize: '14px', color: '#7c6fff', fontWeight: 600, letterSpacing: '0.01em' }}>
+              Add Card
+            </div>
+          </div>
+        </div>
+      </div>
       
       {data.cards.length === 0 && (
         <div style={{
@@ -866,40 +852,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
       </div>
       
       {hasPaymentsCard && (
-        <button
-          onClick={onOpenBottomSheet}
-          style={{
-            position: 'fixed',
-            bottom: '100px',
-            right: '24px',
-            width: '68px',
-            height: '68px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7c6fff 0%, #a78bff 100%)',
-            border: 'none',
-            color: '#fff',
-            fontSize: '36px',
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(124, 111, 255, 0.5), 0 0 0 0 rgba(124, 111, 255, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            fontWeight: 300,
-            lineHeight: 1
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 12px 32px rgba(124, 111, 255, 0.6), 0 0 48px rgba(124, 111, 255, 0.5)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1) translateY(0)'
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 111, 255, 0.5), 0 0 0 0 rgba(124, 111, 255, 0.4)'
-          }}
-        >
-          +
-        </button>
+        <FAB onClick={onOpenBottomSheet} />
       )}
     </>
   )

@@ -1,30 +1,15 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import theme from '../../theme'
 
-export default function BottomNav({ activeCards }) {
+export default function BottomNav() {
   const navigate = useNavigate()
   const location = useLocation()
   
-  // Build nav items based on active cards
   const navItems = [
-    { id: 'home', label: 'Home', path: '/', icon: '/home-svgrepo-com.svg', alwaysShow: true }
+    { id: 'home', label: 'Home', path: '/', icon: '/home-4-svgrepo-com.svg', size: '24px' },
+    { id: 'profile', label: 'Profile', path: '/profile', icon: '/profile-1335-svgrepo-com.svg', size: '20px' },
+    { id: 'settings', label: 'Settings', path: '/settings', icon: '/settings-svgrepo-com.svg', size: '22px' }
   ]
-  
-  if (activeCards.includes('payments')) {
-    navItems.push({ id: 'payments', label: 'Payments', path: '/payments', icon: '/currency-inr-bold-svgrepo-com.svg' })
-  }
-  
-  if (activeCards.includes('maps')) {
-    navItems.push({ id: 'maps', label: 'Maps', path: '/maps', icon: '/map-pin-alt-svgrepo-com.svg' })
-  }
-  
-  if (activeCards.includes('weather')) {
-    navItems.push({ id: 'weather', label: 'Weather', path: '/weather', icon: '/weather-9-svgrepo-com.svg' })
-  }
-  
-  if (activeCards.includes('counter')) {
-    navItems.push({ id: 'counter', label: 'Counter', path: '/counter', icon: '🔢' })
-  }
   
   const isActive = (path) => location.pathname === path
   
@@ -94,28 +79,18 @@ export default function BottomNav({ activeCards }) {
             boxShadow: isActive(item.path) ? '0 2px 16px rgba(124, 111, 255, 0.8)' : 'none'
           }} />
           
-          {item.icon.startsWith('/') ? (
-            <img 
-              src={item.icon} 
-              alt={item.label}
-              style={{ 
-                width: '26px', 
-                height: '26px',
-                filter: isActive(item.path) 
-                  ? 'invert(61%) sepia(52%) saturate(3187%) hue-rotate(222deg) brightness(102%) contrast(101%)'
-                  : 'invert(60%) sepia(10%) saturate(500%) hue-rotate(194deg) brightness(95%) contrast(85%)',
-                transition: 'all 0.3s ease'
-              }} 
-            />
-          ) : (
-            <span style={{ 
-              fontSize: '26px',
-              filter: isActive(item.path) ? 'drop-shadow(0 0 8px rgba(124, 111, 255, 0.6))' : 'none',
+          <img 
+            src={item.icon} 
+            alt={item.label}
+            style={{ 
+              width: item.size || '26px', 
+              height: item.size || '26px',
+              filter: isActive(item.path) 
+                ? 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(222deg)'
+                : 'brightness(0) invert(1) opacity(0.6)',
               transition: 'all 0.3s ease'
-            }}>
-              {item.icon}
-            </span>
-          )}
+            }} 
+          />
           <span style={{ 
             fontSize: theme.typography.tiny, 
             fontWeight: isActive(item.path) ? theme.typography.semiBold : theme.typography.medium,

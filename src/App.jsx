@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-ro
 import { useStore } from './hooks/useStore'
 import { usePayments } from './hooks/usePayments'
 import TopBar from './components/common/TopBar'
-import SidePanel from './components/common/SidePanel'
 import BottomNav from './components/common/BottomNav'
 import BottomSheet from './components/common/BottomSheet'
 import Toast from './components/common/Toast'
@@ -13,6 +12,7 @@ import InstallBanner from './components/common/InstallBanner'
 import Dashboard from './pages/Dashboard'
 import Payments from './pages/Payments'
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 import Maps from './pages/Maps'
 import Weather from './pages/Weather'
 import Counter from './pages/Counter'
@@ -21,7 +21,6 @@ import theme from './theme'
 function AppContent() {
   const [data, updateStore] = useStore()
   const { addTransaction, deleteTransaction } = usePayments(data, updateStore)
-  const [sidePanelOpen, setSidePanelOpen] = useState(false)
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [cardSelectionOpen, setCardSelectionOpen] = useState(false)
   const location = useLocation()
@@ -87,7 +86,7 @@ function AppContent() {
       background: theme.colors.bgPrimary,
       fontFamily: theme.typography.fontFamily
     }}>
-      <TopBar onMenuClick={() => setSidePanelOpen(true)} />
+      <TopBar />
       
       <main style={{
         maxWidth: theme.layout.maxWidth,
@@ -100,18 +99,14 @@ function AppContent() {
           <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} onAddCard={handleFABClick} />} />
           <Route path="/payments" element={<Payments data={data} updateStore={updateStore} onDelete={deleteTransaction} onOpenBottomSheet={() => setBottomSheetOpen(true)} />} />
           <Route path="/profile" element={<Profile data={data} updateStore={updateStore} />} />
+          <Route path="/settings" element={<Settings data={data} updateStore={updateStore} />} />
           <Route path="/maps" element={<Maps data={data} updateStore={updateStore} />} />
           <Route path="/weather" element={<Weather data={data} updateStore={updateStore} />} />
           <Route path="/counter" element={<Counter data={data} updateStore={updateStore} />} />
         </Routes>
       </main>
       
-      <BottomNav activeCards={data.cards} />
-      
-      <SidePanel
-        isOpen={sidePanelOpen}
-        onClose={() => setSidePanelOpen(false)}
-      />
+      <BottomNav />
       
 
       

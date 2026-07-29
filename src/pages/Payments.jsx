@@ -4,6 +4,7 @@ import PaymentsSetup from '../components/payments/PaymentsSetup'
 import PaymentsHistory from '../components/payments/PaymentsHistory'
 import PaymentsCharts from '../components/payments/PaymentsCharts'
 import EditTransactionModal from '../components/payments/EditTransactionModal'
+import FAB from '../components/common/FAB'
 import { formatCurrency } from '../utils/formatCurrency'
 import { getMonthYear } from '../utils/formatDate'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
@@ -258,41 +259,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
       )}
       </div>
       
-      <button
-        onClick={onOpenBottomSheet}
-        style={{
-          position: 'fixed',
-          bottom: '100px',
-          right: '24px',
-          width: '68px',
-          height: '68px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #7c6fff 0%, #a78bff 100%)',
-          border: 'none',
-          color: '#fff',
-          fontSize: '36px',
-          cursor: 'pointer',
-          boxShadow: theme.shadows.fab,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: theme.zIndex.fab,
-          transition: theme.transitions.smooth,
-          fontWeight: theme.typography.light,
-          lineHeight: 1,
-          outline: 'none'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)'
-          e.currentTarget.style.boxShadow = theme.shadows.fabHover
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1) translateY(0)'
-          e.currentTarget.style.boxShadow = theme.shadows.fab
-        }}
-      >
-        +
-      </button>
+      <FAB onClick={onOpenBottomSheet} />
     </>
   )
 }
