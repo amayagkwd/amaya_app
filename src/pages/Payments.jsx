@@ -6,6 +6,7 @@ import PaymentsCharts from '../components/payments/PaymentsCharts'
 import EditTransactionModal from '../components/payments/EditTransactionModal'
 import FAB from '../components/common/FAB'
 import { formatCurrency } from '../utils/formatCurrency'
+import { formatLargeNumber } from '../utils/formatLargeNumber'
 import { getMonthYear } from '../utils/formatDate'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
 import theme from '../theme'
@@ -152,10 +153,10 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           </div>
         </div>
       
-      <div style={{ display: 'flex', gap: theme.spacing.md, marginBottom: theme.spacing.xl }}>
-        <StatCard label="Income" value={formatCurrency(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
-        <StatCard label="Expenses" value={formatCurrency(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
-        <StatCard label="Balance" value={formatCurrency(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
+      <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.xl }}>
+        <StatCard label="Income" value={formatLargeNumber(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
+        <StatCard label="Expenses" value={formatLargeNumber(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
+        <StatCard label="Balance" value={formatLargeNumber(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
       </div>
       
       <div style={{ marginBottom: theme.spacing.xxl }}>
@@ -268,17 +269,26 @@ function StatCard({ label, value, color }) {
   return (
     <div style={{
       flex: 1,
+      minWidth: 0,
       background: theme.colors.bgCard,
       backdropFilter: theme.backdropFilter,
       WebkitBackdropFilter: theme.backdropFilter,
-      padding: theme.spacing.lg,
+      padding: `${theme.spacing.md} ${theme.spacing.sm}`,
       borderRadius: theme.borderRadius.lg,
       textAlign: 'center',
       border: `1px solid ${theme.colors.borderSubtle}`,
-      boxShadow: theme.shadows.card
+      boxShadow: theme.shadows.card,
+      overflow: 'hidden'
     }}>
-      <div style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary, marginBottom: theme.spacing.sm, fontWeight: theme.typography.medium }}>{label}</div>
-      <div style={{ fontSize: theme.typography.h3, fontWeight: theme.typography.semiBold, color }}>{value}</div>
+      <div style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary, marginBottom: theme.spacing.xs, fontWeight: theme.typography.medium }}>{label}</div>
+      <div style={{ 
+        fontSize: theme.typography.h4, 
+        fontWeight: theme.typography.semiBold, 
+        color,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}>{value}</div>
     </div>
   )
 }
