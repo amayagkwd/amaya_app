@@ -1,37 +1,66 @@
 import { useState, useEffect } from 'react'
+import theme from '../../theme'
 
 const availableCards = [
-  { id: 'payments', name: 'Payments', icon: '💰', description: 'Track income and expenses' },
-  { id: 'maps', name: 'Maps', icon: '🗺️', description: 'Location and navigation' },
-  { id: 'weather', name: 'Weather', icon: '🌤️', description: 'Weather updates' },
-  { id: 'counter', name: 'Counter', icon: '🔢', description: 'Track daily counts' }
+  { id: 'payments', name: 'Payments', icon: '/currency-inr-bold-svgrepo-com.svg', description: 'Track your payments', unique: true },
+  { id: 'maps', name: 'Maps', icon: '/map_start.svg', description: 'Location and navigation', unique: false },
+  { id: 'weather', name: 'Weather', icon: '/weather-9-svgrepo-com.svg', description: 'Weather updates', unique: false },
+  { id: 'counter', name: 'Counter', icon: '🔢', description: 'Track daily counts', unique: false }
 ]
 
 export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, activeCards }) {
-  const [selectedCards, setSelectedCards] = useState([])
+  const [cardCounts, setCardCounts] = useState({})
   
   useEffect(() => {
     if (isOpen) {
-      setSelectedCards([...activeCards])
+      // Count occurrences of each card type
+      const counts = {}
+      activeCards.forEach(cardId => {
+        counts[cardId] = (counts[cardId] || 0) + 1
+      })
+      setCardCounts(counts)
     }
   }, [isOpen, activeCards])
   
   if (!isOpen) return null
   
-  const handleToggleCard = (cardId) => {
-    setSelectedCards(prev => 
-      prev.includes(cardId)
-        ? prev.filter(id => id !== cardId)
-        : [...prev, cardId]
-    )
+  const handleAddCard = (cardId, isUnique) => {
+    if (isUnique) {
+      // For unique cards (like payments), just toggle
+      if (cardCounts[cardId]) {
+        setCardCounts(prev => {
+          const updated = { ...prev }
+          delete updated[cardId]
+          return updated
+        })
+      } else {
+        setCardCounts(prev => ({ ...prev, [cardId]: 1 }))
+      }
+    } else {
+      // For non-unique cards, increment count
+      setCardCounts(prev => ({
+        ...prev,
+        [cardId]: (prev[cardId] || 0) + 1
+      }))
+    }
   }
   
   const handleSave = () => {
-    onUpdateCards(selectedCards)
+    // Convert counts back to array of card IDs
+    const newCards = []
+    Object.entries(cardCounts).forEach(([cardId, count]) => {
+      for (let i = 0; i < count; i++) {
+        newCards.push(cardId)
+      }
+    })
+    onUpdateCards(newCards)
     onClose()
   }
   
-  const hasChanges = JSON.stringify(selectedCards.sort()) !== JSON.stringify([...activeCards].sort())
+  const hasCards = Object.keys(cardCounts).length > 0
+  const hasChanges = JSON.stringify(activeCards.sort()) !== JSON.stringify(
+    Object.entries(cardCounts).flatMap(([id, count]) => Array(count).fill(id)).sort()
+  )
   
   return (
     <>
@@ -40,8 +69,10 @@ export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, act
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 400
+          background: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          zIndex: theme.zIndex.modal
         }}
       />
       <div style={{
@@ -49,114 +80,201 @@ export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, act
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        background: '#fff',
-        borderRadius: '16px',
-        padding: '24px',
-        zIndex: 401,
-        maxWidth: '400px',
+        background: theme.colors.bgModal,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: theme.borderRadius.xxxl,
+        padding: theme.spacing.xxxl,
+        zIndex: theme.zIndex.modal + 1,
+        maxWidth: '440px',
         width: '90%',
         maxHeight: '80vh',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        border: `1px solid ${theme.colors.borderMedium}`,
+        boxShadow: theme.shadows.strong
       }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: 600 }}>
-          Manage cards
+        <h3 style={{ 
+          margin: `0 0 ${theme.spacing.sm} 0`, 
+          fontSize: theme.typography.h3, 
+          fontWeight: theme.typography.semiBold,
+          color: theme.colors.textPrimary
+        }}>
+          Add Dashboard Cards
         </h3>
-        <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#6b7280' }}>
-          Select the cards you want on your dashboard
+        <p style={{ 
+          margin: `0 0 ${theme.spacing.xxl} 0`, 
+          fontSize: theme.typography.body, 
+          color: theme.colors.textSecondary,
+          lineHeight: 1.5
+        }}>
+          Customize your dashboard with the cards you need
         </p>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px'
-          }}>
-            {availableCards.map(card => {
-              const isSelected = selectedCards.includes(card.id)
-              return (
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: theme.spacing.md, 
+          marginBottom: theme.spacing.xxl 
+        }}>
+          {availableCards.map(card => {
+            const count = cardCounts[card.id] || 0
+            const isAdded = count > 0
+            
+            return (
+              <div
+                key={card.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.lg,
+                  padding: theme.spacing.lg,
+                  background: theme.colors.bgCard,
+                  backdropFilter: theme.backdropFilter,
+                  WebkitBackdropFilter: theme.backdropFilter,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.lg,
+                  transition: theme.transitions.normal
+                }}
+              >
+                <div style={{ 
+                  width: '40px',
+                  height: '40px',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {card.icon.startsWith('/') ? (
+                    <img 
+                      src={card.icon} 
+                      alt={card.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        filter: 'brightness(0) saturate(100%) invert(88%) sepia(8%) saturate(295%) hue-rotate(186deg) brightness(94%) contrast(88%)'
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '32px' }}>{card.icon}</span>
+                  )}
+                </div>
+                
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ 
+                    fontSize: theme.typography.h5, 
+                    fontWeight: theme.typography.semiBold, 
+                    color: theme.colors.textPrimary,
+                    marginBottom: '2px'
+                  }}>
+                    {card.name}
+                  </div>
+                  <div style={{ 
+                    fontSize: theme.typography.bodySmall, 
+                    color: theme.colors.textSecondary,
+                    lineHeight: 1.4
+                  }}>
+                    {card.description}
+                  </div>
+                </div>
+                
                 <button
-                  key={card.id}
-                  onClick={() => handleToggleCard(card.id)}
+                  onClick={() => handleAddCard(card.id, card.unique)}
                   style={{
-                    aspectRatio: '1',
-                    padding: '16px',
-                    border: `2px solid ${isSelected ? '#4f46e5' : '#e5e5e3'}`,
-                    borderRadius: '12px',
-                    background: isSelected ? '#f9fafb' : '#fff',
+                    minWidth: '80px',
+                    padding: '10px 16px',
+                    background: 'transparent',
+                    color: theme.colors.textPrimary,
+                    border: `1px dashed ${isAdded ? theme.colors.accentBlue : theme.colors.borderMedium}`,
+                    borderRadius: theme.borderRadius.sm,
+                    fontSize: theme.typography.bodySmall,
+                    fontWeight: theme.typography.semiBold,
                     cursor: 'pointer',
+                    transition: theme.transitions.fast,
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
-                    position: 'relative',
-                    textAlign: 'center'
+                    gap: '6px',
+                    flexShrink: 0
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = theme.colors.accentBlue
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isAdded) {
+                      e.currentTarget.style.borderColor = theme.colors.borderMedium
+                    }
                   }}
                 >
-                  {isSelected && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      background: '#4f46e5',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: 600
-                    }}>
-                      ✓
-                    </div>
+                  {card.unique ? (
+                    isAdded ? (
+                      <>
+                        <span style={{ fontSize: '14px', color: theme.colors.accentBlue }}>✓</span>
+                        <span>Added</span>
+                      </>
+                    ) : (
+                      <span>Add</span>
+                    )
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
+                      <span>{count}</span>
+                    </>
                   )}
-                  <span style={{ fontSize: '36px' }}>{card.icon}</span>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a', marginBottom: '2px' }}>
-                      {card.name}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#6b7280', lineHeight: 1.3 }}>
-                      {card.description}
-                    </div>
-                  </div>
                 </button>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
         
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: theme.spacing.md }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '12px',
-              background: '#f3f4f6',
-              color: '#6b7280',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer'
+              padding: theme.spacing.lg,
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: theme.colors.textSecondary,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.lg,
+              fontSize: theme.typography.h6,
+              fontWeight: theme.typography.medium,
+              cursor: 'pointer',
+              transition: theme.transitions.normal
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
             }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            disabled={selectedCards.length === 0}
+            disabled={!hasCards}
             style={{
               flex: 1,
-              padding: '12px',
-              background: selectedCards.length > 0 ? '#4f46e5' : '#e5e5e3',
-              color: '#fff',
+              padding: theme.spacing.lg,
+              background: hasCards ? theme.colors.accentPurple : 'rgba(255, 255, 255, 0.1)',
+              color: theme.colors.textPrimary,
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: selectedCards.length > 0 ? 'pointer' : 'not-allowed'
+              borderRadius: theme.borderRadius.lg,
+              fontSize: theme.typography.h6,
+              fontWeight: theme.typography.semiBold,
+              cursor: hasCards ? 'pointer' : 'not-allowed',
+              boxShadow: hasCards ? theme.shadows.glow.purple : 'none',
+              opacity: hasCards ? 1 : 0.5,
+              transition: theme.transitions.normal
+            }}
+            onMouseEnter={(e) => {
+              if (hasCards) {
+                e.currentTarget.style.transform = 'translateY(-1px)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
             }}
           >
             {hasChanges ? 'Save Changes' : 'Done'}
