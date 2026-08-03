@@ -3,8 +3,9 @@ export const countries = [
   { name: 'United States', code: 'US', currency: '$', currencyName: 'Dollars' },
   { name: 'United Kingdom', code: 'GB', currency: '£', currencyName: 'Pounds' },
   { name: 'European Union', code: 'EU', currency: '€', currencyName: 'Euros' },
-  { name: 'Canada', code: 'CA', currency: 'C$', currencyName: 'Canadian Dollars' },
-  { name: 'Australia', code: 'AU', currency: 'A$', currencyName: 'Australian Dollars' }
+  { name: 'Japan', code: 'JP', currency: '¥', currencyName: 'Yen' },
+  { name: 'Australia', code: 'AU', currency: 'A$', currencyName: 'Australian Dollars' },
+  { name: 'Canada', code: 'CA', currency: 'C$', currencyName: 'Canadian Dollars' }
 ]
 
 export function getCurrencyByCountry(countryName) {

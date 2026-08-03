@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { countries } from '../../utils/countries'
+import theme from '../../theme'
 
 export default function OnboardingModal({ onComplete }) {
   const [name, setName] = useState('')
@@ -22,7 +23,7 @@ export default function OnboardingModal({ onComplete }) {
     <div style={{
       position: 'fixed',
       inset: 0,
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: theme.colors.bgPrimary,
       zIndex: 1000,
       display: 'flex',
       alignItems: 'center',
@@ -30,12 +31,15 @@ export default function OnboardingModal({ onComplete }) {
       padding: '20px'
     }}>
       <div style={{
-        background: '#fff',
-        borderRadius: '24px',
+        background: theme.colors.bgModal,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: theme.borderRadius.xxxl,
         padding: '40px 32px',
         maxWidth: '420px',
         width: '100%',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        boxShadow: theme.shadows.strong,
+        border: `1px solid ${theme.colors.borderMedium}`
       }}>
         <div style={{
           textAlign: 'center',
@@ -49,15 +53,15 @@ export default function OnboardingModal({ onComplete }) {
           </div>
           <h2 style={{
             fontSize: '28px',
-            fontWeight: 600,
-            color: '#1a1a1a',
+            fontWeight: theme.typography.semiBold,
+            color: theme.colors.textPrimary,
             margin: '0 0 8px 0'
           }}>
             Welcome!
           </h2>
           <p style={{
-            fontSize: '15px',
-            color: '#6b7280',
+            fontSize: theme.typography.h6,
+            color: theme.colors.textSecondary,
             margin: 0
           }}>
             Let's get to know you better
@@ -104,15 +108,16 @@ export default function OnboardingModal({ onComplete }) {
               width: '100%',
               padding: '16px',
               marginTop: '24px',
-              background: canSubmit ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#e5e5e3',
-              color: '#fff',
+              background: canSubmit ? theme.colors.accentPurple : 'rgba(255, 255, 255, 0.1)',
+              color: theme.colors.textPrimary,
               border: 'none',
-              borderRadius: '12px',
-              fontSize: '16px',
-              fontWeight: 600,
+              borderRadius: theme.borderRadius.lg,
+              fontSize: theme.typography.h5,
+              fontWeight: theme.typography.semiBold,
               cursor: canSubmit ? 'pointer' : 'not-allowed',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              boxShadow: canSubmit ? '0 4px 12px rgba(102, 126, 234, 0.4)' : 'none'
+              transition: theme.transitions.fast,
+              boxShadow: canSubmit ? theme.shadows.glow.purple : 'none',
+              opacity: canSubmit ? 1 : 0.5
             }}
             onMouseDown={(e) => {
               if (canSubmit) {
@@ -154,14 +159,14 @@ function FloatingLabelInput({ label, value, onChange, focused, onFocus, onBlur, 
         style={{
           width: '100%',
           padding: '20px 16px 8px 16px',
-          border: `2px solid ${focused ? '#667eea' : '#e5e5e3'}`,
-          borderRadius: '12px',
-          fontSize: '16px',
-          fontWeight: 500,
-          color: '#1a1a1a',
+          border: `1px solid ${focused ? theme.colors.accentPurple : theme.colors.borderSubtle}`,
+          borderRadius: theme.borderRadius.lg,
+          fontSize: theme.typography.h5,
+          fontWeight: theme.typography.medium,
+          color: theme.colors.textPrimary,
           boxSizing: 'border-box',
-          transition: 'all 0.2s',
-          background: focused ? '#f9fafb' : '#fff',
+          transition: theme.transitions.fast,
+          background: theme.colors.bgCardDark,
           outline: 'none'
         }}
       />
@@ -170,12 +175,12 @@ function FloatingLabelInput({ label, value, onChange, focused, onFocus, onBlur, 
         left: '16px',
         top: isActive ? '8px' : '50%',
         transform: isActive ? 'translateY(0)' : 'translateY(-50%)',
-        fontSize: isActive ? '12px' : '16px',
-        fontWeight: isActive ? 600 : 500,
-        color: focused ? '#667eea' : '#9ca3af',
-        transition: 'all 0.2s',
+        fontSize: isActive ? theme.typography.caption : theme.typography.h5,
+        fontWeight: isActive ? theme.typography.semiBold : theme.typography.medium,
+        color: focused ? theme.colors.accentPurple : theme.colors.textSecondary,
+        transition: theme.transitions.fast,
         pointerEvents: 'none',
-        background: '#fff',
+        background: theme.colors.bgCardDark,
         padding: '0 4px'
       }}>
         {label}
@@ -253,14 +258,14 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
         style={{
           width: '100%',
           padding: '20px 16px 8px 16px',
-          border: `2px solid ${focused || isOpen ? '#667eea' : '#e5e5e3'}`,
-          borderRadius: '12px',
-          fontSize: '16px',
-          fontWeight: 500,
-          color: value ? '#1a1a1a' : '#9ca3af',
+          border: `1px solid ${focused || isOpen ? theme.colors.accentPurple : theme.colors.borderSubtle}`,
+          borderRadius: theme.borderRadius.lg,
+          fontSize: theme.typography.h5,
+          fontWeight: theme.typography.medium,
+          color: value ? theme.colors.textPrimary : theme.colors.textSecondary,
           boxSizing: 'border-box',
-          transition: 'all 0.2s',
-          background: focused || isOpen ? '#f9fafb' : '#fff',
+          transition: theme.transitions.fast,
+          background: theme.colors.bgCardDark,
           outline: 'none',
           textAlign: 'left',
           cursor: 'pointer',
@@ -277,12 +282,12 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
         left: '16px',
         top: isActive ? '8px' : '50%',
         transform: isActive ? 'translateY(0)' : 'translateY(-50%)',
-        fontSize: isActive ? '12px' : '16px',
-        fontWeight: isActive ? 600 : 500,
-        color: focused || isOpen ? '#667eea' : '#9ca3af',
-        transition: 'all 0.2s',
+        fontSize: isActive ? theme.typography.caption : theme.typography.h5,
+        fontWeight: isActive ? theme.typography.semiBold : theme.typography.medium,
+        color: focused || isOpen ? theme.colors.accentPurple : theme.colors.textSecondary,
+        transition: theme.transitions.fast,
         pointerEvents: 'none',
-        background: '#fff',
+        background: theme.colors.bgCardDark,
         padding: '0 4px'
       }}>
         Date of Birth
@@ -295,10 +300,12 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
           left: 0,
           right: 0,
           marginTop: '4px',
-          background: '#fff',
-          border: '1px solid #e5e5e3',
-          borderRadius: '12px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          background: theme.colors.bgModal,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          border: `1px solid ${theme.colors.borderMedium}`,
+          borderRadius: theme.borderRadius.lg,
+          boxShadow: theme.shadows.card,
           zIndex: 10,
           padding: '16px'
         }}>
@@ -309,14 +316,16 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
               style={{
                 flex: 2,
                 padding: '10px 8px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 500,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.bodySmall,
+                fontWeight: theme.typography.medium,
                 cursor: 'pointer',
                 outline: 'none',
                 boxSizing: 'border-box',
-                minWidth: 0
+                minWidth: 0,
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             >
               {months.map((month, idx) => (
@@ -330,14 +339,16 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
               style={{
                 flex: 1,
                 padding: '10px 8px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 500,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.bodySmall,
+                fontWeight: theme.typography.medium,
                 cursor: 'pointer',
                 outline: 'none',
                 boxSizing: 'border-box',
-                minWidth: 0
+                minWidth: 0,
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             >
               {days.map(day => (
@@ -351,14 +362,16 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
               style={{
                 flex: 1.2,
                 padding: '10px 8px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 500,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.bodySmall,
+                fontWeight: theme.typography.medium,
                 cursor: 'pointer',
                 outline: 'none',
                 boxSizing: 'border-box',
-                minWidth: 0
+                minWidth: 0,
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             >
               {years.map(year => (
@@ -373,12 +386,12 @@ function DateOfBirthPicker({ value, onChange, isOpen, onToggle, onClose, focused
             style={{
               width: '100%',
               padding: '12px',
-              background: '#667eea',
-              color: '#fff',
+              background: theme.colors.accentPurple,
+              color: theme.colors.textPrimary,
               border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 600,
+              borderRadius: theme.borderRadius.sm,
+              fontSize: theme.typography.body,
+              fontWeight: theme.typography.semiBold,
               cursor: 'pointer'
             }}
           >
@@ -430,14 +443,14 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
         style={{
           width: '100%',
           padding: '20px 16px 8px 16px',
-          border: `2px solid ${focused || isOpen ? '#667eea' : '#e5e5e3'}`,
-          borderRadius: '12px',
-          fontSize: '16px',
-          fontWeight: 500,
-          color: value ? '#1a1a1a' : '#9ca3af',
+          border: `1px solid ${focused || isOpen ? theme.colors.accentPurple : theme.colors.borderSubtle}`,
+          borderRadius: theme.borderRadius.lg,
+          fontSize: theme.typography.h5,
+          fontWeight: theme.typography.medium,
+          color: value ? theme.colors.textPrimary : theme.colors.textSecondary,
           boxSizing: 'border-box',
-          transition: 'all 0.2s',
-          background: focused || isOpen ? '#f9fafb' : '#fff',
+          transition: theme.transitions.fast,
+          background: theme.colors.bgCardDark,
           outline: 'none',
           textAlign: 'left',
           cursor: 'pointer',
@@ -448,9 +461,9 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
       >
         <span>{value || ''}</span>
         <span style={{ 
-          fontSize: '12px',
+          fontSize: theme.typography.caption,
           transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.2s'
+          transition: theme.transitions.fast
         }}>
           ▼
         </span>
@@ -460,12 +473,12 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
         left: '16px',
         top: isActive ? '8px' : '50%',
         transform: isActive ? 'translateY(0)' : 'translateY(-50%)',
-        fontSize: isActive ? '12px' : '16px',
-        fontWeight: isActive ? 600 : 500,
-        color: focused || isOpen ? '#667eea' : '#9ca3af',
-        transition: 'all 0.2s',
+        fontSize: isActive ? theme.typography.caption : theme.typography.h5,
+        fontWeight: isActive ? theme.typography.semiBold : theme.typography.medium,
+        color: focused || isOpen ? theme.colors.accentPurple : theme.colors.textSecondary,
+        transition: theme.transitions.fast,
         pointerEvents: 'none',
-        background: '#fff',
+        background: theme.colors.bgCardDark,
         padding: '0 4px'
       }}>
         Country
@@ -478,16 +491,18 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
           left: 0,
           right: 0,
           marginTop: '4px',
-          background: '#fff',
-          border: '1px solid #e5e5e3',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          background: theme.colors.bgModal,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          border: `1px solid ${theme.colors.borderMedium}`,
+          borderRadius: theme.borderRadius.lg,
+          boxShadow: theme.shadows.card,
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
           maxHeight: '200px'
         }}>
-          <div style={{ padding: '12px', borderBottom: '1px solid #f3f4f6' }}>
+          <div style={{ padding: '12px', borderBottom: `1px solid ${theme.colors.borderSubtle}` }}>
             <input
               type="text"
               placeholder="Search countries..."
@@ -497,11 +512,13 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                border: '1px solid #e5e5e3',
-                borderRadius: '8px',
-                fontSize: '14px',
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                fontSize: theme.typography.body,
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary
               }}
             />
           </div>
@@ -511,8 +528,8 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
               <div style={{
                 padding: '20px',
                 textAlign: 'center',
-                color: '#9ca3af',
-                fontSize: '14px'
+                color: theme.colors.textSecondary,
+                fontSize: theme.typography.body
               }}>
                 No countries found
               </div>
@@ -526,19 +543,30 @@ function CountryDropdown({ value, onChange, isOpen, onToggle, onClose, focused, 
                     width: '100%',
                     padding: '12px 16px',
                     border: 'none',
-                    background: value === country.name ? '#f9f9f7' : 'transparent',
+                    background: value === country.name ? 'rgba(124, 111, 255, 0.15)' : 'transparent',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    fontSize: '15px',
-                    color: '#1a1a1a',
-                    borderBottom: '1px solid #f3f4f6',
+                    fontSize: theme.typography.h6,
+                    color: theme.colors.textPrimary,
+                    borderBottom: `1px solid ${theme.colors.borderSubtle}`,
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    transition: theme.transitions.fast
+                  }}
+                  onMouseEnter={(e) => {
+                    if (value !== country.name) {
+                      e.currentTarget.style.background = 'rgba(124, 111, 255, 0.08)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (value !== country.name) {
+                      e.currentTarget.style.background = 'transparent'
+                    }
                   }}
                 >
                   <span>{country.name}</span>
-                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                  <span style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary }}>
                     {country.currency} {country.currencyName}
                   </span>
                 </button>
