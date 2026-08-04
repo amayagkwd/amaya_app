@@ -279,7 +279,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                   </svg>
                 </div>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600, color: '#ffffff' }}>
-                  Office
+                  Maps
                 </h3>
                 <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
                   No routes yet
@@ -309,7 +309,14 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
               data.mapCards.map((mapCard, index) => (
                 <div
                   key={index}
-                  onClick={() => handleMapCardClick(mapCard)}
+                  onClick={() => {
+                    if (!mapCard.location1 || !mapCard.location2) {
+                      // Navigate with index for setup
+                      navigate(`/maps?edit=${index}`)
+                    } else {
+                      handleMapCardClick(mapCard)
+                    }
+                  }}
                   style={{
                     padding: '0',
                     background: 'rgba(28, 33, 40, 0.6)',
@@ -317,7 +324,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                     WebkitBackdropFilter: 'blur(20px)',
                     borderRadius: '24px',
                     position: 'relative',
-                    border: '1px solid rgba(139, 146, 176, 0.15)',
+                    border: `1px solid ${!mapCard.location1 || !mapCard.location2 ? 'rgba(255, 184, 77, 0.3)' : 'rgba(139, 146, 176, 0.15)'}`,
                     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
                     overflow: 'hidden',
                     cursor: 'pointer',
@@ -337,35 +344,54 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                     e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)'
                   }}
                 >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      navigate('/maps')
-                    }}
-                    style={{
+                  {(!mapCard.location1 || !mapCard.location2) && (
+                    <div style={{
                       position: 'absolute',
                       top: '14px',
                       right: '14px',
-                      padding: '8px',
-                      background: 'rgba(10, 14, 39, 0.7)',
-                      border: 'none',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 2,
-                      opacity: 0.9
-                    }}
-                    title="Edit"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                  </button>
+                      padding: '6px 12px',
+                      background: 'rgba(255, 184, 77, 0.2)',
+                      border: '1px solid rgba(255, 184, 77, 0.3)',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#ffb84d',
+                      zIndex: 2
+                    }}>
+                      Setup Required
+                    </div>
+                  )}
+                  {mapCard.location1 && mapCard.location2 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/maps?edit=${index}`)
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '14px',
+                        right: '14px',
+                        padding: '8px',
+                        background: 'rgba(10, 14, 39, 0.7)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2,
+                        opacity: 0.9
+                      }}
+                      title="Edit"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                  )}
                   
                   <div style={{ padding: '18px 18px 12px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
@@ -399,17 +425,23 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
                     position: 'relative',
                     overflow: 'hidden'
                   }}>
-                    <img 
-                      src="/map_image.png" 
-                      alt="Map preview"
-                      style={{ 
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        borderRadius: '16px',
-                        opacity: 0.8
-                      }}
-                    />
+                    {!mapCard.location1 || !mapCard.location2 ? (
+                      <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)', fontSize: '13px' }}>
+                        Click to setup locations
+                      </div>
+                    ) : (
+                      <img 
+                        src="/map_image.png" 
+                        alt="Map preview"
+                        style={{ 
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '16px',
+                          opacity: 0.8
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               ))
@@ -422,136 +454,197 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore, onAddC
             cardId="weather"
             size="half"
           >
-            <div
-              onClick={() => navigate('/weather')}
-              style={{
+            {data.weatherCards.length === 0 ? (
+              <div style={{
                 padding: '20px',
                 background: 'rgba(28, 33, 40, 0.6)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 borderRadius: '24px',
-                cursor: 'pointer',
+                textAlign: 'center',
                 height: '200px',
                 display: 'flex',
                 flexDirection: 'column',
+                justifyContent: 'center',
                 border: '1px solid rgba(139, 146, 176, 0.15)',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(28, 33, 40, 0.8)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.5)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(28, 33, 40, 0.6)'
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
+              }}>
                 <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '12px',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
                   background: 'rgba(255, 184, 77, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
                 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffb84d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffb84d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
                   </svg>
                 </div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#ffffff' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600, color: '#ffffff' }}>
                   Weather
                 </h3>
+                <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                  No weather cards yet
+                </p>
+                <button
+                  onClick={() => navigate('/weather')}
+                  style={{
+                    padding: '8px 18px',
+                    background: 'rgba(255, 184, 77, 0.2)',
+                    color: '#ffb84d',
+                    border: '1px solid rgba(255, 184, 77, 0.3)',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    margin: '0 auto'
+                  }}
+                >
+                  <span style={{ fontSize: '18px', fontWeight: 400 }}>+</span>
+                  <span>Add weather</span>
+                </button>
               </div>
-              {weatherData ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-                  {/* Temperature and Weather Icon - Side by Side */}
-                  {(data.weatherSettings?.showTemperature || data.weatherSettings?.showWeather) && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                      {data.weatherSettings?.showTemperature && weatherData.current?.temperature_2m !== undefined && (
-                        <div style={{ fontSize: '48px', fontWeight: 700, color: '#ffffff', lineHeight: 1, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-                          {Math.round(weatherData.current.temperature_2m)}°
+            ) : (
+              data.weatherCards.map((weatherCard, index) => (
+                <div
+                  key={index}
+                  onClick={() => navigate(`/weather?edit=${index}`)}
+                  style={{
+                    padding: '20px',
+                    background: 'rgba(28, 33, 40, 0.6)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    borderRadius: '24px',
+                    cursor: 'pointer',
+                    height: '200px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    border: '1px solid rgba(139, 146, 176, 0.15)',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(28, 33, 40, 0.8)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(28, 33, 40, 0.6)'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '12px',
+                      background: 'rgba(255, 184, 77, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffb84d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                      </svg>
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#ffffff' }}>
+                      {weatherCard.name}
+                    </h3>
+                  </div>
+                  {weatherData ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
+                      {/* Temperature and Weather Icon - Side by Side */}
+                      {(weatherCard.showTemperature || weatherCard.showWeather) && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                          {weatherCard.showTemperature && weatherData.current?.temperature_2m !== undefined && (
+                            <div style={{ fontSize: '48px', fontWeight: 700, color: '#ffffff', lineHeight: 1, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
+                              {Math.round(weatherData.current.temperature_2m)}°
+                            </div>
+                          )}
+                          {weatherCard.showWeather && weatherData.current?.weathercode !== undefined && (
+                            <div style={{ fontSize: '42px', filter: 'drop-shadow(0 4px 16px rgba(255, 184, 77, 0.3))' }}>
+                              {getWeatherEmoji(weatherData.current.weathercode)}
+                            </div>
+                          )}
                         </div>
                       )}
-                      {data.weatherSettings?.showWeather && weatherData.current?.weathercode !== undefined && (
-                        <div style={{ fontSize: '42px', filter: 'drop-shadow(0 4px 16px rgba(255, 184, 77, 0.3))' }}>
-                          {getWeatherEmoji(weatherData.current.weathercode)}
+                      
+                      {/* Rain Check - Below */}
+                      {weatherCard.rainCheck && weatherData.hourly?.precipitation_probability && weatherData.hourly?.time && (() => {
+                        const startTime = weatherCard.startTime || '09:00'
+                        const endTime = weatherCard.endTime || '18:00'
+                        const [startHour, startMin] = startTime.split(':').map(Number)
+                        const [endHour, endMin] = endTime.split(':').map(Number)
+                        
+                        const times = weatherData.hourly.time
+                        const precipProbs = weatherData.hourly.precipitation_probability
+                        
+                        let willRain = false
+                        
+                        for (let i = 0; i < times.length && i < precipProbs.length; i++) {
+                          const timeStr = times[i]
+                          const hour = parseInt(timeStr.split('T')[1].split(':')[0])
+                          
+                          let inRange = false
+                          if (startHour < endHour) {
+                            inRange = hour >= startHour && hour <= endHour
+                          } else {
+                            inRange = hour >= startHour || hour <= endHour
+                          }
+                          
+                          if (inRange && precipProbs[i] >= 40) {
+                            willRain = true
+                            break
+                          }
+                        }
+                        
+                        return (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '8px 16px',
+                            background: willRain ? 'rgba(255, 107, 157, 0.15)' : 'rgba(0, 229, 204, 0.15)',
+                            borderRadius: '12px',
+                            border: willRain ? '1px solid rgba(255, 107, 157, 0.3)' : '1px solid rgba(0, 229, 204, 0.3)',
+                            alignSelf: 'center'
+                          }}>
+                            <span style={{ fontSize: '24px' }}>
+                              {willRain ? '☔' : '☀️'}
+                            </span>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 600,
+                              color: willRain ? '#ff6b9d' : '#00e5cc',
+                              letterSpacing: '0.01em'
+                            }}>
+                              {willRain ? 'Umbrella' : 'No Rain'}
+                            </span>
+                          </div>
+                        )
+                      })()}
+                      {!weatherCard.showTemperature && !weatherCard.showWeather && !weatherCard.rainCheck && (
+                        <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center' }}>
+                          Choose what to display
                         </div>
                       )}
                     </div>
-                  )}
-                  
-                  {/* Rain Check - Below */}
-                  {data.weatherSettings?.rainCheck && weatherData.hourly?.precipitation_probability && weatherData.hourly?.time && (() => {
-                    const startTime = data.weatherSettings.startTime || '09:00'
-                    const endTime = data.weatherSettings.endTime || '18:00'
-                    const [startHour, startMin] = startTime.split(':').map(Number)
-                    const [endHour, endMin] = endTime.split(':').map(Number)
-                    
-                    const times = weatherData.hourly.time
-                    const precipProbs = weatherData.hourly.precipitation_probability
-                    
-                    let willRain = false
-                    
-                    for (let i = 0; i < times.length && i < precipProbs.length; i++) {
-                      const timeStr = times[i]
-                      const hour = parseInt(timeStr.split('T')[1].split(':')[0])
-                      
-                      let inRange = false
-                      if (startHour < endHour) {
-                        inRange = hour >= startHour && hour <= endHour
-                      } else {
-                        inRange = hour >= startHour || hour <= endHour
-                      }
-                      
-                      if (inRange && precipProbs[i] >= 40) {
-                        willRain = true
-                        break
-                      }
-                    }
-                    
-                    return (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '8px 16px',
-                        background: willRain ? 'rgba(255, 107, 157, 0.15)' : 'rgba(0, 229, 204, 0.15)',
-                        borderRadius: '12px',
-                        border: willRain ? '1px solid rgba(255, 107, 157, 0.3)' : '1px solid rgba(0, 229, 204, 0.3)',
-                        alignSelf: 'center'
-                      }}>
-                        <span style={{ fontSize: '24px' }}>
-                          {willRain ? '☔' : '☀️'}
-                        </span>
-                        <span style={{ 
-                          fontSize: '11px', 
-                          fontWeight: 600,
-                          color: willRain ? '#ff6b9d' : '#00e5cc',
-                          letterSpacing: '0.01em'
-                        }}>
-                          {willRain ? 'Umbrella' : 'No Rain'}
-                        </span>
-                      </div>
-                    )
-                  })()}
-                  {!data.weatherSettings?.showTemperature && !data.weatherSettings?.showWeather && !data.weatherSettings?.rainCheck && (
-                    <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center' }}>
-                      Choose what to display
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      Loading weather...
                     </div>
                   )}
                 </div>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                  Loading weather...
-                </div>
-              )}
-            </div>
+              ))
+            )}
           </DashboardCard>
         )}
         

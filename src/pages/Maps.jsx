@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import theme from '../theme'
 
 export default function Maps({ data, updateStore }) {
   const [editingIndex, setEditingIndex] = useState(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [openedFromUrl, setOpenedFromUrl] = useState(false)
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     name: '',
     locationType: 'two',
@@ -13,6 +17,37 @@ export default function Maps({ data, updateStore }) {
     location2Label: '',
     transportMode: 'car'
   })
+
+  // Auto-open edit for new cards or URL parameter
+  useEffect(() => {
+    // Check URL parameter first
+    const editParam = searchParams.get('edit')
+    if (editParam !== null) {
+      const editIndex = parseInt(editParam, 10)
+      if (!isNaN(editIndex) && editIndex >= 0 && editIndex < data.mapCards?.length) {
+        setOpenedFromUrl(true)
+        handleStartEdit(editIndex)
+        // Clear the URL parameter after opening
+        const newParams = new URLSearchParams(searchParams)
+        newParams.delete('edit')
+        setSearchParams(newParams, { replace: true })
+        return
+      }
+    }
+    
+    // Then check for new cards
+    const newCardIndex = data.mapCards?.findIndex(card => card.isNew)
+    if (newCardIndex !== -1) {
+      handleStartEdit(newCardIndex)
+      // Remove isNew flag
+      const updatedMapCards = [...data.mapCards]
+      delete updatedMapCards[newCardIndex].isNew
+      updateStore(current => ({
+        ...current,
+        mapCards: updatedMapCards
+      }))
+    }
+  }, [data.mapCards, searchParams])
 
   const handleStartCreate = () => {
     setIsCreating(true)
@@ -44,6 +79,11 @@ export default function Maps({ data, updateStore }) {
   }
 
   const handleCancel = () => {
+    if (openedFromUrl) {
+      // If opened from URL, navigate back to dashboard
+      navigate(-1)
+      setOpenedFromUrl(false)
+    }
     setIsCreating(false)
     setEditingIndex(null)
     setFormData({
@@ -88,15 +128,30 @@ export default function Maps({ data, updateStore }) {
       }))
     }
 
+    // Navigate back if opened from URL
+    if (openedFromUrl) {
+      navigate(-1)
+      setOpenedFromUrl(false)
+    }
+
     handleCancel()
   }
 
   const handleDelete = (index) => {
     if (confirm('Delete this map?')) {
       const updatedMapCards = data.mapCards.filter((_, i) => i !== index)
+      
+      // Also update the cards array - remove one 'maps' entry
+      const mapsIndex = data.cards.indexOf('maps')
+      const updatedCards = [...data.cards]
+      if (mapsIndex !== -1) {
+        updatedCards.splice(mapsIndex, 1)
+      }
+      
       updateStore(current => ({
         ...current,
-        mapCards: updatedMapCards
+        mapCards: updatedMapCards,
+        cards: updatedCards
       }))
     }
   }
@@ -418,6 +473,7 @@ export default function Maps({ data, updateStore }) {
               {data.mapCards.map((mapCard, index) => (
                 <div
                   key={index}
+                  onClick={() => handleStartEdit(index)}
                   style={{
                     background: theme.colors.bgCard,
                     backdropFilter: theme.backdropFilter,
@@ -428,7 +484,15 @@ export default function Maps({ data, updateStore }) {
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
                     border: `1px solid ${theme.colors.borderSubtle}`,
-                    boxShadow: theme.shadows.card
+                    boxShadow: theme.shadows.card,
+                    cursor: 'pointer',
+                    transition: theme.transitions.normal
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = theme.colors.bgCard
                   }}
                 >
                   <div style={{ flex: 1 }}>
@@ -452,18 +516,10 @@ export default function Maps({ data, updateStore }) {
                   </div>
                   <div style={{ display: 'flex', gap: theme.spacing.sm }}>
                     <button
-                      onClick={() => handleStartEdit(index)}
-                      className="btn-edit"
-                      style={{ outline: 'none' }}
-                    >
-                      <img 
-                        src="/edit-pencil-01-svgrepo-com.svg" 
-                        alt="Edit"
-                        style={{ filter: 'invert(60%) sepia(10%) saturate(500%) hue-rotate(194deg) brightness(95%) contrast(85%)' }}
-                      />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(index)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(index)
+                      }}
                       className="btn-delete"
                       style={{ outline: 'none' }}
                     >

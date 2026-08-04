@@ -76,6 +76,8 @@ function AppContent() {
         onClose={() => {}}
         onUpdateCards={handleUpdateCards}
         activeCards={data.cards}
+        data={data}
+        updateStore={updateStore}
       />
     )
   }
@@ -115,6 +117,8 @@ function AppContent() {
         onClose={() => setCardSelectionOpen(false)}
         onUpdateCards={handleUpdateCards}
         activeCards={data.cards}
+        data={data}
+        updateStore={updateStore}
       />
       
       <BottomSheet

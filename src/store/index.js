@@ -15,6 +15,7 @@ const initialState = {
   cards: [],
   cardSizes: {},
   mapCards: [],
+  weatherCards: [],
   weatherSettings: {
     showTemperature: true,
     showWeather: true,
@@ -52,6 +53,7 @@ export function loadStore() {
     profile: { ...initialState.profile, ...parsed.profile },
     payments: { ...initialState.payments, ...parsed.payments },
     mapCards: parsed.mapCards || [],
+    weatherCards: parsed.weatherCards || [],
     hasCompletedCardSetup: parsed.hasCompletedCardSetup !== undefined ? parsed.hasCompletedCardSetup : (parsed.cards && parsed.cards.length > 0)
   }
 }

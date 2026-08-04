@@ -1,11 +1,14 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { exportData, importData } from '../store'
 import theme from '../theme'
 
 export default function Settings({ data, updateStore }) {
   const [showImportModal, setShowImportModal] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [dataManagementOpen, setDataManagementOpen] = useState(false)
   const fileInputRef = useRef(null)
+  const navigate = useNavigate()
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0]
@@ -40,89 +43,340 @@ export default function Settings({ data, updateStore }) {
     <div style={{ padding: theme.spacing.xl }}>
       <h2 style={{ fontSize: theme.typography.h2, margin: `0 0 ${theme.spacing.xxl} 0`, color: theme.colors.textPrimary }}>Settings</h2>
       
+      {/* Edit Maps - Only visible if at least 1 map exists */}
+      {data?.mapCards?.length > 0 && (
+        <div style={{
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          marginBottom: theme.spacing.lg,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card,
+          overflow: 'hidden'
+        }}>
+          <button
+            onClick={() => navigate('/maps')}
+            style={{
+              width: '100%',
+              padding: theme.spacing.xl,
+              background: 'transparent',
+              color: theme.colors.textPrimary,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              transition: theme.transitions.normal
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+            }}
+          >
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{ 
+                fontSize: theme.typography.h4, 
+                margin: `0 0 ${theme.spacing.sm} 0`, 
+                color: theme.colors.textPrimary,
+                fontWeight: theme.typography.semiBold
+              }}>
+                Edit Maps
+              </h3>
+              <p style={{ 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textSecondary, 
+                margin: 0,
+                lineHeight: 1.5
+              }}>
+                Manage your map locations and routes
+              </p>
+            </div>
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Edit Weather - Only visible if at least 1 weather card exists */}
+      {data?.weatherCards?.length > 0 && (
+        <div style={{
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          marginBottom: theme.spacing.lg,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card,
+          overflow: 'hidden'
+        }}>
+          <button
+            onClick={() => navigate('/weather')}
+            style={{
+              width: '100%',
+              padding: theme.spacing.xl,
+              background: 'transparent',
+              color: theme.colors.textPrimary,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              transition: theme.transitions.normal
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+            }}
+          >
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{ 
+                fontSize: theme.typography.h4, 
+                margin: `0 0 ${theme.spacing.sm} 0`, 
+                color: theme.colors.textPrimary,
+                fontWeight: theme.typography.semiBold
+              }}>
+                Edit Weather
+              </h3>
+              <p style={{ 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textSecondary, 
+                margin: 0,
+                lineHeight: 1.5
+              }}>
+                Manage your weather card settings
+              </p>
+            </div>
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Edit Counter - Only visible if counter card exists */}
+      {data?.cards?.includes('counter') && (
+        <div style={{
+          background: theme.colors.bgCard,
+          backdropFilter: theme.backdropFilter,
+          WebkitBackdropFilter: theme.backdropFilter,
+          borderRadius: theme.borderRadius.lg,
+          marginBottom: theme.spacing.lg,
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card,
+          overflow: 'hidden'
+        }}>
+          <button
+            onClick={() => navigate('/counter')}
+            style={{
+              width: '100%',
+              padding: theme.spacing.xl,
+              background: 'transparent',
+              color: theme.colors.textPrimary,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              transition: theme.transitions.normal
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+            }}
+          >
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{ 
+                fontSize: theme.typography.h4, 
+                margin: `0 0 ${theme.spacing.sm} 0`, 
+                color: theme.colors.textPrimary,
+                fontWeight: theme.typography.semiBold
+              }}>
+                Edit Counter
+              </h3>
+              <p style={{ 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textSecondary, 
+                margin: 0,
+                lineHeight: 1.5
+              }}>
+                Manage your counter settings
+              </p>
+            </div>
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </button>
+        </div>
+      )}
+      
+      {/* Data Management */}
       <div style={{
         background: theme.colors.bgCard,
         backdropFilter: theme.backdropFilter,
         WebkitBackdropFilter: theme.backdropFilter,
-        padding: theme.spacing.xl,
         borderRadius: theme.borderRadius.lg,
         marginBottom: theme.spacing.lg,
         border: `1px solid ${theme.colors.borderSubtle}`,
-        boxShadow: theme.shadows.card
+        boxShadow: theme.shadows.card,
+        overflow: 'hidden'
       }}>
-        <h3 style={{ 
-          fontSize: theme.typography.h4, 
-          margin: `0 0 ${theme.spacing.sm} 0`, 
-          color: theme.colors.textPrimary,
-          fontWeight: theme.typography.semiBold
-        }}>
-          Data Management
-        </h3>
-        <p style={{ 
-          fontSize: theme.typography.body, 
-          color: theme.colors.textSecondary, 
-          margin: `0 0 ${theme.spacing.lg} 0`,
-          lineHeight: 1.5
-        }}>
-          Export or import your application data for backup or transfer.
-        </p>
-        
         <button
-          onClick={exportData}
+          onClick={() => setDataManagementOpen(!dataManagementOpen)}
           style={{
             width: '100%',
-            padding: theme.spacing.lg,
-            marginBottom: theme.spacing.md,
-            background: theme.colors.accentPurple,
+            padding: theme.spacing.xl,
+            background: 'transparent',
             color: theme.colors.textPrimary,
             border: 'none',
-            borderRadius: theme.borderRadius.sm,
-            fontSize: theme.typography.h5,
-            fontWeight: theme.typography.medium,
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             transition: theme.transitions.normal
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '0.9'
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '1'
+            e.currentTarget.style.background = 'transparent'
           }}
         >
-          Export Data
+          <div style={{ textAlign: 'left' }}>
+            <h3 style={{ 
+              fontSize: theme.typography.h4, 
+              margin: `0 0 ${theme.spacing.sm} 0`, 
+              color: theme.colors.textPrimary,
+              fontWeight: theme.typography.semiBold
+            }}>
+              Data Management
+            </h3>
+            <p style={{ 
+              fontSize: theme.typography.body, 
+              color: theme.colors.textSecondary, 
+              margin: 0,
+              lineHeight: 1.5
+            }}>
+              Export or import your application data
+            </p>
+          </div>
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            style={{
+              transform: dataManagementOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: theme.transitions.normal
+            }}
+          >
+            <path d="M6 9l6 6 6-6"></path>
+          </svg>
         </button>
+        
+        {dataManagementOpen && (
+          <div style={{ 
+            padding: `0 ${theme.spacing.xl} ${theme.spacing.xl} ${theme.spacing.xl}`,
+            borderTop: `1px solid ${theme.colors.borderSubtle}`
+          }}>
+            <div style={{ paddingTop: theme.spacing.lg }}>
+              <button
+                onClick={exportData}
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.lg,
+                  marginBottom: theme.spacing.md,
+                  background: theme.colors.accentPurple,
+                  color: theme.colors.textPrimary,
+                  border: 'none',
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  fontWeight: theme.typography.medium,
+                  cursor: 'pointer',
+                  transition: theme.transitions.normal
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.9'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1'
+                }}
+              >
+                Export Data
+              </button>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+              />
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            width: '100%',
-            padding: theme.spacing.lg,
-            background: 'rgba(124, 111, 255, 0.2)',
-            color: theme.colors.accentPurple,
-            border: `1px solid rgba(124, 111, 255, 0.35)`,
-            borderRadius: theme.borderRadius.sm,
-            fontSize: theme.typography.h5,
-            fontWeight: theme.typography.medium,
-            cursor: 'pointer',
-            transition: theme.transitions.normal
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(124, 111, 255, 0.3)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(124, 111, 255, 0.2)'
-          }}
-        >
-          Import Data
-        </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.lg,
+                  background: 'rgba(124, 111, 255, 0.2)',
+                  color: theme.colors.accentPurple,
+                  border: `1px solid rgba(124, 111, 255, 0.35)`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  fontWeight: theme.typography.medium,
+                  cursor: 'pointer',
+                  transition: theme.transitions.normal
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(124, 111, 255, 0.3)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(124, 111, 255, 0.2)'
+                }}
+              >
+                Import Data
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showImportModal && (

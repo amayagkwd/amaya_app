@@ -8,19 +8,39 @@ const availableCards = [
   { id: 'counter', name: 'Counter', icon: '🔢', description: 'Track daily counts', unique: false }
 ]
 
-export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, activeCards }) {
+export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, activeCards, data, updateStore }) {
   const [cardCounts, setCardCounts] = useState({})
   
   useEffect(() => {
     if (isOpen) {
-      // Count occurrences of each card type
+      // Count occurrences based on actual card instances
       const counts = {}
-      activeCards.forEach(cardId => {
-        counts[cardId] = (counts[cardId] || 0) + 1
-      })
+      
+      // Count payments (unique card)
+      if (activeCards.includes('payments')) {
+        counts.payments = 1
+      }
+      
+      // Count maps based on actual mapCards array
+      const mapCardsCount = data?.mapCards?.length || 0
+      if (mapCardsCount > 0) {
+        counts.maps = mapCardsCount
+      }
+      
+      // Count weather based on actual weatherCards array
+      const weatherCardsCount = data?.weatherCards?.length || 0
+      if (weatherCardsCount > 0) {
+        counts.weather = weatherCardsCount
+      }
+      
+      // Count counter (for now, just check if it exists in activeCards)
+      if (activeCards.includes('counter')) {
+        counts.counter = 1
+      }
+      
       setCardCounts(counts)
     }
-  }, [isOpen, activeCards])
+  }, [isOpen, activeCards, data?.mapCards?.length, data?.weatherCards?.length])
   
   if (!isOpen) return null
   
@@ -37,10 +57,49 @@ export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, act
         setCardCounts(prev => ({ ...prev, [cardId]: 1 }))
       }
     } else {
-      // For non-unique cards, increment count
+      // For non-unique cards, increment count and create empty instance
+      const currentCount = cardCounts[cardId] || 0
+      const newCount = currentCount + 1
+      
+      // Create empty instances for the card type
+      if (cardId === 'maps') {
+        const existingMaps = data?.mapCards || []
+        const newMap = {
+          name: `Map ${existingMaps.length + 1}`,
+          locationType: 'two',
+          location1: '',
+          location1Label: '',
+          location2: '',
+          location2Label: '',
+          transportMode: 'car',
+          isNew: true
+        }
+        updateStore(current => ({
+          ...current,
+          mapCards: [...(current.mapCards || []), newMap]
+        }))
+      } else if (cardId === 'weather') {
+        const existingWeather = data?.weatherCards || []
+        const newWeather = {
+          name: `Weather ${existingWeather.length + 1}`,
+          showTemperature: true,
+          showWeather: true,
+          rainCheck: false,
+          startTime: '09:00',
+          endTime: '18:00',
+          isNew: true
+        }
+        updateStore(current => ({
+          ...current,
+          weatherCards: [...(current.weatherCards || []), newWeather]
+        }))
+      } else if (cardId === 'counter') {
+        // Counter doesn't need instances, just tracking
+      }
+      
       setCardCounts(prev => ({
         ...prev,
-        [cardId]: (prev[cardId] || 0) + 1
+        [cardId]: newCount
       }))
     }
   }
@@ -216,10 +275,14 @@ export default function CardSelectionModal({ isOpen, onClose, onUpdateCards, act
                       <span>Add</span>
                     )
                   ) : (
-                    <>
-                      <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
-                      <span>{count}</span>
-                    </>
+                    count === 0 ? (
+                      <span>Add</span>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
+                        <span>{count}</span>
+                      </>
+                    )
                   )}
                 </button>
               </div>
