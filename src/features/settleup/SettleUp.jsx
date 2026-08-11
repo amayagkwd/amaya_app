@@ -1,5 +1,5 @@
-import AddTransactionButton from '../components/common/AddTransactionButton'
-import theme, { componentStyles } from '../theme'
+import AddTransactionButton from '../common/AddTransactionButton'
+import theme, { componentStyles } from '../../theme'
 
 export default function SettleUp({ onOpenBottomSheet }) {
   return (

@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
-import PaymentsHistory from '../components/payments/PaymentsHistory'
-import EditTransactionModal from '../components/payments/EditTransactionModal'
-import AddTransactionButton from '../components/common/AddTransactionButton'
-import PeriodSelector from '../components/common/PeriodSelector'
-import { formatLargeNumber } from '../utils/formatLargeNumber'
-import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '../hooks/usePayments'
-import theme, { componentStyles } from '../theme'
+import PaymentsHistory from './PaymentsHistory'
+import EditTransactionModal from './EditTransactionModal'
+import AddTransactionButton from '../common/AddTransactionButton'
+import PeriodSelector from './PeriodSelector'
+import { formatLargeNumber } from '../../utils/formatLargeNumber'
+import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '../../hooks/usePayments'
+import theme, { componentStyles } from '../../theme'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
   const [selectedDate, setSelectedDate] = useState(new Date())

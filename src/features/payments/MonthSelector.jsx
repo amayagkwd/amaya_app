@@ -1,4 +1,4 @@
-import { getMonthYear } from '../utils/formatDate'
+import { getMonthYear } from '../../utils/formatDate'
 
 export default function MonthSelector({ date, onPrev, onNext, disableNext }) {
   return (

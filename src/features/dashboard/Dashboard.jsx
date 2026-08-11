@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getGreeting, getTodayDate } from '../utils/formatDate'
-import { formatCurrency } from '../utils/formatCurrency'
-import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
-import AddTransactionButton from '../components/common/AddTransactionButton'
-import theme, { componentStyles } from '../theme'
+import { getGreeting, getTodayDate } from '../../utils/formatDate'
+import { formatCurrency } from '../../utils/formatCurrency'
+import { getMonthTransactions, calculateMonthStats } from '../../hooks/usePayments'
+import AddTransactionButton from '../common/AddTransactionButton'
+import theme, { componentStyles } from '../../theme'
 
 export default function Dashboard({ data, onOpenBottomSheet }) {
   const navigate = useNavigate()

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import theme, { componentStyles } from '../theme'
+import theme, { componentStyles } from '../../theme'
 
 export default function Profile({ data, updateStore }) {
   const [saved, setSaved] = useState({})

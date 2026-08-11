@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { exportData, importData } from '../store'
-import theme, { componentStyles } from '../theme'
+import { exportData, importData } from '../../store'
+import theme, { componentStyles } from '../../theme'
 
 export default function Settings({ data, updateStore }) {
   const [showImportModal, setShowImportModal] = useState(false)

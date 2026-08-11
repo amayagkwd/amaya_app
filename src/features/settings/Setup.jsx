@@ -1,5 +1,5 @@
-import PaymentsSetup from '../components/payments/PaymentsSetup'
-import theme, { componentStyles } from '../theme'
+import PaymentsSetup from './PaymentsSetup'
+import theme, { componentStyles } from '../../theme'
 
 export default function Setup({ data, updateStore }) {
   return (

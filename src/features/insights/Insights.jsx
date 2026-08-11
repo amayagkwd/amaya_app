@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
-import AddTransactionButton from '../components/common/AddTransactionButton'
-import PeriodSelector from '../components/common/PeriodSelector'
-import PaymentsCharts from '../components/payments/PaymentsCharts'
-import { getMonthTransactions, getYearTransactions } from '../hooks/usePayments'
-import theme, { componentStyles } from '../theme'
+import AddTransactionButton from '../common/AddTransactionButton'
+import PeriodSelector from '../payments/PeriodSelector'
+import PaymentsCharts from './PaymentsCharts'
+import { getMonthTransactions, getYearTransactions } from '../../hooks/usePayments'
+import theme, { componentStyles } from '../../theme'
 
 export default function Insights({ data, onOpenBottomSheet }) {
   const [selectedDate, setSelectedDate] = useState(new Date())
