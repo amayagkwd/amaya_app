@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import theme from '../theme'
+import theme, { componentStyles } from '../theme'
 
 export default function Profile({ data, updateStore }) {
   const [saved, setSaved] = useState({})
@@ -27,8 +27,8 @@ export default function Profile({ data, updateStore }) {
   }
   
   return (
-    <div style={{ padding: theme.spacing.xl }}>
-      <h2 style={{ fontSize: theme.typography.h2, margin: `0 0 ${theme.spacing.xxl} 0`, color: theme.colors.textPrimary }}>Profile</h2>
+    <div style={componentStyles.pageContainer}>
+      <h2 style={componentStyles.pageHeader}>Profile</h2>
       
       <ProfileField
         label="Name"

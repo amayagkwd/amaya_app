@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useStore } from './hooks/useStore'
 import { usePayments } from './hooks/usePayments'
 import TopBar from './components/common/TopBar'
@@ -7,44 +7,22 @@ import BottomNav from './components/common/BottomNav'
 import BottomSheet from './components/common/BottomSheet'
 import Toast from './components/common/Toast'
 import OnboardingModal from './components/common/OnboardingModal'
-import CardSelectionModal from './components/dashboard/CardSelectionModal'
 import InstallBanner from './components/common/InstallBanner'
 import Dashboard from './pages/Dashboard'
 import Payments from './pages/Payments'
+import Insights from './pages/Insights'
+import SettleUp from './pages/SettleUp'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
-import Maps from './pages/Maps'
-import Weather from './pages/Weather'
-import Counter from './pages/Counter'
+import Setup from './pages/Setup'
 import theme from './theme'
 
 function AppContent() {
   const [data, updateStore] = useStore()
   const { addTransaction, deleteTransaction } = usePayments(data, updateStore)
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
-  const [cardSelectionOpen, setCardSelectionOpen] = useState(false)
-  const location = useLocation()
-  const navigate = useNavigate()
   
-  // Handle daily reset for counter
-  useEffect(() => {
-    if (data.counterSettings?.dailyReset) {
-      const today = new Date().toISOString().split('T')[0]
-      const lastResetDate = data.lastCounterResetDate
-      
-      if (lastResetDate !== today) {
-        updateStore(current => ({
-          ...current,
-          counterValue: 0,
-          lastCounterResetDate: today
-        }))
-      }
-    }
-  }, [data.counterSettings?.dailyReset, data.lastCounterResetDate, updateStore])
-  
-  const showFAB = location.pathname === '/'
   const needsOnboarding = !data.profile.name || !data.profile.dob || !data.profile.country
-  const needsCardSetup = !needsOnboarding && !data.hasCompletedCardSetup
   
   const handleOnboardingComplete = (profileData) => {
     updateStore(current => ({
@@ -53,33 +31,8 @@ function AppContent() {
     }))
   }
   
-  const handleUpdateCards = (cardIds) => {
-    updateStore(current => ({
-      ...current,
-      cards: cardIds,
-      hasCompletedCardSetup: true
-    }))
-  }
-  
-  const handleFABClick = () => {
-    setCardSelectionOpen(true)
-  }
-  
   if (needsOnboarding) {
     return <OnboardingModal onComplete={handleOnboardingComplete} />
-  }
-  
-  if (needsCardSetup) {
-    return (
-      <CardSelectionModal
-        isOpen={true}
-        onClose={() => {}}
-        onUpdateCards={handleUpdateCards}
-        activeCards={data.cards}
-        data={data}
-        updateStore={updateStore}
-      />
-    )
   }
   
   return (
@@ -98,28 +51,17 @@ function AppContent() {
         minHeight: `calc(100vh - ${theme.layout.topBarHeight})`
       }}>
         <Routes>
-          <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} onAddCard={handleFABClick} />} />
+          <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => setBottomSheetOpen(true)} updateStore={updateStore} />} />
           <Route path="/payments" element={<Payments data={data} updateStore={updateStore} onDelete={deleteTransaction} onOpenBottomSheet={() => setBottomSheetOpen(true)} />} />
+          <Route path="/insights" element={<Insights data={data} updateStore={updateStore} onOpenBottomSheet={() => setBottomSheetOpen(true)} />} />
+          <Route path="/settleup" element={<SettleUp data={data} updateStore={updateStore} onOpenBottomSheet={() => setBottomSheetOpen(true)} />} />
           <Route path="/profile" element={<Profile data={data} updateStore={updateStore} />} />
           <Route path="/settings" element={<Settings data={data} updateStore={updateStore} />} />
-          <Route path="/maps" element={<Maps data={data} updateStore={updateStore} />} />
-          <Route path="/weather" element={<Weather data={data} updateStore={updateStore} />} />
-          <Route path="/counter" element={<Counter data={data} updateStore={updateStore} />} />
+          <Route path="/setup" element={<Setup data={data} updateStore={updateStore} />} />
         </Routes>
       </main>
       
       <BottomNav />
-      
-
-      
-      <CardSelectionModal
-        isOpen={cardSelectionOpen}
-        onClose={() => setCardSelectionOpen(false)}
-        onUpdateCards={handleUpdateCards}
-        activeCards={data.cards}
-        data={data}
-        updateStore={updateStore}
-      />
       
       <BottomSheet
         isOpen={bottomSheetOpen}

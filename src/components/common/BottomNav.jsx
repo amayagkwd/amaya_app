@@ -7,7 +7,9 @@ export default function BottomNav() {
   
   const navItems = [
     { id: 'home', label: 'Home', path: '/', icon: '/home-4-svgrepo-com.svg', size: '24px' },
-    { id: 'profile', label: 'Profile', path: '/profile', icon: '/profile-1335-svgrepo-com.svg', size: '20px' },
+    { id: 'payments', label: 'Payments', path: '/payments', icon: '/currency-inr-bold-svgrepo-com.svg', size: '24px' },
+    { id: 'insights', label: 'Insights', path: '/insights', icon: '/insights-svgrepo-com.svg', size: '24px' },
+    { id: 'settleup', label: 'Settle Up', path: '/settleup', icon: '/friend-svgrepo-com.svg', size: '24px' },
     { id: 'settings', label: 'Settings', path: '/settings', icon: '/settings-svgrepo-com.svg', size: '22px' }
   ]
   
@@ -59,7 +61,7 @@ export default function BottomNav() {
             gap: '6px',
             color: isActive(item.path) ? theme.colors.accentPurple : theme.colors.textSecondary,
             transition: theme.transitions.smooth,
-            minWidth: '70px',
+            minWidth: '60px',
             position: 'relative',
             outline: 'none',
             WebkitTapHighlightColor: 'transparent'
@@ -92,10 +94,11 @@ export default function BottomNav() {
             }} 
           />
           <span style={{ 
-            fontSize: theme.typography.tiny, 
             fontWeight: isActive(item.path) ? theme.typography.semiBold : theme.typography.medium,
             letterSpacing: '0.01em',
-            color: isActive(item.path) ? theme.colors.accentPurple : theme.colors.textSecondary
+            color: isActive(item.path) ? theme.colors.accentPurple : theme.colors.textSecondary,
+            whiteSpace: 'nowrap',
+            fontSize: '10px'
           }}>
             {item.label}
           </span>

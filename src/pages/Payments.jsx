@@ -1,31 +1,18 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
-import PaymentsSetup from '../components/payments/PaymentsSetup'
+import { useState, useMemo, useRef } from 'react'
 import PaymentsHistory from '../components/payments/PaymentsHistory'
-import PaymentsCharts from '../components/payments/PaymentsCharts'
 import EditTransactionModal from '../components/payments/EditTransactionModal'
-import FAB from '../components/common/FAB'
-import { formatCurrency } from '../utils/formatCurrency'
+import AddTransactionButton from '../components/common/AddTransactionButton'
+import PeriodSelector from '../components/common/PeriodSelector'
 import { formatLargeNumber } from '../utils/formatLargeNumber'
-import { getMonthYear } from '../utils/formatDate'
 import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
-import theme from '../theme'
-
-const SECTIONS = ['setup', 'history', 'charts']
+import theme, { componentStyles } from '../theme'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
-  const location = useLocation()
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [activeSection, setActiveSection] = useState('history')
-  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [isYearly, setIsYearly] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
   const containerRef = useRef(null)
-  
-  useEffect(() => {
-    if (location.state?.openSetup) {
-      setActiveSection('setup')
-    }
-  }, [location.state])
   
   const allTransactions = useMemo(() => {
     return getMonthTransactions(
@@ -36,16 +23,6 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   }, [data.payments.transactions, selectedDate])
   
   const stats = useMemo(() => calculateMonthStats(allTransactions), [allTransactions])
-  
-  const last12Months = useMemo(() => {
-    const months = []
-    const now = new Date()
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      months.push(date)
-    }
-    return months
-  }, [])
   
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction)
@@ -66,91 +43,20 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     setEditingTransaction(null)
   }
   
-  const handleMonthSelect = (date) => {
-    setSelectedDate(date)
-    setMonthDropdownOpen(false)
-  }
-  
   return (
     <>
       <div style={{ padding: `${theme.spacing.xl}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl }}>
-          <h2 style={{ fontSize: theme.typography.h2, margin: 0, color: theme.colors.textPrimary, fontFamily: theme.typography.fontFamilyHeading, fontWeight: theme.typography.bold }}>Payments</h2>
+          <h2 style={componentStyles.pageHeaderSimple}>Payments</h2>
           
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
-              style={{
-                padding: `${theme.spacing.sm} ${theme.spacing.lg}`,
-                background: theme.colors.bgCard,
-                border: `1px solid ${theme.colors.borderSubtle}`,
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontSize: theme.typography.body,
-                display: 'flex',
-                alignItems: 'center',
-                WebkitTapHighlightColor: 'transparent',
-                gap: theme.spacing.sm,
-                color: theme.colors.textPrimary,
-                fontWeight: theme.typography.medium,
-                outline: 'none'
-              }}
-            >
-              {getMonthYear(selectedDate)}
-              <span style={{ fontSize: theme.typography.caption }}>▼</span>
-            </button>
-            {monthDropdownOpen && (
-              <>
-                <div
-                  onClick={() => setMonthDropdownOpen(false)}
-                  style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 10
-                  }}
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '4px',
-                  background: theme.colors.bgModal,
-                  backdropFilter: theme.backdropFilter,
-                  WebkitBackdropFilter: theme.backdropFilter,
-                  border: `1px solid ${theme.colors.borderSubtle}`,
-                  borderRadius: theme.borderRadius.sm,
-                  boxShadow: theme.shadows.card,
-                  zIndex: 11,
-                  minWidth: '150px',
-                  maxHeight: '300px',
-                  overflowY: 'auto'
-                }}>
-                  {last12Months.map(month => (
-                    <button
-                      key={month.getTime()}
-                      onClick={() => handleMonthSelect(month)}
-                      style={{
-                        width: '100%',
-                        padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-                        background: selectedDate.getMonth() === month.getMonth() && 
-                                   selectedDate.getFullYear() === month.getFullYear() 
-                                   ? theme.colors.bgCardHover : 'transparent',
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: theme.typography.body,
-                        color: theme.colors.textPrimary,
-                        borderBottom: `1px solid ${theme.colors.borderSubtle}`,
-                        outline: 'none'
-                      }}
-                    >
-                      {getMonthYear(month)}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          <PeriodSelector
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+            isYearly={isYearly}
+            onYearlyToggle={setIsYearly}
+          />
         </div>
       
       <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.xl }}>
@@ -159,96 +65,13 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
         <StatCard label="Balance" value={formatLargeNumber(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
       </div>
       
-      <div style={{ marginBottom: theme.spacing.xxl }}>
-        <div style={{ display: 'flex', position: 'relative' }}>
-          {SECTIONS.map(section => (
-            <button
-              key={section}
-              onClick={() => setActiveSection(section)}
-              style={{
-                flex: 1,
-                padding: `${theme.spacing.md} 0`,
-                background: 'none',
-                border: 'none',
-                color: activeSection === section ? theme.colors.textPrimary : theme.colors.textSecondary,
-                fontWeight: activeSection === section ? theme.typography.medium : theme.typography.regular,
-                fontSize: theme.typography.h6,
-                cursor: 'pointer',
-                textTransform: 'capitalize',
-                position: 'relative',
-                outline: 'none'
-              }}
-            >
-              {section}
-            </button>
-          ))}
-        </div>
-        <div style={{ 
-          height: '2px', 
-          background: theme.colors.borderSubtle,
-          position: 'relative'
-        }}>
-          <div style={{
-            position: 'absolute',
-            height: '2px',
-            background: theme.colors.accentPurple,
-            width: '33.333%',
-            left: activeSection === 'setup' ? '0%' : activeSection === 'history' ? '33.333%' : '66.666%',
-            transition: 'left 0.3s ease',
-            boxShadow: `0 0 8px ${theme.colors.accentPurple}`
-          }} />
-        </div>
-      </div>
-      
-      <div 
-        ref={containerRef}
-        style={{
-          overflow: 'hidden',
-          position: 'relative',
-          minHeight: '400px',
-          width: '100%'
-        }}
-      >
-        <div style={{
-          display: 'flex',
-          transform: `translateX(calc(-${SECTIONS.indexOf(activeSection) * (100/3)}%))`,
-          transition: 'transform 0.3s ease-out',
-          width: '300%',
-          willChange: 'transform'
-        }}>
-          <div 
-            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0', boxSizing: 'border-box' }}
-          >
-            <PaymentsSetup 
-              data={data} 
-              updateStore={updateStore}
-              autoOpenType={location.state?.categoryType}
-            />
-          </div>
-          
-          <div 
-            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0', boxSizing: 'border-box' }}
-          >
-            <PaymentsHistory
-              allTransactions={allTransactions}
-              categories={data.payments.categories}
-              country={data.profile.country}
-              onDelete={onDelete}
-              onEdit={handleEdit}
-            />
-          </div>
-          
-          <div 
-            style={{ width: 'calc(100% / 3)', flexShrink: 0, padding: '0', boxSizing: 'border-box' }}
-          >
-            <PaymentsCharts
-              allTransactions={allTransactions}
-              categories={data.payments.categories}
-              country={data.profile.country}
-            />
-          </div>
-        </div>
-      </div>
+      <PaymentsHistory
+        allTransactions={allTransactions}
+        categories={data.payments.categories}
+        country={data.profile.country}
+        onDelete={onDelete}
+        onEdit={handleEdit}
+      />
       
       {editingTransaction && (
         <EditTransactionModal
@@ -260,7 +83,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
       )}
       </div>
       
-      <FAB onClick={onOpenBottomSheet} />
+      <AddTransactionButton onClick={onOpenBottomSheet} />
     </>
   )
 }

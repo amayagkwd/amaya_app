@@ -183,6 +183,88 @@ export const componentStyles = {
     fontFamily: theme.typography.fontFamily,
     outline: 'none',
   },
+  
+  // Page specific styles
+  pageContainer: {
+    padding: theme.spacing.xl,
+  },
+  
+  pageHeader: {
+    fontSize: theme.typography.h2,
+    margin: `0 0 ${theme.spacing.xxl} 0`,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.typography.fontFamilyHeading,
+    fontWeight: theme.typography.bold,
+  },
+  
+  pageHeaderSimple: {
+    fontSize: theme.typography.h2,
+    margin: 0,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.typography.fontFamilyHeading,
+    fontWeight: theme.typography.bold,
+  },
+  
+  // Settings/Profile card container
+  settingsCard: {
+    background: theme.colors.bgCard,
+    backdropFilter: theme.backdropFilter,
+    WebkitBackdropFilter: theme.backdropFilter,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.lg,
+    border: `1px solid ${theme.colors.borderSubtle}`,
+    boxShadow: theme.shadows.card,
+    overflow: 'hidden',
+  },
+  
+  settingsButton: {
+    width: '100%',
+    padding: theme.spacing.xl,
+    background: 'transparent',
+    color: theme.colors.textPrimary,
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    transition: theme.transitions.normal,
+  },
+  
+  settingsButtonHover: {
+    background: 'rgba(255, 255, 255, 0.03)',
+  },
+  
+  settingsTitle: {
+    fontSize: theme.typography.h4,
+    margin: `0 0 ${theme.spacing.sm} 0`,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.semiBold,
+  },
+  
+  settingsDescription: {
+    fontSize: theme.typography.body,
+    color: theme.colors.textSecondary,
+    margin: 0,
+    lineHeight: 1.5,
+  },
+  
+  // Dashboard greeting
+  greeting: {
+    fontSize: theme.typography.h2,
+    margin: '0',
+    fontFamily: theme.typography.fontFamilyHeading,
+    fontWeight: theme.typography.bold,
+    letterSpacing: '-0.01em',
+    lineHeight: 1.2,
+    color: theme.colors.textPrimary,
+  },
+  
+  greetingDate: {
+    color: theme.colors.textSecondary,
+    margin: `0 0 ${theme.spacing.xxl} 0`,
+    fontSize: theme.typography.bodySmall,
+    fontWeight: theme.typography.medium,
+  },
 }
 
 export default theme

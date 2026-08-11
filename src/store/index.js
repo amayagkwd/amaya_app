@@ -11,29 +11,7 @@ const initialState = {
   payments: {
     categories: [],
     transactions: []
-  },
-  cards: [],
-  cardSizes: {},
-  mapCards: [],
-  weatherCards: [],
-  weatherSettings: {
-    showTemperature: true,
-    showWeather: true,
-    rainCheck: false,
-    startTime: '09:00',
-    endTime: '18:00'
-  },
-  counterSettings: {
-    dailyReset: false,
-    counterType: 'increment',
-    incrementValue: 1,
-    enableNotes: false,
-    title: 'My Counter'
-  },
-  counterValue: 0,
-  counterHistory: [],
-  lastCounterResetDate: null,
-  hasCompletedCardSetup: false
+  }
 }
 
 export function loadStore() {
@@ -51,10 +29,7 @@ export function loadStore() {
     ...initialState,
     ...parsed,
     profile: { ...initialState.profile, ...parsed.profile },
-    payments: { ...initialState.payments, ...parsed.payments },
-    mapCards: parsed.mapCards || [],
-    weatherCards: parsed.weatherCards || [],
-    hasCompletedCardSetup: parsed.hasCompletedCardSetup !== undefined ? parsed.hasCompletedCardSetup : (parsed.cards && parsed.cards.length > 0)
+    payments: { ...initialState.payments, ...parsed.payments }
   }
 }
 
