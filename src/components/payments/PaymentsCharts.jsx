@@ -83,25 +83,57 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     
     // Get all dates in the month and organize by weeks
     const dates = Object.keys(byDate).sort()
-    if (dates.length === 0) return { weeks: [], currentWeekIndex: 0, transactionsByDate: {} }
     
-    const firstDate = new Date(dates[0] + 'T00:00:00')
-    const year = firstDate.getFullYear()
-    const month = firstDate.getMonth()
+    // Determine the year and month from selected date or first transaction
+    let year, month
+    if (dates.length === 0) {
+      // No transactions, use current selected date
+      const now = new Date()
+      year = now.getFullYear()
+      month = now.getMonth()
+    } else {
+      const firstDate = new Date(dates[0] + 'T00:00:00')
+      year = firstDate.getFullYear()
+      month = firstDate.getMonth()
+    }
     
     // Get first and last day of month
     const firstDayOfMonth = new Date(year, month, 1)
     const lastDayOfMonth = new Date(year, month + 1, 0)
     
-    // Create weeks
+    // Create weeks with padding from previous/next months
     const weeks = []
     let currentWeekData = []
     let currentWeekIndex = 0
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     
-    // Start from first day of month
+    // Start from the first day of the month
     const currentDate = new Date(firstDayOfMonth)
+    
+    // Pad the beginning with previous month dates if first day is not Sunday
+    const firstDayOfWeek = firstDayOfMonth.getDay() // 0 = Sunday
+    if (firstDayOfWeek !== 0) {
+      // Add previous month dates
+      const prevMonthDate = new Date(year, month, 0) // Last day of previous month
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        const padDate = new Date(prevMonthDate)
+        padDate.setDate(prevMonthDate.getDate() - i)
+        const year = padDate.getFullYear()
+        const month = String(padDate.getMonth() + 1).padStart(2, '0')
+        const day = String(padDate.getDate()).padStart(2, '0')
+        const dateStr = `${year}-${month}-${day}`
+        
+        currentWeekData.push({
+          date: padDate.getDate(),
+          amount: byDate[dateStr] || 0,
+          dateStr: dateStr,
+          isOutsideMonth: true
+        })
+      }
+    }
+    
+    // Add current month dates
     while (currentDate <= lastDayOfMonth) {
       const year = currentDate.getFullYear()
       const month = String(currentDate.getMonth() + 1).padStart(2, '0')
@@ -112,7 +144,8 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
       currentWeekData.push({
         date: currentDate.getDate(),
         amount: byDate[dateStr] || 0,
-        dateStr: dateStr
+        dateStr: dateStr,
+        isOutsideMonth: false
       })
       
       // Check if current date falls in this week
@@ -122,13 +155,35 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
         currentWeekIndex = weeks.length
       }
       
-      // End of week (Saturday) or end of month
-      if (dayOfWeek === 6 || currentDate.getDate() === lastDayOfMonth.getDate()) {
+      // End of week (Saturday)
+      if (dayOfWeek === 6) {
         weeks.push([...currentWeekData])
         currentWeekData = []
       }
       
       currentDate.setDate(currentDate.getDate() + 1)
+    }
+    
+    // Pad the last week with next month dates if needed
+    if (currentWeekData.length > 0) {
+      const nextMonthDate = new Date(year, month + 1, 1) // First day of next month
+      const daysToAdd = 7 - currentWeekData.length
+      for (let i = 0; i < daysToAdd; i++) {
+        const padDate = new Date(nextMonthDate)
+        padDate.setDate(nextMonthDate.getDate() + i)
+        const year = padDate.getFullYear()
+        const month = String(padDate.getMonth() + 1).padStart(2, '0')
+        const day = String(padDate.getDate()).padStart(2, '0')
+        const dateStr = `${year}-${month}-${day}`
+        
+        currentWeekData.push({
+          date: padDate.getDate(),
+          amount: byDate[dateStr] || 0,
+          dateStr: dateStr,
+          isOutsideMonth: true
+        })
+      }
+      weeks.push([...currentWeekData])
     }
     
     return { weeks, currentWeekIndex, transactionsByDate }
@@ -485,6 +540,9 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                 }}>
                   {week.map((day, index) => {
                     const heightPixels = day.amount > 0 ? Math.max((day.amount / maxAmount) * 200, 10) : 0
+                    const barColor = day.isOutsideMonth ? 'rgba(139, 92, 246, 0.3)' : theme.colors.accentPurple
+                    const textColor = day.isOutsideMonth ? theme.colors.textMuted : theme.colors.textSecondary
+                    
                     return (
                       <div 
                         key={index} 
@@ -507,7 +565,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                             width: '100%',
                             maxWidth: '40px',
                             height: `${heightPixels}px`,
-                            background: theme.colors.accentPurple,
+                            background: barColor,
                             borderRadius: '4px 4px 0 0',
                             cursor: day.amount > 0 ? 'pointer' : 'default',
                             transition: theme.transitions.fast
@@ -517,7 +575,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                         />
                         <div style={{ 
                           fontSize: theme.typography.caption, 
-                          color: theme.colors.textSecondary,
+                          color: textColor,
                           marginTop: theme.spacing.sm
                         }}>
                           {day.date}
@@ -842,11 +900,11 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
             padding: '0 2px'
           }}>
             <ChartCard
-              title="Income Breakdown"
-              chartData={incomeBreakdown ? { ...incomeBreakdown, country } : null}
-              colors={COLORS}
-              legendOpen={legendOpen['income'] || false}
-              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, income: !prev['income'] }))}
+              title="Expense Breakdown"
+              chartData={expenseBreakdown ? { ...expenseBreakdown, country } : null}
+              colors={COLORS.slice().reverse()}
+              legendOpen={legendOpen['expense'] || false}
+              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, expense: !prev['expense'] }))}
             />
           </div>
           
@@ -857,11 +915,11 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
             padding: '0 2px'
           }}>
             <ChartCard
-              title="Expense Breakdown"
-              chartData={expenseBreakdown ? { ...expenseBreakdown, country } : null}
-              colors={COLORS.slice().reverse()}
-              legendOpen={legendOpen['expense'] || false}
-              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, expense: !prev['expense'] }))}
+              title="Income Breakdown"
+              chartData={incomeBreakdown ? { ...incomeBreakdown, country } : null}
+              colors={COLORS}
+              legendOpen={legendOpen['income'] || false}
+              onToggleLegend={() => setLegendOpen(prev => ({ ...prev, income: !prev['income'] }))}
             />
           </div>
           
