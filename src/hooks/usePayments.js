@@ -76,6 +76,13 @@ export function getMonthTransactions(transactions, year, month) {
   })
 }
 
+export function getYearTransactions(transactions, year) {
+  return transactions.filter(t => {
+    const date = new Date(t.date)
+    return date.getFullYear() === year
+  })
+}
+
 export function calculateMonthStats(transactions) {
   const income = transactions
     .filter(t => t.type === 'income')

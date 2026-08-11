@@ -6,17 +6,20 @@ import theme from '../../theme'
 
 const COLORS = ['#10b981', '#4f46e5', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16']
 
-export default function PaymentsCharts({ allTransactions, categories, country }) {
+export default function PaymentsCharts({ allTransactions, categories, country, isYearly, selectedYear }) {
   const [selectedDay, setSelectedDay] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(null)
   const [currentChartIndex, setCurrentChartIndex] = useState(0)
   const [currentWeek, setCurrentWeek] = useState(0)
+  const [currentHalfYear, setCurrentHalfYear] = useState(0)
   const [legendOpen, setLegendOpen] = useState({})
   const carouselRef = useRef(null)
   const weekCarouselRef = useRef(null)
+  const monthCarouselRef = useRef(null)
   
   // Disable scroll when modal is open
   useEffect(() => {
-    if (selectedDay) {
+    if (selectedDay || selectedMonth) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
@@ -25,7 +28,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [selectedDay])
+  }, [selectedDay, selectedMonth])
   
   const handleCarouselScroll = () => {
     if (carouselRef.current) {
@@ -43,6 +46,15 @@ export default function PaymentsCharts({ allTransactions, categories, country })
       const containerWidth = weekCarouselRef.current.offsetWidth
       const index = Math.round(scrollLeft / containerWidth)
       setCurrentWeek(index)
+    }
+  }
+  
+  const handleMonthScroll = () => {
+    if (monthCarouselRef.current) {
+      const scrollLeft = monthCarouselRef.current.scrollLeft
+      const containerWidth = monthCarouselRef.current.offsetWidth
+      const index = Math.round(scrollLeft / containerWidth)
+      setCurrentHalfYear(index)
     }
   }
   
@@ -122,9 +134,70 @@ export default function PaymentsCharts({ allTransactions, categories, country })
     return { weeks, currentWeekIndex, transactionsByDate }
   }, [allTransactions])
   
-  // Scroll to current week on mount
+  const monthlyData = useMemo(() => {
+    if (!isYearly) return { halfYears: [], currentHalfYearIndex: 0, categoryByMonth: {} }
+    
+    const expenseTxns = allTransactions.filter(t => t.type === 'expense')
+    
+    // Group by month
+    const byMonth = {}
+    const categoryByMonth = {}
+    
+    expenseTxns.forEach(t => {
+      const date = new Date(t.date)
+      const monthIndex = date.getMonth() // 0-11
+      
+      byMonth[monthIndex] = (byMonth[monthIndex] || 0) + t.amount
+      
+      if (!categoryByMonth[monthIndex]) categoryByMonth[monthIndex] = {}
+      const category = categories.find(c => c.id === t.categoryId)
+      const categoryName = category?.name || 'Unknown'
+      categoryByMonth[monthIndex][categoryName] = (categoryByMonth[monthIndex][categoryName] || 0) + t.amount
+    })
+    
+    // Create two half-year arrays
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const firstHalf = []
+    const secondHalf = []
+    
+    for (let i = 0; i < 6; i++) {
+      firstHalf.push({
+        month: i,
+        monthName: monthNames[i],
+        amount: byMonth[i] || 0
+      })
+    }
+    
+    for (let i = 6; i < 12; i++) {
+      secondHalf.push({
+        month: i,
+        monthName: monthNames[i],
+        amount: byMonth[i] || 0
+      })
+    }
+    
+    // Determine current half year
+    const currentMonth = new Date().getMonth()
+    const currentYear = new Date().getFullYear()
+    const currentHalfYearIndex = (selectedYear === currentYear && currentMonth >= 6) ? 1 : 0
+    
+    return { 
+      halfYears: [firstHalf, secondHalf], 
+      currentHalfYearIndex,
+      categoryByMonth
+    }
+  }, [allTransactions, isYearly, selectedYear, categories])
+  
+  // Scroll to current week/half-year on mount
   useEffect(() => {
-    if (weekCarouselRef.current && weeklyData.weeks.length > 0) {
+    if (isYearly && monthCarouselRef.current && monthlyData.halfYears.length > 0) {
+      const containerWidth = monthCarouselRef.current.offsetWidth
+      monthCarouselRef.current.scrollTo({
+        left: monthlyData.currentHalfYearIndex * containerWidth,
+        behavior: 'auto'
+      })
+      setCurrentHalfYear(monthlyData.currentHalfYearIndex)
+    } else if (!isYearly && weekCarouselRef.current && weeklyData.weeks.length > 0) {
       const containerWidth = weekCarouselRef.current.offsetWidth
       weekCarouselRef.current.scrollTo({
         left: weeklyData.currentWeekIndex * containerWidth,
@@ -132,17 +205,27 @@ export default function PaymentsCharts({ allTransactions, categories, country })
       })
       setCurrentWeek(weeklyData.currentWeekIndex)
     }
-  }, [weeklyData.currentWeekIndex, weeklyData.weeks.length])
+  }, [isYearly, weeklyData.currentWeekIndex, weeklyData.weeks.length, monthlyData.currentHalfYearIndex, monthlyData.halfYears.length])
   
   const maxAmount = useMemo(() => {
-    let max = 0
-    weeklyData.weeks.forEach(week => {
-      week.forEach(day => {
-        if (day.amount > max) max = day.amount
+    if (isYearly) {
+      let max = 0
+      monthlyData.halfYears.forEach(halfYear => {
+        halfYear.forEach(month => {
+          if (month.amount > max) max = month.amount
+        })
       })
-    })
-    return max || 100
-  }, [weeklyData.weeks])
+      return max || 100
+    } else {
+      let max = 0
+      weeklyData.weeks.forEach(week => {
+        week.forEach(day => {
+          if (day.amount > max) max = day.amount
+        })
+      })
+      return max || 100
+    }
+  }, [isYearly, weeklyData.weeks, monthlyData.halfYears])
   
   const incomeBreakdown = useMemo(() => {
     const incomeTxns = allTransactions.filter(t => t.type === 'income')
@@ -204,8 +287,148 @@ export default function PaymentsCharts({ allTransactions, categories, country })
   
   return (
     <div>
-      {weeklyData.weeks.length > 0 && (
-        <div style={{ 
+      {isYearly ? (
+        // Monthly view for yearly selection
+        monthlyData.halfYears.length > 0 && monthlyData.halfYears.some(half => half.some(m => m.amount > 0)) && (
+          <div style={{ 
+            background: theme.colors.bgCard,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            padding: theme.spacing.lg,
+            borderRadius: theme.borderRadius.lg,
+            marginBottom: theme.spacing.xxxl,
+            position: 'relative',
+            border: `1px solid ${theme.colors.borderSubtle}`,
+            boxShadow: theme.shadows.card
+          }}>
+            <h4 style={{ 
+              fontSize: theme.typography.h5, 
+              fontWeight: theme.typography.medium, 
+              margin: `0 0 ${theme.spacing.lg} 0`, 
+              textAlign: 'center',
+              color: theme.colors.textPrimary 
+            }}>
+              {currentHalfYear === 0 ? 'Jan - Jun' : 'Jul - Dec'}
+            </h4>
+            
+            <div 
+              ref={monthCarouselRef}
+              onScroll={handleMonthScroll}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              style={{
+                display: 'flex',
+                overflowX: 'scroll',
+                scrollSnapType: 'x mandatory',
+                gap: '0px',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'auto'
+              }}
+            >
+              {monthlyData.halfYears.map((halfYear, halfYearIndex) => (
+                <div 
+                  key={halfYearIndex}
+                  style={{ 
+                    minWidth: '100%', 
+                    scrollSnapAlign: 'start',
+                    scrollSnapStop: 'always',
+                    padding: '0 2px'
+                  }}
+                >
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'flex-end', 
+                    justifyContent: 'space-around',
+                    height: '200px',
+                    gap: '8px',
+                    paddingBottom: '8px'
+                  }}>
+                    {halfYear.map((month, index) => {
+                      const heightPixels = month.amount > 0 ? Math.max((month.amount / maxAmount) * 200, 10) : 0
+                      return (
+                        <div 
+                          key={index} 
+                          style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center',
+                            flex: 1,
+                            height: '100%',
+                            justifyContent: 'flex-end'
+                          }}
+                        >
+                          <div 
+                            onClick={() => {
+                              if (month.amount > 0) {
+                                setSelectedMonth(month)
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              maxWidth: '40px',
+                              height: `${heightPixels}px`,
+                              background: theme.colors.accentPurple,
+                              borderRadius: '4px 4px 0 0',
+                              cursor: month.amount > 0 ? 'pointer' : 'default',
+                              transition: theme.transitions.fast
+                            }}
+                            onMouseEnter={(e) => month.amount > 0 && (e.currentTarget.style.opacity = '0.8')}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                          />
+                          <div style={{ 
+                            fontSize: theme.typography.caption, 
+                            color: theme.colors.textSecondary,
+                            marginTop: theme.spacing.sm
+                          }}>
+                            {month.monthName}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: theme.spacing.sm,
+              marginTop: theme.spacing.lg
+            }}>
+              {monthlyData.halfYears.map((_, index) => (
+                <div
+                  key={index}
+                  onClick={() => {
+                    if (monthCarouselRef.current) {
+                      const containerWidth = monthCarouselRef.current.offsetWidth
+                      monthCarouselRef.current.scrollTo({
+                        left: index * containerWidth,
+                        behavior: 'smooth'
+                      })
+                    }
+                  }}
+                  style={{
+                    width: currentHalfYear === index ? '10px' : '8px',
+                    height: currentHalfYear === index ? '10px' : '8px',
+                    borderRadius: '50%',
+                    background: currentHalfYear === index ? theme.colors.accentPurple : theme.colors.borderMedium,
+                    cursor: 'pointer',
+                    transition: theme.transitions.normal,
+                    opacity: currentHalfYear === index ? 1 : 0.6
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      ) : (
+        // Weekly view for monthly selection
+        weeklyData.weeks.length > 0 && (
+          <div style={{ 
           background: theme.colors.bgCard,
           backdropFilter: theme.backdropFilter,
           WebkitBackdropFilter: theme.backdropFilter,
@@ -339,6 +562,7 @@ export default function PaymentsCharts({ allTransactions, categories, country })
             ))}
           </div>
         </div>
+        )
       )}
       
       {selectedDay && selectedDay.amount > 0 && createPortal(
@@ -463,6 +687,124 @@ export default function PaymentsCharts({ allTransactions, categories, country })
                   </div>
                 )
               })}
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
+      
+      {selectedMonth && selectedMonth.amount > 0 && createPortal(
+        <>
+          <div
+            onClick={() => setSelectedMonth(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.7)',
+              zIndex: 300,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: theme.colors.bgModal,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            borderRadius: theme.borderRadius.xl,
+            padding: theme.spacing.xl,
+            zIndex: 301,
+            maxWidth: '400px',
+            width: '90%',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            boxShadow: theme.shadows.strong,
+            border: `1px solid ${theme.colors.borderSubtle}`
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: theme.spacing.lg
+            }}>
+              <div>
+                <div style={{ 
+                  fontSize: theme.typography.h4, 
+                  fontWeight: theme.typography.semiBold, 
+                  color: theme.colors.textPrimary 
+                }}>
+                  {formatCurrency(selectedMonth.amount, country)}
+                </div>
+                <div style={{ 
+                  fontSize: theme.typography.body, 
+                  color: theme.colors.textSecondary, 
+                  marginTop: '4px' 
+                }}>
+                  {selectedMonth.monthName} {selectedYear}
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedMonth(null)
+                }}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: theme.colors.bgCardDark,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  color: theme.colors.textSecondary,
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
+              {monthlyData.categoryByMonth[selectedMonth.month] && 
+                Object.entries(monthlyData.categoryByMonth[selectedMonth.month])
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([categoryName, amount]) => (
+                    <div 
+                      key={categoryName}
+                      style={{
+                        background: theme.colors.bgCard,
+                        padding: theme.spacing.md,
+                        borderRadius: theme.borderRadius.sm,
+                        border: `1px solid ${theme.colors.borderSubtle}`,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div style={{ 
+                        fontWeight: theme.typography.medium, 
+                        fontSize: theme.typography.body,
+                        color: theme.colors.textPrimary
+                      }}>
+                        {categoryName}
+                      </div>
+                      <span style={{ 
+                        fontWeight: theme.typography.medium, 
+                        color: theme.colors.accentPink, 
+                        fontSize: theme.typography.body 
+                      }}>
+                        {formatCurrency(amount, country)}
+                      </span>
+                    </div>
+                  ))
+              }
             </div>
           </div>
         </>,

@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import PaymentsHistory from '../components/payments/PaymentsHistory'
 import EditTransactionModal from '../components/payments/EditTransactionModal'
 import AddTransactionButton from '../components/common/AddTransactionButton'
 import PeriodSelector from '../components/common/PeriodSelector'
 import { formatLargeNumber } from '../utils/formatLargeNumber'
-import { getMonthTransactions, calculateMonthStats } from '../hooks/usePayments'
+import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '../hooks/usePayments'
 import theme, { componentStyles } from '../theme'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
@@ -12,15 +12,17 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [isYearly, setIsYearly] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
-  const containerRef = useRef(null)
   
   const allTransactions = useMemo(() => {
+    if (isYearly) {
+      return getYearTransactions(data.payments.transactions, selectedYear)
+    }
     return getMonthTransactions(
       data.payments.transactions,
       selectedDate.getFullYear(),
       selectedDate.getMonth()
     )
-  }, [data.payments.transactions, selectedDate])
+  }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
   
   const stats = useMemo(() => calculateMonthStats(allTransactions), [allTransactions])
   

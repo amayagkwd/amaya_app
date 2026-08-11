@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import AddTransactionButton from '../components/common/AddTransactionButton'
 import PeriodSelector from '../components/common/PeriodSelector'
 import PaymentsCharts from '../components/payments/PaymentsCharts'
-import { getMonthTransactions } from '../hooks/usePayments'
+import { getMonthTransactions, getYearTransactions } from '../hooks/usePayments'
 import theme, { componentStyles } from '../theme'
 
 export default function Insights({ data, onOpenBottomSheet }) {
@@ -11,12 +11,15 @@ export default function Insights({ data, onOpenBottomSheet }) {
   const [isYearly, setIsYearly] = useState(false)
   
   const allTransactions = useMemo(() => {
+    if (isYearly) {
+      return getYearTransactions(data.payments.transactions, selectedYear)
+    }
     return getMonthTransactions(
       data.payments.transactions,
       selectedDate.getFullYear(),
       selectedDate.getMonth()
     )
-  }, [data.payments.transactions, selectedDate])
+  }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
   
   return (
     <>
@@ -38,6 +41,8 @@ export default function Insights({ data, onOpenBottomSheet }) {
           allTransactions={allTransactions}
           categories={data.payments.categories}
           country={data.profile.country}
+          isYearly={isYearly}
+          selectedYear={selectedYear}
         />
       </div>
       
