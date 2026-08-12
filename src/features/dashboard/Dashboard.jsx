@@ -58,6 +58,20 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
 
   const balanceColor = stats.balance >= 0 ? theme.dashboardColors.cyan : theme.dashboardColors.pink
 
+  // Get last 4 transactions
+  const recentTransactions = useMemo(() => {
+    return [...data.payments.transactions]
+      .sort((a, b) => {
+        const dateA = new Date(a.date)
+        const dateB = new Date(b.date)
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB - dateA
+        }
+        return (b.timestamp || 0) - (a.timestamp || 0)
+      })
+      .slice(0, 4)
+  }, [data.payments.transactions])
+
   return (
     <div
       style={{
@@ -359,6 +373,118 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
           </div>
         </div>
       )}
+
+      {/* Recent Transactions */}
+      <div style={{ marginTop: 28, position: 'relative', zIndex: 1 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+          }}
+        >
+          <h3
+            style={{
+              margin: 0,
+              color: theme.dashboardColors.muted,
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: '0.15em',
+            }}
+          >
+            Recent Transactions
+          </h3>
+          <button
+            onClick={() => navigate('/payments')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: theme.dashboardColors.cyan,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: 0,
+            }}
+          >
+            See all
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {recentTransactions.length > 0 ? (
+            recentTransactions.map((transaction) => {
+              const transactionDate = new Date(transaction.date)
+              const isIncome = transaction.type === 'income'
+              const amountColor = isIncome ? theme.dashboardColors.cyan : theme.dashboardColors.pink
+              
+              return (
+                <div
+                  key={transaction.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    background: theme.dashboardColors.card,
+                    border: `1px solid ${theme.dashboardColors.border}`,
+                    borderRadius: 14,
+                    boxShadow: theme.dashboardShadows.card,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div
+                      style={{
+                        color: theme.dashboardColors.white,
+                        fontSize: 15,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {transaction.category}
+                    </div>
+                    <div
+                      style={{
+                        color: theme.dashboardColors.muted,
+                        fontSize: 12,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {transactionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      color: amountColor,
+                      fontSize: 17,
+                      fontWeight: 700,
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {isIncome ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount), data.profile.country)}
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '32px 16px',
+                color: theme.dashboardColors.muted,
+                fontSize: 14,
+              }}
+            >
+              No transactions yet
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Floating add button is intentionally kept outside the cards. */}
       <AddTransactionButton onClick={onOpenBottomSheet} />
