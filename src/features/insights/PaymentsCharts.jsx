@@ -280,7 +280,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
         halfYear.forEach(month => allAmounts.push(month.amount))
       })
       const median = getMedian(allAmounts)
-      return (median || 50) * 6
+      return (median || 50) * 2
     } else {
       const allAmounts = []
       weeklyData.weeks.forEach(week => {
