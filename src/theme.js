@@ -121,7 +121,7 @@ export const theme = {
   // Layout
   layout: {
     maxWidth: '480px',
-    topBarHeight: '88px',
+    topBarHeight: '64px',
     bottomNavHeight: '70px',
   },
   
@@ -311,7 +311,7 @@ export const componentStyles = {
   
   // Forecast card
   forecastCard: {
-    minHeight: 200,
+    minHeight: 110,
     position: 'relative',
     overflow: 'hidden',
     padding: '16px',
@@ -323,13 +323,11 @@ export const componentStyles = {
   // Background shine effect (for page backgrounds)
   backgroundShine: {
     position: 'fixed',
-    width: '180px',
-    height: '180px',
-    borderRadius: '50%',
-    right: '-80px',
-    top: '10%',
-    background: 'rgba(0,229,204,0.06)',
-    filter: 'blur(60px)',
+    top: 0,
+    right: 0,
+    width: '100%',
+    height: '100%',
+    background: 'radial-gradient(circle at 100% 0%, rgba(0,229,204,0.08) 0%, rgba(0,229,204,0.04) 25%, transparent 50%)',
     pointerEvents: 'none',
     zIndex: 0,
   },

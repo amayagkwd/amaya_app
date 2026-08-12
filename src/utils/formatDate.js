@@ -21,7 +21,7 @@ export function getMonthYear(date) {
 export function getGreeting(name) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  return `${greeting}, ${name}`
+  return { greeting, name }
 }
 
 export function getTodayDate() {

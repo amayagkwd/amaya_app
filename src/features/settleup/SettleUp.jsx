@@ -4,7 +4,10 @@ import theme, { componentStyles } from '../../theme'
 export default function SettleUp({ onOpenBottomSheet }) {
   return (
     <>
-      <div style={componentStyles.pageContainer}>
+      {/* Background gradient */}
+      <div style={componentStyles.backgroundShine} />
+      
+      <div style={{ ...componentStyles.pageContainer, position: 'relative', zIndex: 1 }}>
         <h2 style={componentStyles.pageHeader}>
           Settle Up
         </h2>

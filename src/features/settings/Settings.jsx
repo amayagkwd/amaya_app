@@ -40,7 +40,11 @@ export default function Settings({ data, updateStore }) {
   }
   
   return (
-    <div style={componentStyles.pageContainer}>
+    <>
+      {/* Background gradient */}
+      <div style={componentStyles.backgroundShine} />
+      
+      <div style={{ ...componentStyles.pageContainer, position: 'relative', zIndex: 1 }}>
       <h2 style={componentStyles.pageHeader}>Settings</h2>
       
       {/* Profile */}
@@ -341,5 +345,6 @@ export default function Settings({ data, updateStore }) {
         </>
       )}
     </div>
+    </>
   )
 }

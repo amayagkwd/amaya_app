@@ -23,7 +23,10 @@ export default function Insights({ data, onOpenBottomSheet }) {
   
   return (
     <>
-      <div style={componentStyles.pageContainer}>
+      {/* Background gradient */}
+      <div style={componentStyles.backgroundShine} />
+      
+      <div style={{ ...componentStyles.pageContainer, position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl }}>
           <h2 style={componentStyles.pageHeaderSimple}>Insights</h2>
           

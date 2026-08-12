@@ -46,8 +46,32 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   }
   
   return (
-    <>
-      <div style={{ padding: `${theme.spacing.xl}` }}>
+    <div style={{ 
+      position: 'fixed',
+      top: theme.layout.topBarHeight,
+      left: 0,
+      right: 0,
+      bottom: theme.layout.bottomNavHeight,
+      maxWidth: theme.layout.maxWidth,
+      margin: '0 auto',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
+      {/* Background gradient */}
+      <div style={componentStyles.backgroundShine} />
+      
+      {/* Fixed header section - no scroll */}
+      <div style={{
+        flexShrink: 0,
+        zIndex: 99,
+        background: theme.colors.bgSecondary,
+        padding: `${theme.spacing.xl}`,
+        paddingBottom: theme.spacing.lg,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderBottom: `1px solid ${theme.colors.borderSubtle}`
+      }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xl }}>
           <h2 style={componentStyles.pageHeaderSimple}>Payments</h2>
           
@@ -61,19 +85,31 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           />
         </div>
       
-      <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.xl }}>
-        <StatCard label="Income" value={formatLargeNumber(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
-        <StatCard label="Expenses" value={formatLargeNumber(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
-        <StatCard label="Balance" value={formatLargeNumber(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
+        <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+          <StatCard label="Income" value={formatLargeNumber(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
+          <StatCard label="Expenses" value={formatLargeNumber(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
+          <StatCard label="Balance" value={formatLargeNumber(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
+        </div>
       </div>
       
-      <PaymentsHistory
-        allTransactions={allTransactions}
-        categories={data.payments.categories}
-        country={data.profile.country}
-        onDelete={onDelete}
-        onEdit={handleEdit}
-      />
+      {/* Scrollable content only */}
+      <div style={{ 
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        padding: `${theme.spacing.xl}`,
+        paddingTop: theme.spacing.lg,
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <PaymentsHistory
+          allTransactions={allTransactions}
+          categories={data.payments.categories}
+          country={data.profile.country}
+          onDelete={onDelete}
+          onEdit={handleEdit}
+        />
+      </div>
       
       {editingTransaction && (
         <EditTransactionModal
@@ -83,10 +119,9 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           onClose={() => setEditingTransaction(null)}
         />
       )}
-      </div>
       
       <AddTransactionButton onClick={onOpenBottomSheet} />
-    </>
+    </div>
   )
 }
 
