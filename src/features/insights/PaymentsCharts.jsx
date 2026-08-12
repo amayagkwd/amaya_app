@@ -68,6 +68,16 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     }
   }
   
+  // Helper to compute median
+  const getMedian = (values) => {
+    const sorted = [...values].filter(v => v > 0).sort((a, b) => a - b)
+    if (sorted.length === 0) return 0
+    const mid = Math.floor(sorted.length / 2)
+    return sorted.length % 2 !== 0
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2
+  }
+  
   const weeklyData = useMemo(() => {
     const expenseTxns = allTransactions.filter(t => t.type === 'expense')
     
@@ -262,23 +272,22 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     }
   }, [isYearly, weeklyData.currentWeekIndex, weeklyData.weeks.length, monthlyData.currentHalfYearIndex, monthlyData.halfYears.length])
   
-  const maxAmount = useMemo(() => {
+  // Replace maxAmount with medianCap
+  const medianCap = useMemo(() => {
     if (isYearly) {
-      let max = 0
+      const allAmounts = []
       monthlyData.halfYears.forEach(halfYear => {
-        halfYear.forEach(month => {
-          if (month.amount > max) max = month.amount
-        })
+        halfYear.forEach(month => allAmounts.push(month.amount))
       })
-      return max || 100
+      const median = getMedian(allAmounts)
+      return (median || 50) * 6
     } else {
-      let max = 0
+      const allAmounts = []
       weeklyData.weeks.forEach(week => {
-        week.forEach(day => {
-          if (day.amount > max) max = day.amount
-        })
+        week.forEach(day => allAmounts.push(day.amount))
       })
-      return max || 100
+      const median = getMedian(allAmounts)
+      return (median || 50) * 6
     }
   }, [isYearly, weeklyData.weeks, monthlyData.halfYears])
   
@@ -401,7 +410,10 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                     paddingBottom: '8px'
                   }}>
                     {halfYear.map((month, index) => {
-                      const heightPixels = month.amount > 0 ? Math.max((month.amount / maxAmount) * 200, 10) : 0
+                      const isCapped = month.amount > medianCap
+                      const heightPixels = month.amount > 0 
+                        ? Math.min(Math.max((month.amount / medianCap) * 200, 10), 200)
+                        : 0
                       return (
                         <div 
                           key={index} 
@@ -427,11 +439,26 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                               background: theme.colors.accentPurple,
                               borderRadius: '4px 4px 0 0',
                               cursor: month.amount > 0 ? 'pointer' : 'default',
-                              transition: theme.transitions.fast
+                              transition: theme.transitions.fast,
+                              position: 'relative',
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'flex-start'
                             }}
                             onMouseEnter={(e) => month.amount > 0 && (e.currentTarget.style.opacity = '0.8')}
                             onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                          />
+                          >
+                            {isCapped && (
+                              <span style={{
+                                position: 'absolute',
+                                top: '2px',
+                                fontSize: '12px',
+                                color: '#fff'
+                              }}>
+                                ↑
+                              </span>
+                            )}
+                          </div>
                           <div style={{ 
                             fontSize: theme.typography.caption, 
                             color: theme.colors.textSecondary,
@@ -539,7 +566,10 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                   paddingBottom: '8px'
                 }}>
                   {week.map((day, index) => {
-                    const heightPixels = day.amount > 0 ? Math.max((day.amount / maxAmount) * 200, 10) : 0
+                    const isCapped = day.amount > medianCap
+                    const heightPixels = day.amount > 0 
+                      ? Math.min(Math.max((day.amount / medianCap) * 200, 10), 200)
+                      : 0
                     const barColor = day.isOutsideMonth ? 'rgba(139, 92, 246, 0.3)' : theme.colors.accentPurple
                     const textColor = day.isOutsideMonth ? theme.colors.textMuted : theme.colors.textSecondary
                     
@@ -568,11 +598,26 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                             background: barColor,
                             borderRadius: '4px 4px 0 0',
                             cursor: day.amount > 0 ? 'pointer' : 'default',
-                            transition: theme.transitions.fast
+                            transition: theme.transitions.fast,
+                            position: 'relative',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'flex-start'
                           }}
                           onMouseEnter={(e) => day.amount > 0 && (e.currentTarget.style.opacity = '0.8')}
                           onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                        />
+                        >
+                          {isCapped && (
+                            <span style={{
+                              position: 'absolute',
+                              top: '2px',
+                              fontSize: '12px',
+                              color: '#fff'
+                            }}>
+                              ↑
+                            </span>
+                          )}
+                        </div>
                         <div style={{ 
                           fontSize: theme.typography.caption, 
                           color: textColor,

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getGreeting, getTodayDate } from '../../utils/formatDate'
 import { formatCurrency } from '../../utils/formatCurrency'
 import { getMonthTransactions, calculateMonthStats } from '../../hooks/usePayments'
-import { calculateForecast } from './forecastCalculations'
+import { calculateMedianDailySpend } from '../../utils/medianCalculator'
 import AddTransactionButton from '../common/AddTransactionButton'
 import theme, { componentStyles } from '../../theme'
 
@@ -23,7 +23,35 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
   }, [data.payments.transactions])
 
   const forecast = useMemo(() => {
-    return calculateForecast(data.payments.transactions, stats.balance)
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    const currentDay = now.getDate()
+    const daysElapsed = currentDay
+
+    // Don't show forecast if less than 10 days have passed
+    if (daysElapsed < 10) {
+      return null
+    }
+
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate()
+    const daysRemaining = totalDaysInMonth - daysElapsed
+
+    // Calculate median daily spend from day 1 to current day
+    const medianDailySpend = calculateMedianDailySpend(
+      data.payments.transactions,
+      year,
+      month,
+      daysElapsed
+    )
+
+    const projectedRemainingSpend = medianDailySpend * daysRemaining
+    const projectedMonthEndBalance = stats.balance - projectedRemainingSpend
+
+    return {
+      dailySpendForecast: medianDailySpend,
+      monthEndProjection: projectedMonthEndBalance
+    }
   }, [data.payments.transactions, stats.balance])
 
   const showForecast = forecast !== null
