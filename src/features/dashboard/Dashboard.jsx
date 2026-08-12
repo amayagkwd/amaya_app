@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getGreeting, getTodayDate } from '../../utils/formatDate'
 import { formatCurrency } from '../../utils/formatCurrency'
@@ -9,6 +9,27 @@ import theme, { componentStyles } from '../../theme'
 
 export default function Dashboard({ data, onOpenBottomSheet }) {
   const navigate = useNavigate()
+  const [currentForecastIndex, setCurrentForecastIndex] = useState(0)
+  const forecastCarouselRef = useRef(null)
+
+  const handleForecastScroll = () => {
+    if (forecastCarouselRef.current) {
+      const scrollLeft = forecastCarouselRef.current.scrollLeft
+      const containerWidth = forecastCarouselRef.current.offsetWidth
+      const index = Math.round(scrollLeft / containerWidth)
+      setCurrentForecastIndex(index)
+    }
+  }
+
+  const scrollToForecast = (index) => {
+    if (forecastCarouselRef.current) {
+      const containerWidth = forecastCarouselRef.current.offsetWidth
+      forecastCarouselRef.current.scrollTo({
+        left: index * containerWidth,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   const stats = useMemo(() => {
     const now = new Date()
@@ -310,7 +331,7 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             zIndex: 1,
           }}
         >
-          {/* Daily spend */}
+          {/* Coming soon box */}
           <div
             style={{
               ...componentStyles.forecastCard,
@@ -320,55 +341,156 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
               <h3
                 style={{
                   margin: 0,
-                  color: theme.dashboardColors.muted,
+                  color: theme.dashboardColors.cyan,
                   fontSize: 14,
                   fontWeight: 700,
                   letterSpacing: '-0.02em',
                 }}
               >
-                Daily Spend Forecast
+                Today's budget
               </h3>
               <p style={{
                 marginTop: 14,
                 fontFamily: theme.typography.fontFamily,
                 fontSize: 26,
                 fontWeight: 600,
-                color: 'white',
+                color: theme.dashboardColors.muted,
                 letterSpacing: '-0.02em',
               }}>
-               ~{formatCurrency(forecast.dailySpendForecast, data.profile.country)}
+                Coming Soon
               </p>
             </div>
           </div>
 
-          {/* Month end */}
+          {/* Carousel box with monthly and daily forecast */}
           <div
             style={{
               ...componentStyles.forecastCard,
+              overflow: 'hidden',
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
-            <div style={{ position: 'relative', zIndex: 10 }}>
-              <h3
-                style={{
-                  margin: 0,
-                  color: theme.dashboardColors.muted,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Month End Projection
-              </h3>
-              <p style={{
-                marginTop: 14,
-                fontFamily: theme.typography.fontFamily,
-                fontSize: 26,
-                fontWeight: 600,
-                color: 'white',
-                letterSpacing: '-0.02em',
+            <div 
+              ref={forecastCarouselRef}
+              onScroll={handleForecastScroll}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              style={{
+                display: 'flex',
+                overflowX: 'scroll',
+                scrollSnapType: 'x mandatory',
+                gap: '0px',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'auto',
+                flex: 1
+              }}
+            >
+              <style>
+                {`
+                  div::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}
+              </style>
+              
+              {/* Month end projection */}
+              <div style={{ 
+                minWidth: '100%', 
+                scrollSnapAlign: 'start',
+                scrollSnapStop: 'always',
+                padding: '18px 20px 0px',
+                boxSizing: 'border-box'
               }}>
-                ~{formatCurrency(forecast.monthEndProjection, data.profile.country)}
-              </p>
+                <div style={{ position: 'relative', zIndex: 10 }}>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: theme.dashboardColors.pink,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    At current pace, you will save . . .
+                  </h3>
+                  <p style={{
+                    marginTop: 14,
+                    marginBottom: 0,
+                    fontFamily: theme.typography.fontFamily,
+                    fontSize: 26,
+                    fontWeight: 600,
+                    color: 'white',
+                    letterSpacing: '-0.02em',
+                  }}>
+                    ~{formatCurrency(forecast.monthEndProjection, data.profile.country)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Daily spend forecast */}
+              <div style={{ 
+                minWidth: '100%', 
+                scrollSnapAlign: 'start',
+                scrollSnapStop: 'always',
+                padding: '18px 20px 0px',
+                boxSizing: 'border-box'
+              }}>
+                <div style={{ position: 'relative', zIndex: 10 }}>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: theme.dashboardColors.pink,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    Daily Spend Forecast
+                  </h3>
+                  <p style={{
+                    marginTop: 14,
+                    marginBottom: 0,
+                    fontFamily: theme.typography.fontFamily,
+                    fontSize: 26,
+                    fontWeight: 600,
+                    color: 'white',
+                    letterSpacing: '-0.02em',
+                  }}>
+                    ~{formatCurrency(forecast.dailySpendForecast, data.profile.country)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dot navigation inside the second box */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 0 16px',
+              position: 'relative',
+              zIndex: 10
+            }}>
+              {[0, 1].map(index => (
+                <div
+                  key={index}
+                  onClick={() => scrollToForecast(index)}
+                  style={{
+                    width: currentForecastIndex === index ? '10px' : '8px',
+                    height: currentForecastIndex === index ? '10px' : '8px',
+                    borderRadius: '50%',
+                    background: currentForecastIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: currentForecastIndex === index ? 1 : 0.6
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
