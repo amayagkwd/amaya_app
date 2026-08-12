@@ -127,6 +127,28 @@ export const theme = {
   
   // Backdrop Filter
   backdropFilter: 'blur(20px)',
+  
+  // Dashboard specific colors
+  dashboardColors: {
+    page: '#02050A',
+    card: 'rgba(15, 22, 29, 0.92)',
+    white: '#F7F8FA',
+    muted: '#A8B3C7',
+    mutedDark: '#6B7892',
+    cyan: '#00E5CC',
+    cyanSoft: 'rgba(0, 229, 204, 0.15)',
+    violet: '#8B72FF',
+    violetSoft: 'rgba(139, 114, 255, 0.18)',
+    pink: '#FF6B9D',
+    pinkSoft: 'rgba(255, 107, 157, 0.15)',
+    border: 'rgba(157, 174, 196, 0.18)',
+  },
+  
+  // Dashboard shadows
+  dashboardShadows: {
+    card: '0 18px 50px rgba(0, 0, 0, 0.28)',
+    cyan: '0 0 30px rgba(0, 229, 204, 0.12)',
+  },
 }
 
 // Helper function to create gradient backgrounds
@@ -264,6 +286,52 @@ export const componentStyles = {
     margin: `0 0 ${theme.spacing.xxl} 0`,
     fontSize: theme.typography.bodySmall,
     fontWeight: theme.typography.medium,
+  },
+  
+  // Dashboard card styles
+  dashboardCard: {
+    borderRadius: '28px',
+    border: `1px solid ${theme.dashboardColors.border}`,
+    boxShadow: theme.dashboardShadows.card,
+    boxSizing: 'border-box',
+    background: `
+      radial-gradient(circle at 100% 0%, rgba(0,229,204,0.055), transparent 34%),
+      linear-gradient(145deg, rgba(18,26,34,0.96), rgba(10,16,22,0.98))
+    `,
+  },
+  
+  dashboardIconBox: (accent, background) => ({
+    display: 'grid',
+    placeItems: 'center',
+    flexShrink: 0,
+    color: accent,
+    background,
+    boxShadow: `0 0 22px ${background}`,
+  }),
+  
+  // Forecast card
+  forecastCard: {
+    minHeight: 200,
+    position: 'relative',
+    overflow: 'hidden',
+    padding: '16px',
+    borderRadius: '22px',
+    border: '1px solid #292d3a',
+    background: 'linear-gradient(155deg, #111821 0%, #10141c 100%)',
+  },
+  
+  // Background shine effect (for page backgrounds)
+  backgroundShine: {
+    position: 'fixed',
+    width: '180px',
+    height: '180px',
+    borderRadius: '50%',
+    right: '-80px',
+    top: '10%',
+    background: 'rgba(0,229,204,0.06)',
+    filter: 'blur(60px)',
+    pointerEvents: 'none',
+    zIndex: 0,
   },
 }
 
