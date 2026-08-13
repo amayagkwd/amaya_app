@@ -10,7 +10,8 @@ const initialState = {
   },
   payments: {
     categories: [],
-    transactions: []
+    transactions: [],
+    previousCategories: []
   }
 }
 

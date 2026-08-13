@@ -25,7 +25,29 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
     }
   }, [isOpen])
   
-  const filteredCategories = categories.filter(c => c.type === type)
+  // Get current month's date range
+  const currentDate = new Date(date)
+  const currentMonth = currentDate.getMonth()
+  const currentYear = currentDate.getFullYear()
+  
+  // Count category usage in the selected month
+  const categoryUsageCount = {}
+  data.payments.transactions.forEach(transaction => {
+    const transactionDate = new Date(transaction.date)
+    if (transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
+      categoryUsageCount[transaction.categoryId] = (categoryUsageCount[transaction.categoryId] || 0) + 1
+    }
+  })
+  
+  // Filter and sort categories by usage count
+  const filteredCategories = categories
+    .filter(c => c.type === type)
+    .sort((a, b) => {
+      const countA = categoryUsageCount[a.id] || 0
+      const countB = categoryUsageCount[b.id] || 0
+      return countB - countA // Descending order (most used first)
+    })
+  
   const canSave = amount > 0 && categoryId
   
   const handleSave = () => {
