@@ -59,9 +59,9 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
       categoryId,
       date,
       note: note.trim() || null,
-      classification: category.classification
+      classification: category?.classification || null
     })
-    showToast(`Logged ${currencySymbol}${amount} · ${category.name}`)
+    showToast(`Logged ${currencySymbol}${amount} · ${category?.name || 'Transaction'}`)
     onClose()
   }
   

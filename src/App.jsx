@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useStore } from './hooks/useStore'
 import { usePayments } from './hooks/usePayments'
+import { useMonthlyBalanceCarry } from './hooks/useMonthlyBalanceCarry'
 import TopBar from './features/common/TopBar'
 import BottomNav from './features/common/BottomNav'
 import BottomSheet from './features/common/BottomSheet'
@@ -21,6 +22,9 @@ function AppContent() {
   const [data, updateStore] = useStore()
   const { addTransaction, deleteTransaction } = usePayments(data, updateStore)
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+  
+  // Handle monthly balance carry-over
+  useMonthlyBalanceCarry(data, updateStore)
   
   const needsOnboarding = !data.profile.name || !data.profile.dob || !data.profile.country
   

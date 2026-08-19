@@ -588,6 +588,8 @@ export default function PaymentsHistory({
             </div>
             {txns.map(t => {
               const category = categories.find(c => c.id === t.categoryId)
+              const isBalanceTransaction = t.note?.startsWith('Balance of ')
+              const displayName = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
               return (
                 <div
                   key={t.id}
@@ -606,7 +608,7 @@ export default function PaymentsHistory({
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: theme.typography.medium, color: theme.colors.textPrimary, fontSize: theme.typography.h6 }}>{category?.name || 'Unknown'}</div>
+                    <div style={{ fontWeight: theme.typography.medium, color: theme.colors.textPrimary, fontSize: theme.typography.h6 }}>{displayName}</div>
                     {t.note && (
                       <div style={{ fontSize: theme.typography.body, color: theme.colors.textSecondary, marginTop: '4px' }}>
                         {t.note}

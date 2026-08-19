@@ -216,7 +216,8 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
       
       if (!categoryByMonth[monthIndex]) categoryByMonth[monthIndex] = {}
       const category = categories.find(c => c.id === t.categoryId)
-      const categoryName = category?.name || 'Unknown'
+      const isBalanceTransaction = t.note?.startsWith('Balance of ')
+      const categoryName = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
       categoryByMonth[monthIndex][categoryName] = (categoryByMonth[monthIndex][categoryName] || 0) + t.amount
     })
     
@@ -298,7 +299,8 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     const byCategory = {}
     incomeTxns.forEach(t => {
       const category = categories.find(c => c.id === t.categoryId)
-      const name = category?.name || 'Unknown'
+      const isBalanceTransaction = t.note?.startsWith('Balance of ')
+      const name = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
       byCategory[name] = (byCategory[name] || 0) + t.amount
     })
     
@@ -318,7 +320,8 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     const byCategory = {}
     expenseTxns.forEach(t => {
       const category = categories.find(c => c.id === t.categoryId)
-      const name = category?.name || 'Unknown'
+      const isBalanceTransaction = t.note?.startsWith('Balance of ')
+      const name = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
       byCategory[name] = (byCategory[name] || 0) + t.amount
     })
     
@@ -749,6 +752,8 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
               {weeklyData.transactionsByDate[selectedDay.dateStr]?.map(txn => {
                 const category = categories.find(c => c.id === txn.categoryId)
+                const isBalanceTransaction = txn.note?.startsWith('Balance of ')
+                const displayName = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
                 return (
                   <div 
                     key={txn.id}
@@ -768,7 +773,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                         fontSize: theme.typography.body,
                         color: theme.colors.textPrimary
                       }}>
-                        {category?.name || 'Unknown'}
+                        {displayName}
                       </div>
                       {txn.note && (
                         <div style={{ 

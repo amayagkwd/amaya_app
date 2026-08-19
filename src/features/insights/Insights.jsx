@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import AddTransactionButton from '../common/AddTransactionButton'
 import PeriodSelector from '../payments/PeriodSelector'
 import PaymentsCharts from './PaymentsCharts'
-import { getMonthTransactions, getYearTransactions } from '../../hooks/usePayments'
+import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '../../hooks/usePayments'
+import { formatLargeNumber } from '../../utils/formatLargeNumber'
 import theme, { componentStyles } from '../../theme'
 
 export default function Insights({ data, onOpenBottomSheet }) {
@@ -20,6 +21,8 @@ export default function Insights({ data, onOpenBottomSheet }) {
       selectedDate.getMonth()
     )
   }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
+  
+  const stats = useMemo(() => calculateMonthStats(allTransactions), [allTransactions])
   
   return (
     <>
@@ -40,6 +43,12 @@ export default function Insights({ data, onOpenBottomSheet }) {
           />
         </div>
         
+        <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.xl }}>
+          <StatCard label="Income" value={formatLargeNumber(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
+          <StatCard label="Expenses" value={formatLargeNumber(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
+          <StatCard label="Balance" value={formatLargeNumber(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
+        </div>
+        
         <PaymentsCharts
           allTransactions={allTransactions}
           categories={data.payments.categories}
@@ -51,5 +60,33 @@ export default function Insights({ data, onOpenBottomSheet }) {
       
       <AddTransactionButton onClick={onOpenBottomSheet} />
     </>
+  )
+}
+
+function StatCard({ label, value, color }) {
+  return (
+    <div style={{
+      flex: 1,
+      minWidth: 0,
+      background: theme.colors.bgCard,
+      backdropFilter: theme.backdropFilter,
+      WebkitBackdropFilter: theme.backdropFilter,
+      padding: `${theme.spacing.md} ${theme.spacing.sm}`,
+      borderRadius: theme.borderRadius.lg,
+      textAlign: 'center',
+      border: `1px solid ${theme.colors.borderSubtle}`,
+      boxShadow: theme.shadows.card,
+      overflow: 'hidden'
+    }}>
+      <div style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary, marginBottom: theme.spacing.xs, fontWeight: theme.typography.medium }}>{label}</div>
+      <div style={{ 
+        fontSize: theme.typography.h4, 
+        fontWeight: theme.typography.semiBold, 
+        color,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}>{value}</div>
+    </div>
   )
 }

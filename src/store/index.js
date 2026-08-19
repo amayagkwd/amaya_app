@@ -12,6 +12,10 @@ const initialState = {
     categories: [],
     transactions: [],
     previousCategories: []
+  },
+  settings: {
+    carryBalanceToNextMonth: false,
+    lastCheckedMonth: null // Format: "YYYY-MM"
   }
 }
 
@@ -30,7 +34,8 @@ export function loadStore() {
     ...initialState,
     ...parsed,
     profile: { ...initialState.profile, ...parsed.profile },
-    payments: { ...initialState.payments, ...parsed.payments }
+    payments: { ...initialState.payments, ...parsed.payments },
+    settings: { ...initialState.settings, ...parsed.settings }
   }
 }
 

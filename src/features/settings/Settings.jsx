@@ -117,6 +117,68 @@ export default function Settings({ data, updateStore }) {
         </button>
       </div>
       
+      {/* Carry Balance Toggle */}
+      <div style={componentStyles.settingsCard}>
+        <div style={{
+          ...componentStyles.settingsButton,
+          cursor: 'default'
+        }}>
+          <div style={{ textAlign: 'left', flex: 1 }}>
+            <h3 style={componentStyles.settingsTitle}>
+              Carry Balance to Next Month
+            </h3>
+            <p style={componentStyles.settingsDescription}>
+              Automatically add remaining balance as first transaction of new month
+            </p>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={data.settings?.carryBalanceToNextMonth || false}
+              onChange={(e) => {
+                const isEnabled = e.target.checked
+                const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
+                
+                updateStore(current => ({
+                  ...current,
+                  settings: {
+                    ...current.settings,
+                    carryBalanceToNextMonth: isEnabled,
+                    lastCheckedMonth: isEnabled ? currentMonth : current.settings?.lastCheckedMonth
+                  }
+                }))
+              }}
+              style={{ display: 'none' }}
+            />
+            <div style={{
+              width: '48px',
+              height: '28px',
+              borderRadius: '14px',
+              background: (data.settings?.carryBalanceToNextMonth || false) 
+                ? theme.colors.accentPurple 
+                : theme.colors.bgCardDark,
+              position: 'relative',
+              transition: theme.transitions.normal,
+              border: `1px solid ${(data.settings?.carryBalanceToNextMonth || false) 
+                ? theme.colors.accentPurple 
+                : theme.colors.borderSubtle}`
+            }}>
+              <div style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: theme.colors.textPrimary,
+                position: 'absolute',
+                top: '3px',
+                left: (data.settings?.carryBalanceToNextMonth || false) ? '24px' : '3px',
+                transition: theme.transitions.normal,
+                boxShadow: theme.shadows.card
+              }} />
+            </div>
+          </label>
+        </div>
+      </div>
+      
       {/* Data Management */}
       <div style={componentStyles.settingsCard}>
         <button

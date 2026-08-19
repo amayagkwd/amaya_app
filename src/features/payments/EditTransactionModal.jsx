@@ -3,22 +3,23 @@ import theme from '../../theme'
 
 export default function EditTransactionModal({ transaction, categories, onSave, onClose }) {
   const [amount, setAmount] = useState(transaction.amount.toString())
-  const [categoryId, setCategoryId] = useState(transaction.categoryId)
+  const [categoryId, setCategoryId] = useState(transaction.categoryId || '')
   const [date, setDate] = useState(transaction.date)
   const [note, setNote] = useState(transaction.note || '')
   
   const filteredCategories = categories.filter(c => c.type === transaction.type)
-  const canSave = amount > 0 && categoryId
+  const isBalanceTransaction = transaction.note?.startsWith('Balance of ')
+  const canSave = amount > 0 && (isBalanceTransaction || categoryId)
   
   const handleSave = () => {
-    const category = categories.find(c => c.id === categoryId)
+    const category = categoryId ? categories.find(c => c.id === categoryId) : null
     onSave({
       ...transaction,
       amount: parseFloat(amount),
-      categoryId,
+      categoryId: categoryId || null,
       date,
       note: note.trim() || null,
-      classification: category.classification
+      classification: category?.classification || null
     })
   }
   
@@ -89,7 +90,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
         
         <div style={{ marginBottom: theme.spacing.lg }}>
           <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
-            Category
+            Category {isBalanceTransaction && '(optional for balance transactions)'}
           </label>
           <select
             value={categoryId}
@@ -106,6 +107,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
               outline: 'none'
             }}
           >
+            {isBalanceTransaction && <option value="">No category</option>}
             {filteredCategories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
