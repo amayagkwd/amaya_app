@@ -4,6 +4,7 @@ import { getGreeting, getTodayDate } from '../../utils/formatDate'
 import { formatCurrency } from '../../utils/formatCurrency'
 import { getMonthTransactions, calculateMonthStats } from '../../hooks/usePayments'
 import { calculateMedianDailySpend } from '../../utils/medianCalculator'
+import { useBudget } from '../../hooks/useBudget'
 import AddTransactionButton from '../common/AddTransactionButton'
 import theme, { componentStyles } from '../../theme'
 
@@ -11,6 +12,9 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
   const navigate = useNavigate()
   const [currentForecastIndex, setCurrentForecastIndex] = useState(0)
   const forecastCarouselRef = useRef(null)
+  
+  // Get budget data
+  const budgetData = useBudget(data)
 
   const handleForecastScroll = () => {
     if (forecastCarouselRef.current) {
@@ -331,7 +335,7 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             zIndex: 1,
           }}
         >
-          {/* Coming soon box */}
+          {/* Coming soon box / Budget box */}
           <div
             style={{
               ...componentStyles.forecastCard,
@@ -349,16 +353,30 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
               >
                 Today's budget
               </h3>
-              <p style={{
-                marginTop: 14,
-                fontFamily: theme.typography.fontFamily,
-                fontSize: 26,
-                fontWeight: 600,
-                color: theme.dashboardColors.muted,
-                letterSpacing: '-0.02em',
-              }}>
-                Coming Soon
-              </p>
+              {budgetData ? (
+                <p style={{
+                  marginTop: 14,
+                  marginBottom: 0,
+                  fontFamily: theme.typography.fontFamily,
+                  fontSize: 26,
+                  fontWeight: 600,
+                  color: budgetData.dailyAllowance >= 0 ? 'white' : theme.dashboardColors.pink,
+                  letterSpacing: '-0.02em',
+                }}>
+                  {formatCurrency(budgetData.dailyAllowance, data.profile.country)}
+                </p>
+              ) : (
+                <p style={{
+                  marginTop: 14,
+                  fontFamily: theme.typography.fontFamily,
+                  fontSize: 26,
+                  fontWeight: 600,
+                  color: theme.dashboardColors.muted,
+                  letterSpacing: '-0.02em',
+                }}>
+                  Coming Soon
+                </p>
+              )}
             </div>
           </div>
 

@@ -116,6 +116,41 @@ export default function Settings({ data, updateStore }) {
           </svg>
         </button>
       </div>
+
+      {/* Budget Setup */}
+      <div style={componentStyles.settingsCard}>
+        <button
+          onClick={() => navigate('/budget-setup')}
+          style={componentStyles.settingsButton}
+          onMouseEnter={(e) => {
+            Object.assign(e.currentTarget.style, componentStyles.settingsButtonHover)
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+          }}
+        >
+          <div style={{ textAlign: 'left' }}>
+            <h3 style={componentStyles.settingsTitle}>
+              Set Monthly Budget
+            </h3>
+            <p style={componentStyles.settingsDescription}>
+              Configure spending limit or savings goal
+            </p>
+          </div>
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M9 18l6-6-6-6"></path>
+          </svg>
+        </button>
+      </div>
       
       {/* Carry Balance Toggle */}
       <div style={componentStyles.settingsCard}>

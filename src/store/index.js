@@ -15,7 +15,12 @@ const initialState = {
   },
   settings: {
     carryBalanceToNextMonth: false,
-    lastCheckedMonth: null // Format: "YYYY-MM"
+    lastCheckedMonth: null, // Format: "YYYY-MM"
+    budget: {
+      enabled: false,
+      mode: 'spend', // 'spend' or 'keep'
+      amount: 0
+    }
   }
 }
 

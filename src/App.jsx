@@ -16,6 +16,7 @@ import SettleUp from './features/settleup/SettleUp'
 import Profile from './features/settings/Profile'
 import Settings from './features/settings/Settings'
 import Setup from './features/settings/Setup'
+import BudgetSetup from './features/settings/BudgetSetup'
 import theme from './theme'
 
 function AppContent() {
@@ -62,6 +63,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile data={data} updateStore={updateStore} />} />
           <Route path="/settings" element={<Settings data={data} updateStore={updateStore} />} />
           <Route path="/setup" element={<Setup data={data} updateStore={updateStore} />} />
+          <Route path="/budget-setup" element={<BudgetSetup data={data} updateStore={updateStore} />} />
         </Routes>
       </main>
       
