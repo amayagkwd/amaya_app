@@ -13,8 +13,8 @@ export default function BudgetSetup({ data, updateStore }) {
   const [isEnabled, setIsEnabled] = useState(existingBudget?.enabled || false)
 
   const handleSave = () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount')
+    if (isEnabled && (!amount || parseFloat(amount) <= 0)) {
+      // Don't save if budget is enabled but amount is invalid
       return
     }
 
@@ -25,7 +25,7 @@ export default function BudgetSetup({ data, updateStore }) {
         budget: {
           enabled: isEnabled,
           mode: mode,
-          amount: parseFloat(amount)
+          amount: parseFloat(amount) || 0
         }
       }
     }))
@@ -111,7 +111,7 @@ export default function BudgetSetup({ data, updateStore }) {
             <div style={componentStyles.settingsCard}>
               <h3 style={{
                 ...componentStyles.settingsTitle,
-                padding: '0 20px 16px 20px',
+                padding: '0 16px 12px 16px',
                 margin: 0
               }}>
                 Budget Mode
@@ -210,11 +210,11 @@ export default function BudgetSetup({ data, updateStore }) {
 
             {/* Amount Input */}
             <div style={componentStyles.settingsCard}>
-              <div style={{ padding: '20px' }}>
-                <h3 style={{ ...componentStyles.settingsTitle, margin: '0 0 8px 0' }}>
+              <div style={{ padding: '16px' }}>
+                <h3 style={{ ...componentStyles.settingsTitle, margin: '0 0 4px 0' }}>
                   {mode === 'spend' ? 'Monthly Spend Limit' : 'Savings Goal Balance'}
                 </h3>
-                <p style={{ ...componentStyles.settingsDescription, marginBottom: '16px' }}>
+                <p style={{ ...componentStyles.settingsDescription, marginBottom: '12px' }}>
                   {mode === 'spend' 
                     ? 'Set your total spending limit for the month'
                     : 'Set the minimum balance you want to maintain'}
@@ -226,8 +226,8 @@ export default function BudgetSetup({ data, updateStore }) {
                   background: theme.colors.bgCardDark,
                   border: `1px solid ${theme.colors.borderMedium}`,
                   borderRadius: theme.borderRadius.xl,
-                  padding: '16px 20px',
-                  fontSize: '24px',
+                  padding: '12px 16px',
+                  fontSize: '20px',
                   fontWeight: 700
                 }}>
                   <span style={{ color: theme.colors.textSecondary, marginRight: '8px' }}>
@@ -243,13 +243,24 @@ export default function BudgetSetup({ data, updateStore }) {
                       background: 'none',
                       border: 'none',
                       color: theme.colors.textPrimary,
-                      fontSize: '24px',
+                      fontSize: '20px',
                       fontWeight: 700,
                       outline: 'none',
                       fontFamily: theme.typography.fontFamily
                     }}
                   />
                 </div>
+                
+                {isEnabled && (!amount || parseFloat(amount) <= 0) && (
+                  <p style={{
+                    marginTop: '8px',
+                    fontSize: theme.typography.bodySmall,
+                    color: theme.colors.accentPink,
+                    margin: '8px 0 0 0'
+                  }}>
+                    Please enter a limit
+                  </p>
+                )}
               </div>
             </div>
 
@@ -259,8 +270,8 @@ export default function BudgetSetup({ data, updateStore }) {
               background: 'rgba(124, 111, 255, 0.08)',
               border: `1px solid rgba(124, 111, 255, 0.25)`
             }}>
-              <div style={{ padding: '20px' }}>
-                <h3 style={{ ...componentStyles.settingsTitle, margin: '0 0 8px 0', color: theme.colors.accentPurple }}>
+              <div style={{ padding: '16px' }}>
+                <h3 style={{ ...componentStyles.settingsTitle, margin: '0 0 4px 0', color: theme.colors.accentPurple }}>
                   How it works
                 </h3>
                 <p style={{ ...componentStyles.settingsDescription, lineHeight: 1.6 }}>
@@ -278,8 +289,8 @@ export default function BudgetSetup({ data, updateStore }) {
           onClick={handleSave}
           style={{
             width: '100%',
-            padding: '18px',
-            marginTop: '24px',
+            padding: '14px',
+            marginTop: '20px',
             background: theme.colors.accentPurple,
             color: theme.colors.textPrimary,
             border: 'none',
@@ -299,7 +310,7 @@ export default function BudgetSetup({ data, updateStore }) {
             e.currentTarget.style.boxShadow = theme.shadows.glow.purple
           }}
         >
-          Save Budget Settings
+          Save
         </button>
       </div>
     </>

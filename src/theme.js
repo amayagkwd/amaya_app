@@ -233,7 +233,7 @@ export const componentStyles = {
     backdropFilter: theme.backdropFilter,
     WebkitBackdropFilter: theme.backdropFilter,
     borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     border: `1px solid ${theme.colors.borderSubtle}`,
     boxShadow: theme.shadows.card,
     overflow: 'hidden',
@@ -241,7 +241,7 @@ export const componentStyles = {
   
   settingsButton: {
     width: '100%',
-    padding: theme.spacing.xl,
+    padding: theme.spacing.md,
     background: 'transparent',
     color: theme.colors.textPrimary,
     border: 'none',
@@ -257,17 +257,17 @@ export const componentStyles = {
   },
   
   settingsTitle: {
-    fontSize: theme.typography.h4,
-    margin: `0 0 ${theme.spacing.sm} 0`,
+    fontSize: theme.typography.h5,
+    margin: `0 0 ${theme.spacing.xs} 0`,
     color: theme.colors.textPrimary,
     fontWeight: theme.typography.semiBold,
   },
   
   settingsDescription: {
-    fontSize: theme.typography.body,
+    fontSize: theme.typography.bodySmall,
     color: theme.colors.textSecondary,
     margin: 0,
-    lineHeight: 1.5,
+    lineHeight: 1.4,
   },
   
   // Dashboard greeting

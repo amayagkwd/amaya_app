@@ -77,14 +77,14 @@ function ProfileField({ label, value, isEditing, editValue, onEditValueChange, o
       background: theme.colors.bgCard,
       backdropFilter: theme.backdropFilter,
       WebkitBackdropFilter: theme.backdropFilter,
-      padding: theme.spacing.xl,
+      padding: theme.spacing.lg,
       borderRadius: theme.borderRadius.lg,
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
       border: saved ? `2px solid ${theme.colors.success}` : `1px solid ${theme.colors.borderSubtle}`,
       transition: theme.transitions.normal,
       boxShadow: theme.shadows.card
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.sm }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.xs }}>
         <label style={{ fontSize: theme.typography.body, color: theme.colors.textSecondary, fontWeight: theme.typography.medium }}>
           {label}
         </label>

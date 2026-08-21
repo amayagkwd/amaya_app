@@ -151,6 +151,64 @@ export default function Settings({ data, updateStore }) {
           </svg>
         </button>
       </div>
+
+      {/* Predict Month End Projections Toggle */}
+      <div style={componentStyles.settingsCard}>
+        <div style={{
+          ...componentStyles.settingsButton,
+          cursor: 'default'
+        }}>
+          <div style={{ textAlign: 'left', flex: 1 }}>
+            <h3 style={componentStyles.settingsTitle}>
+              Predict Month End Projections
+            </h3>
+            <p style={componentStyles.settingsDescription}>
+              Show estimated month-end balance based on spending patterns
+            </p>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={data.settings?.predictMonthEnd || false}
+              onChange={(e) => {
+                updateStore(current => ({
+                  ...current,
+                  settings: {
+                    ...current.settings,
+                    predictMonthEnd: e.target.checked
+                  }
+                }))
+              }}
+              style={{ display: 'none' }}
+            />
+            <div style={{
+              width: '48px',
+              height: '28px',
+              borderRadius: '14px',
+              background: (data.settings?.predictMonthEnd || false) 
+                ? theme.colors.accentPurple 
+                : theme.colors.bgCardDark,
+              position: 'relative',
+              transition: theme.transitions.normal,
+              border: `1px solid ${(data.settings?.predictMonthEnd || false) 
+                ? theme.colors.accentPurple 
+                : theme.colors.borderSubtle}`
+            }}>
+              <div style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: theme.colors.textPrimary,
+                position: 'absolute',
+                top: '3px',
+                left: (data.settings?.predictMonthEnd || false) ? '24px' : '3px',
+                transition: theme.transitions.normal,
+                boxShadow: theme.shadows.card
+              }} />
+            </div>
+          </label>
+        </div>
+      </div>
       
       {/* Carry Balance Toggle */}
       <div style={componentStyles.settingsCard}>

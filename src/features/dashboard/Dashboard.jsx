@@ -16,6 +16,10 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
   // Get budget data
   const budgetData = useBudget(data)
 
+  // Get settings
+  const isBudgetEnabled = data.settings?.budget?.enabled || false
+  const isPredictMonthEndEnabled = data.settings?.predictMonthEnd || false
+
   const handleForecastScroll = () => {
     if (forecastCarouselRef.current) {
       const scrollLeft = forecastCarouselRef.current.scrollLeft
@@ -80,6 +84,9 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
   }, [data.payments.transactions, stats.balance])
 
   const showForecast = forecast !== null
+
+  // Determine if we should show the forecast grid
+  const showForecastGrid = showForecast && (isBudgetEnabled || isPredictMonthEndEnabled)
 
   const balanceColor = stats.balance >= 0 ? theme.dashboardColors.cyan : theme.dashboardColors.pink
 
@@ -196,7 +203,7 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             <h3
               style={{
                 margin: 0,
-                color: theme.dashboardColors.muted,
+                color: theme.colors.accentPurple,
                 fontSize: 17,
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
@@ -324,7 +331,7 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
       </div>
 
       {/* Forecast cards */}
-      {showForecast && (
+      {showForecastGrid && (
         <div
           style={{
             display: 'grid',
@@ -335,182 +342,224 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             zIndex: 1,
           }}
         >
-          {/* Coming soon box / Budget box */}
-          <div
-            style={{
-              ...componentStyles.forecastCard,
-            }}
-          >
-            <div style={{ position: 'relative', zIndex: 10 }}>
-              <h3
-                style={{
-                  margin: 0,
-                  color: theme.dashboardColors.cyan,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Today's budget
-              </h3>
-              {budgetData ? (
-                <p style={{
-                  marginTop: 14,
-                  marginBottom: 0,
-                  fontFamily: theme.typography.fontFamily,
-                  fontSize: 26,
-                  fontWeight: 600,
-                  color: budgetData.dailyAllowance >= 0 ? 'white' : theme.dashboardColors.pink,
-                  letterSpacing: '-0.02em',
-                }}>
-                  {formatCurrency(budgetData.dailyAllowance, data.profile.country)}
-                </p>
-              ) : (
-                <p style={{
-                  marginTop: 14,
-                  fontFamily: theme.typography.fontFamily,
-                  fontSize: 26,
-                  fontWeight: 600,
-                  color: theme.dashboardColors.muted,
-                  letterSpacing: '-0.02em',
-                }}>
-                  Coming Soon
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Carousel box with monthly and daily forecast */}
-          <div
-            style={{
-              ...componentStyles.forecastCard,
-              overflow: 'hidden',
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <div 
-              ref={forecastCarouselRef}
-              onScroll={handleForecastScroll}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
+          {/* Today's Budget box */}
+          {isBudgetEnabled && (
+            <div
               style={{
-                display: 'flex',
-                overflowX: 'scroll',
-                scrollSnapType: 'x mandatory',
-                gap: '0px',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'auto',
-                flex: 1
+                ...componentStyles.forecastCard,
+                display: budgetData && !budgetData.isPossible ? 'flex' : 'block',
+                alignItems: budgetData && !budgetData.isPossible ? 'center' : 'initial',
+                justifyContent: budgetData && !budgetData.isPossible ? 'center' : 'initial'
               }}
             >
-              <style>
-                {`
-                  div::-webkit-scrollbar {
-                    display: none;
-                  }
-                `}
-              </style>
-              
-              {/* Month end projection */}
-              <div style={{ 
-                minWidth: '100%', 
-                scrollSnapAlign: 'start',
-                scrollSnapStop: 'always',
-                padding: '18px 20px 0px',
-                boxSizing: 'border-box'
-              }}>
-                <div style={{ position: 'relative', zIndex: 10 }}>
+              <div style={{ position: 'relative', zIndex: 10, width: '100%' }}>
+                {budgetData && budgetData.isPossible && (
                   <h3
                     style={{
                       margin: 0,
-                      color: theme.dashboardColors.pink,
+                      color: theme.colors.accentPurple,
                       fontSize: 14,
                       fontWeight: 700,
                       letterSpacing: '-0.02em',
                     }}
                   >
-                    At current pace, you will save . . .
+                    Today's budget
                   </h3>
-                  <p style={{
-                    marginTop: 14,
-                    marginBottom: 0,
-                    fontFamily: theme.typography.fontFamily,
-                    fontSize: 26,
-                    fontWeight: 600,
-                    color: 'white',
-                    letterSpacing: '-0.02em',
-                  }}>
-                    ~{formatCurrency(forecast.monthEndProjection, data.profile.country)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Daily spend forecast */}
-              <div style={{ 
-                minWidth: '100%', 
-                scrollSnapAlign: 'start',
-                scrollSnapStop: 'always',
-                padding: '18px 20px 0px',
-                boxSizing: 'border-box'
-              }}>
-                <div style={{ position: 'relative', zIndex: 10 }}>
-                  <h3
-                    style={{
-                      margin: 0,
-                      color: theme.dashboardColors.pink,
-                      fontSize: 14,
-                      fontWeight: 700,
+                )}
+                {budgetData ? (
+                  budgetData.dashboardCondition ? (
+                    <p style={{
+                      marginTop: 0,
+                      marginBottom: 0,
+                      fontFamily: theme.typography.fontFamily,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: theme.dashboardColors.muted,
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      justifyContent: 'center'
+                    }}>
+                      <span style={{ color: theme.colors.accentPink, fontSize: 16, fontWeight: 700 }}>!</span>
+                      {budgetData.dashboardCondition.message}
+                    </p>
+                  ) : (
+                    <p style={{
+                      marginTop: 14,
+                      marginBottom: 0,
+                      fontFamily: theme.typography.fontFamily,
+                      fontSize: 26,
+                      fontWeight: 600,
+                      color: budgetData.dailyAllowance >= 0 ? 'white' : theme.dashboardColors.pink,
                       letterSpacing: '-0.02em',
-                    }}
-                  >
-                    Daily Spend Forecast
-                  </h3>
-                  <p style={{
-                    marginTop: 14,
-                    marginBottom: 0,
-                    fontFamily: theme.typography.fontFamily,
-                    fontSize: 26,
-                    fontWeight: 600,
-                    color: 'white',
-                    letterSpacing: '-0.02em',
-                  }}>
-                    ~{formatCurrency(forecast.dailySpendForecast, data.profile.country)}
-                  </p>
-                </div>
+                    }}>
+                      {formatCurrency(budgetData.dailyAllowance, data.profile.country)}
+                    </p>
+                  )
+                ) : (
+                  <>
+                    <h3
+                      style={{
+                        margin: 0,
+                        color: theme.colors.accentPurple,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      Today's budget
+                    </h3>
+                    <p style={{
+                      marginTop: 14,
+                      fontFamily: theme.typography.fontFamily,
+                      fontSize: 26,
+                      fontWeight: 600,
+                      color: theme.dashboardColors.muted,
+                      letterSpacing: '-0.02em',
+                    }}>
+                      Coming Soon
+                    </p>
+                  </>
+                )}
               </div>
             </div>
+          )}
 
-            {/* Dot navigation inside the second box */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 0 16px',
-              position: 'relative',
-              zIndex: 10
-            }}>
-              {[0, 1].map(index => (
-                <div
-                  key={index}
-                  onClick={() => scrollToForecast(index)}
-                  style={{
-                    width: currentForecastIndex === index ? '10px' : '8px',
-                    height: currentForecastIndex === index ? '10px' : '8px',
-                    borderRadius: '50%',
-                    background: currentForecastIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    opacity: currentForecastIndex === index ? 1 : 0.6
-                  }}
-                />
-              ))}
+          {/* Carousel box with monthly and daily forecast */}
+          {isPredictMonthEndEnabled && (
+            <div
+              style={{
+                ...componentStyles.forecastCard,
+                overflow: 'hidden',
+                padding: 0,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div 
+                ref={forecastCarouselRef}
+                onScroll={handleForecastScroll}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{
+                  display: 'flex',
+                  overflowX: 'scroll',
+                  scrollSnapType: 'x mandatory',
+                  gap: '0px',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'auto',
+                  flex: 1
+                }}
+              >
+                <style>
+                  {`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}
+                </style>
+                
+                {/* Month end projection */}
+                <div style={{ 
+                  minWidth: '100%', 
+                  scrollSnapAlign: 'start',
+                  scrollSnapStop: 'always',
+                  padding: '18px 20px 0px',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ position: 'relative', zIndex: 10 }}>
+                    <h3
+                      style={{
+                        margin: 0,
+                        color: theme.colors.accentPurple,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      Month End Projection
+                    </h3>
+                    <p style={{
+                      marginTop: 14,
+                      marginBottom: 0,
+                      fontFamily: theme.typography.fontFamily,
+                      fontSize: 26,
+                      fontWeight: 600,
+                      color: 'white',
+                      letterSpacing: '-0.02em',
+                    }}>
+                      {formatCurrency(forecast.monthEndProjection, data.profile.country)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Daily spend forecast */}
+                <div style={{ 
+                  minWidth: '100%', 
+                  scrollSnapAlign: 'start',
+                  scrollSnapStop: 'always',
+                  padding: '18px 20px 0px',
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ position: 'relative', zIndex: 10 }}>
+                    <h3
+                      style={{
+                        margin: 0,
+                        color: theme.colors.accentPurple,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      Daily Spend Forecast
+                    </h3>
+                    <p style={{
+                      marginTop: 14,
+                      marginBottom: 0,
+                      fontFamily: theme.typography.fontFamily,
+                      fontSize: 26,
+                      fontWeight: 600,
+                      color: 'white',
+                      letterSpacing: '-0.02em',
+                    }}>
+                      {formatCurrency(forecast.dailySpendForecast, data.profile.country)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dot navigation inside the second box */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 0 16px',
+                position: 'relative',
+                zIndex: 10
+              }}>
+                {[0, 1].map(index => (
+                  <div
+                    key={index}
+                    onClick={() => scrollToForecast(index)}
+                    style={{
+                      width: currentForecastIndex === index ? '10px' : '8px',
+                      height: currentForecastIndex === index ? '10px' : '8px',
+                      borderRadius: '50%',
+                      background: currentForecastIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      opacity: currentForecastIndex === index ? 1 : 0.6
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -527,7 +576,7 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
           <h3
             style={{
               margin: 0,
-              color: theme.dashboardColors.muted,
+              color: theme.colors.accentPurple,
               fontSize: 14,
               fontWeight: 700,
               letterSpacing: '0.15em',
