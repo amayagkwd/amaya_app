@@ -5,7 +5,7 @@ import { getCurrencyByCountry } from '../../utils/countries'
 import uuidv4 from '../../utils/uuid'
 import theme from '../../theme'
 
-export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore }) {
+export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore, mode = 'transaction' }) {
   const navigate = useNavigate()
   const [type, setType] = useState('expense')
   const [amount, setAmount] = useState('')
@@ -14,16 +14,30 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
   const [note, setNote] = useState('')
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
   
+  // Reminder-specific fields
+  const [reminderName, setReminderName] = useState('')
+  const [reminderCategory, setReminderCategory] = useState('')
+  const [reminderCategoryDropdownOpen, setReminderCategoryDropdownOpen] = useState(false)
+  const [remindDaysBefore, setRemindDaysBefore] = useState(1)
+  const [recurMonthly, setRecurMonthly] = useState(false)
+  
   useEffect(() => {
     if (isOpen) {
-      setType('expense')
+      setType(mode === 'settleup' ? 'owed' : 'expense')
       setAmount('')
       setCategoryId('')
       setDate(new Date().toISOString().split('T')[0])
       setNote('')
       setCategoryDropdownOpen(false)
+      
+      // Reset reminder fields
+      setReminderName('')
+      setReminderCategory('')
+      setReminderCategoryDropdownOpen(false)
+      setRemindDaysBefore(1)
+      setRecurMonthly(false)
     }
-  }, [isOpen])
+  }, [isOpen, mode])
   
   // Get current month's date range
   const currentDate = new Date(date)
@@ -48,20 +62,39 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
       return countB - countA // Descending order (most used first)
     })
   
-  const canSave = amount > 0 && categoryId
+  const canSave = mode === 'reminder' 
+    ? reminderName.trim() && reminderCategory && date
+    : amount > 0 && (mode === 'settleup' || categoryId)
+  
+  // Get expense categories for reminders
+  const expenseCategories = categories.filter(c => c.type === 'expense')
   
   const handleSave = () => {
-    const category = categories.find(c => c.id === categoryId)
-    const currencySymbol = getCurrencyByCountry(data.profile.country)
-    onSave({
-      type,
-      amount: parseFloat(amount),
-      categoryId,
-      date,
-      note: note.trim() || null,
-      classification: category?.classification || null
-    })
-    showToast(`Logged ${currencySymbol}${amount} · ${category?.name || 'Transaction'}`)
+    if (mode === 'reminder') {
+      const category = categories.find(c => c.id === reminderCategory)
+      onSave({
+        name: reminderName.trim(),
+        category: category?.name || '',
+        categoryId: reminderCategory,
+        date,
+        remindDaysBefore: parseInt(remindDaysBefore),
+        recurMonthly,
+        note: note.trim() || null
+      })
+      showToast(`Reminder set for ${reminderName}`)
+    } else {
+      const category = categories.find(c => c.id === categoryId)
+      const currencySymbol = getCurrencyByCountry(data.profile.country)
+      onSave({
+        type,
+        amount: parseFloat(amount),
+        categoryId,
+        date,
+        note: note.trim() || null,
+        classification: category?.classification || null
+      })
+      showToast(`Logged ${currencySymbol}${amount} · ${category?.name || 'Transaction'}`)
+    }
     onClose()
   }
   
@@ -109,135 +142,311 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
           margin: `0 auto ${theme.spacing.xl}`
         }} />
         
-        <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
-          <button
-            onClick={() => setType('income')}
-            style={{
-              flex: 1,
-              padding: theme.spacing.md,
-              background: type === 'income' ? theme.colors.accentPurple : theme.colors.bgCardDark,
-              color: theme.colors.textPrimary,
-              border: type === 'income' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
-              borderRadius: theme.borderRadius.sm,
-              cursor: 'pointer',
-              fontSize: theme.typography.body,
-              fontWeight: theme.typography.medium
-            }}
-          >
-            Income
-          </button>
-          <button
-            onClick={() => setType('expense')}
-            style={{
-              flex: 1,
-              padding: theme.spacing.md,
-              background: type === 'expense' ? theme.colors.accentPurple : theme.colors.bgCardDark,
-              color: theme.colors.textPrimary,
-              border: type === 'expense' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
-              borderRadius: theme.borderRadius.sm,
-              cursor: 'pointer',
-              fontSize: theme.typography.body,
-              fontWeight: theme.typography.medium
-            }}
-          >
-            Expense
-          </button>
-        </div>
-        
-        <div style={{ marginBottom: theme.spacing.lg }}>
-          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
-            Amount
-          </label>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            autoFocus
-            placeholder="0"
-            style={{
-              width: '100%',
-              padding: theme.spacing.md,
-              paddingLeft: '32px',
-              border: `1px solid ${theme.colors.borderSubtle}`,
-              borderRadius: theme.borderRadius.sm,
-              fontSize: theme.typography.h5,
-              boxSizing: 'border-box',
-              background: theme.colors.bgCardDark,
-              color: theme.colors.textPrimary,
-              outline: 'none'
-            }}
-          />
-          <span style={{
-            position: 'relative',
-            top: '-38px',
-            left: '12px',
-            color: theme.colors.textSecondary
-          }}>₹</span>
-        </div>
-        
-        <div style={{ marginBottom: theme.spacing.lg }}>
-          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
-            Category
-          </label>
-          <CustomDropdown
-            value={categoryId}
-            onChange={setCategoryId}
-            options={filteredCategories}
-            placeholder="Select category"
-            isOpen={categoryDropdownOpen}
-            onToggle={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-            onClose={() => setCategoryDropdownOpen(false)}
-            onAddCategory={handleAddCategory}
-            type={type}
-            updateStore={updateStore}
-          />
-        </div>
-        
-        <div style={{ marginBottom: theme.spacing.lg }}>
-          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
-            Date
-          </label>
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            style={{
-              width: '100%',
-              padding: theme.spacing.md,
-              border: `1px solid ${theme.colors.borderSubtle}`,
-              borderRadius: theme.borderRadius.sm,
-              fontSize: theme.typography.h5,
-              boxSizing: 'border-box',
-              background: theme.colors.bgCardDark,
-              color: theme.colors.textPrimary,
-              outline: 'none'
-            }}
-          />
-        </div>
-        
-        <div style={{ marginBottom: theme.spacing.lg }}>
-          <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
-            Note (optional)
-          </label>
-          <input
-            type="text"
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="e.g. California burrito"
-            style={{
-              width: '100%',
-              padding: theme.spacing.md,
-              border: `1px solid ${theme.colors.borderSubtle}`,
-              borderRadius: theme.borderRadius.sm,
-              fontSize: theme.typography.h5,
-              boxSizing: 'border-box',
-              background: theme.colors.bgCardDark,
-              color: theme.colors.textPrimary,
-              outline: 'none'
-            }}
-          />
-        </div>
+        {mode === 'reminder' ? (
+          <>
+            {/* Reminder Form */}
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Name
+              </label>
+              <input
+                type="text"
+                value={reminderName}
+                onChange={e => setReminderName(e.target.value)}
+                autoFocus
+                placeholder="e.g. Pay electricity bill"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Category
+              </label>
+              <CustomDropdown
+                value={reminderCategory}
+                onChange={setReminderCategory}
+                options={expenseCategories}
+                placeholder="Select category"
+                isOpen={reminderCategoryDropdownOpen}
+                onToggle={() => setReminderCategoryDropdownOpen(!reminderCategoryDropdownOpen)}
+                onClose={() => setReminderCategoryDropdownOpen(false)}
+                onAddCategory={handleAddCategory}
+                type="expense"
+                updateStore={updateStore}
+              />
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Remind me
+              </label>
+              <div style={{
+                display: 'flex',
+                overflowX: 'auto',
+                gap: theme.spacing.sm,
+                padding: '4px 0'
+              }}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(days => (
+                  <button
+                    key={days}
+                    onClick={() => setRemindDaysBefore(days)}
+                    type="button"
+                    style={{
+                      minWidth: '80px',
+                      padding: `${theme.spacing.md} ${theme.spacing.lg}`,
+                      background: remindDaysBefore === days ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                      color: theme.colors.textPrimary,
+                      border: `1px solid ${remindDaysBefore === days ? theme.colors.accentPurple : theme.colors.borderSubtle}`,
+                      borderRadius: theme.borderRadius.sm,
+                      cursor: 'pointer',
+                      fontSize: theme.typography.body,
+                      fontWeight: theme.typography.medium,
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {days} {days === 1 ? 'day' : 'days'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: theme.spacing.md,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                background: theme.colors.bgCardDark
+              }}>
+                <label style={{ fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium, cursor: 'pointer' }}>
+                  Repeat monthly
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={recurMonthly}
+                    onChange={(e) => setRecurMonthly(e.target.checked)}
+                    style={{ display: 'none' }}
+                  />
+                  <div style={{
+                    width: '48px',
+                    height: '28px',
+                    borderRadius: '14px',
+                    background: recurMonthly ? theme.colors.accentPurple : theme.colors.bgCard,
+                    position: 'relative',
+                    transition: theme.transitions.normal,
+                    border: `1px solid ${recurMonthly ? theme.colors.accentPurple : theme.colors.borderSubtle}`
+                  }}>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      background: theme.colors.textPrimary,
+                      position: 'absolute',
+                      top: '3px',
+                      left: recurMonthly ? '24px' : '3px',
+                      transition: theme.transitions.normal,
+                      boxShadow: theme.shadows.card
+                    }} />
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Notes (optional)
+              </label>
+              <input
+                type="text"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="Add any additional details"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Transaction/SettleUp Form */}
+            <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
+              <button
+                onClick={() => setType(mode === 'settleup' ? 'owed' : 'income')}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.md,
+                  background: type === (mode === 'settleup' ? 'owed' : 'income') ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: type === (mode === 'settleup' ? 'owed' : 'income') ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  cursor: 'pointer',
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
+                }}
+              >
+                {mode === 'settleup' ? 'Owed' : 'Income'}
+              </button>
+              <button
+                onClick={() => setType(mode === 'settleup' ? 'debt' : 'expense')}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.md,
+                  background: type === (mode === 'settleup' ? 'debt' : 'expense') ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: type === (mode === 'settleup' ? 'debt' : 'expense') ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  cursor: 'pointer',
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
+                }}
+              >
+                {mode === 'settleup' ? 'Debt' : 'Expense'}
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Amount
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                autoFocus
+                placeholder="0"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  paddingLeft: '32px',
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+              <span style={{
+                position: 'relative',
+                top: '-38px',
+                left: '12px',
+                color: theme.colors.textSecondary
+              }}>₹</span>
+            </div>
+            
+            {mode !== 'settleup' && (
+              <div style={{ marginBottom: theme.spacing.lg }}>
+                <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                  Category
+                </label>
+                <CustomDropdown
+                  value={categoryId}
+                  onChange={setCategoryId}
+                  options={filteredCategories}
+                  placeholder="Select category"
+                  isOpen={categoryDropdownOpen}
+                  onToggle={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                  onClose={() => setCategoryDropdownOpen(false)}
+                  onAddCategory={handleAddCategory}
+                  type={type}
+                  updateStore={updateStore}
+                />
+              </div>
+            )}
+            
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ display: 'block', marginBottom: theme.spacing.sm, fontSize: theme.typography.body, color: theme.colors.textPrimary, fontWeight: theme.typography.medium }}>
+                Note (optional)
+              </label>
+              <input
+                type="text"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="e.g. California burrito"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </>
+        )}
         
         <button
           onClick={handleSave}

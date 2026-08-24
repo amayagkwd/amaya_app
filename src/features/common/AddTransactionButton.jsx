@@ -1,6 +1,6 @@
 import theme from '../../theme'
 
-export default function AddTransactionButton({ onClick }) {
+export default function AddTransactionButton({ onClick, mode = 'transaction' }) {
   return (
     <button
       onClick={onClick}
