@@ -86,15 +86,12 @@ export function getYearTransactions(transactions, year) {
 export function calculateMonthStats(transactions) {
   let income = 0
   let expenses = 0
+  let balanceAdjustments = 0
   
   transactions.forEach(t => {
-    if (t.isBalanceUpdate) {
-      // Balance updates affect the balance directly
-      if (t.balanceChange > 0) {
-        income += t.balanceChange
-      } else {
-        expenses += Math.abs(t.balanceChange)
-      }
+    if (t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'balance-update') {
+      // Balance updates don't count as income or expense, they're adjustments
+      balanceAdjustments += t.balanceChange || 0
     } else if (t.type === 'income') {
       income += t.amount
     } else if (t.type === 'expense') {
@@ -102,5 +99,5 @@ export function calculateMonthStats(transactions) {
     }
   })
   
-  return { income, expenses, balance: income - expenses }
+  return { income, expenses, balance: income - expenses + balanceAdjustments }
 }
