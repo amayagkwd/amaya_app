@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import theme from '../../theme'
 
 export default function EditTransactionModal({ transaction, categories, onSave, onClose }) {
@@ -23,7 +24,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
     })
   }
   
-  return (
+  return createPortal(
     <>
       <div
         onClick={onClose}
@@ -31,7 +32,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
           position: 'fixed',
           inset: 0,
           background: 'rgba(0,0,0,0.7)',
-          zIndex: 1000
+          zIndex: 300
         }}
       />
       <div style={{
@@ -44,7 +45,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
         WebkitBackdropFilter: theme.backdropFilter,
         borderRadius: `${theme.borderRadius.xl} ${theme.borderRadius.xl} 0 0`,
         padding: theme.spacing.xl,
-        zIndex: 1001,
+        zIndex: 301,
         maxWidth: theme.layout.maxWidth,
         margin: '0 auto',
         maxHeight: '80vh',
@@ -196,6 +197,7 @@ export default function EditTransactionModal({ transaction, categories, onSave, 
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

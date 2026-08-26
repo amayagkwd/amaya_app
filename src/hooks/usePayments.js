@@ -84,13 +84,23 @@ export function getYearTransactions(transactions, year) {
 }
 
 export function calculateMonthStats(transactions) {
-  const income = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+  let income = 0
+  let expenses = 0
   
-  const expenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+  transactions.forEach(t => {
+    if (t.isBalanceUpdate) {
+      // Balance updates affect the balance directly
+      if (t.balanceChange > 0) {
+        income += t.balanceChange
+      } else {
+        expenses += Math.abs(t.balanceChange)
+      }
+    } else if (t.type === 'income') {
+      income += t.amount
+    } else if (t.type === 'expense') {
+      expenses += t.amount
+    }
+  })
   
   return { income, expenses, balance: income - expenses }
 }

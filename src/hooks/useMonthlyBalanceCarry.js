@@ -3,18 +3,112 @@ import uuidv4 from '../utils/uuid'
 
 export function useMonthlyBalanceCarry(data, updateStore) {
   const hasRunRef = useRef(false)
+  const migrationDoneRef = useRef(false)
+  const timestampFixDoneRef = useRef(false)
   
   useEffect(() => {
     // Prevent multiple runs in the same render cycle
     if (hasRunRef.current) return
     
     const settings = data.settings || {}
-    const carryBalanceEnabled = settings.carryBalanceToNextMonth || false
+    const resetBalanceEnabled = settings.resetBalanceEachMonth || false
     const lastCheckedMonth = settings.lastCheckedMonth
     const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
     
-    // Only proceed if toggle is on and we have a lastCheckedMonth to compare
-    if (!carryBalanceEnabled || !lastCheckedMonth) {
+    // Migration 2: Fix timestamps for existing balance transactions
+    if (!timestampFixDoneRef.current && !settings.balanceTimestampsFixed) {
+      timestampFixDoneRef.current = true
+      
+      const fixedTransactions = data.payments.transactions.map(t => {
+        // Check if this is a balance transaction that needs fixing
+        if ((t.isBalanceUpdate || t.categoryId === 'month-balance' || t.note?.startsWith('Balance of ')) && t.date) {
+          const firstDayDate = new Date(t.date + 'T00:00:00')
+          const midnightTimestamp = firstDayDate.getTime()
+          
+          // Only update if timestamp is different
+          if (t.timestamp !== midnightTimestamp) {
+            return {
+              ...t,
+              timestamp: midnightTimestamp
+            }
+          }
+        }
+        return t
+      })
+      
+      // Check if any transactions were actually modified
+      const hasChanges = fixedTransactions.some((t, i) => t.timestamp !== data.payments.transactions[i].timestamp)
+      
+      if (hasChanges) {
+        updateStore(current => ({
+          ...current,
+          payments: {
+            ...current.payments,
+            transactions: fixedTransactions
+          },
+          settings: {
+            ...current.settings,
+            balanceTimestampsFixed: true
+          }
+        }))
+        return
+      } else {
+        // No changes needed, just mark as done
+        updateStore(current => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            balanceTimestampsFixed: true
+          }
+        }))
+        return
+      }
+    }
+    
+    // Migration: For existing users, if they don't have the new setting, migrate them
+    if (!migrationDoneRef.current && settings.resetBalanceEachMonth === undefined) {
+      migrationDoneRef.current = true
+      
+      // Migrate existing data: create balance transactions for all previous months
+      const balanceTransactions = generateHistoricalBalanceTransactions(data)
+      
+      if (balanceTransactions.length > 0) {
+        hasRunRef.current = true
+        
+        updateStore(current => ({
+          ...current,
+          payments: {
+            ...current.payments,
+            transactions: [...current.payments.transactions, ...balanceTransactions]
+          },
+          settings: {
+            ...current.settings,
+            resetBalanceEachMonth: false, // Default to OFF (carry balance)
+            lastCheckedMonth: currentMonth
+          }
+        }))
+        
+        setTimeout(() => {
+          hasRunRef.current = false
+        }, 1000)
+        
+        return
+      } else {
+        // No transactions to migrate, just set the default
+        updateStore(current => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            resetBalanceEachMonth: false, // Default to OFF (carry balance)
+            lastCheckedMonth: currentMonth
+          }
+        }))
+        return
+      }
+    }
+    
+    // Only carry balance forward if resetBalanceEnabled is FALSE
+    if (resetBalanceEnabled || !lastCheckedMonth) {
       return
     }
     
@@ -31,7 +125,7 @@ export function useMonthlyBalanceCarry(data, updateStore) {
         const tDate = new Date(t.date)
         if (isNaN(tDate.getTime())) return false
         const tMonth = tDate.toISOString().slice(0, 7)
-        return tMonth === currentMonth && t.note?.startsWith('Balance of ')
+        return tMonth === currentMonth && (t.note?.startsWith('Balance of ') || t.isBalanceUpdate)
       })
       
       // Only create if it doesn't exist and balance is not zero
@@ -39,22 +133,28 @@ export function useMonthlyBalanceCarry(data, updateStore) {
         const previousMonthName = new Date(lastCheckedMonth + '-01').toLocaleDateString('en-US', { month: 'long' })
         const firstDayOfMonth = currentMonth + '-01'
         
+        // Create timestamp at the very start of the day (midnight) so it appears below other transactions on the 1st
+        const firstDayDate = new Date(firstDayOfMonth + 'T00:00:00')
+        const midnightTimestamp = firstDayDate.getTime()
+        
+        const balanceTransaction = {
+          id: uuidv4(),
+          type: 'balance-update',
+          amount: Math.abs(previousMonthBalance),
+          category: `${previousMonthName}'s Balance`,
+          categoryId: 'month-balance',
+          date: firstDayOfMonth,
+          note: null,
+          timestamp: midnightTimestamp,
+          isBalanceUpdate: true,
+          balanceChange: previousMonthBalance
+        }
+        
         updateStore(current => ({
           ...current,
           payments: {
             ...current.payments,
-            transactions: [
-              ...current.payments.transactions,
-              {
-                id: uuidv4(),
-                type: previousMonthBalance > 0 ? 'income' : 'expense',
-                amount: Math.abs(previousMonthBalance),
-                categoryId: null,
-                date: firstDayOfMonth,
-                note: `Balance of ${previousMonthName}`,
-                classification: null
-              }
-            ]
+            transactions: [...current.payments.transactions, balanceTransaction]
           },
           settings: {
             ...current.settings,
@@ -95,13 +195,85 @@ function calculateEndOfMonthBalance(data, monthString) {
     
     // Include all transactions up to and including the last day of the specified month
     if (tDate <= endOfMonth) {
-      if (transaction.type === 'income') {
+      if (transaction.isBalanceUpdate) {
+        balance += transaction.balanceChange
+      } else if (transaction.type === 'income') {
         balance += transaction.amount
-      } else {
+      } else if (transaction.type === 'expense') {
         balance -= transaction.amount
       }
     }
   })
   
   return balance
+}
+
+function generateHistoricalBalanceTransactions(data) {
+  const transactions = data.payments.transactions || []
+  
+  if (transactions.length === 0) {
+    return []
+  }
+  
+  // Get all unique months from transactions
+  const monthsSet = new Set()
+  transactions.forEach(t => {
+    if (!t.date) return
+    const tDate = new Date(t.date)
+    if (isNaN(tDate.getTime())) return
+    const monthKey = tDate.toISOString().slice(0, 7)
+    monthsSet.add(monthKey)
+  })
+  
+  const months = Array.from(monthsSet).sort()
+  
+  if (months.length <= 1) {
+    return []
+  }
+  
+  const balanceTransactions = []
+  
+  // For each month (starting from the second month), create a balance transaction
+  for (let i = 1; i < months.length; i++) {
+    const currentMonth = months[i]
+    const previousMonth = months[i - 1]
+    
+    // Check if a balance transaction already exists for this month
+    const alreadyExists = transactions.some(t => {
+      if (!t.date) return false
+      const tDate = new Date(t.date)
+      if (isNaN(tDate.getTime())) return false
+      const tMonth = tDate.toISOString().slice(0, 7)
+      return tMonth === currentMonth && (t.note?.startsWith('Balance of ') || t.isBalanceUpdate)
+    })
+    
+    if (alreadyExists) continue
+    
+    // Calculate balance at end of previous month
+    const balance = calculateEndOfMonthBalance(data, previousMonth)
+    
+    if (balance === 0) continue
+    
+    const previousMonthName = new Date(previousMonth + '-01').toLocaleDateString('en-US', { month: 'long' })
+    const firstDayOfMonth = currentMonth + '-01'
+    
+    // Create timestamp at the very start of the day (midnight)
+    const firstDayDate = new Date(firstDayOfMonth + 'T00:00:00')
+    const midnightTimestamp = firstDayDate.getTime()
+    
+    balanceTransactions.push({
+      id: uuidv4(),
+      type: 'balance-update',
+      amount: Math.abs(balance),
+      category: `${previousMonthName}'s Balance`,
+      categoryId: 'month-balance',
+      date: firstDayOfMonth,
+      note: null,
+      timestamp: midnightTimestamp,
+      isBalanceUpdate: true,
+      balanceChange: balance
+    })
+  }
+  
+  return balanceTransactions
 }

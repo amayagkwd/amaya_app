@@ -245,7 +245,7 @@ export default function Settings({ data, updateStore }) {
         </div>
       </div>
       
-      {/* Carry Balance Toggle */}
+      {/* Reset Balance Toggle */}
       <div style={componentStyles.settingsCard}>
         <div style={{
           ...componentStyles.settingsButton,
@@ -253,16 +253,16 @@ export default function Settings({ data, updateStore }) {
         }}>
           <div style={{ textAlign: 'left', flex: 1 }}>
             <h3 style={componentStyles.settingsTitle}>
-              Carry Balance to Next Month
+              Reset Balance Each Month
             </h3>
             <p style={componentStyles.settingsDescription}>
-              Automatically add remaining balance as first transaction of new month
+              Start each month with 0 balance
             </p>
           </div>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
               type="checkbox"
-              checked={data.settings?.carryBalanceToNextMonth || false}
+              checked={data.settings?.resetBalanceEachMonth || false}
               onChange={(e) => {
                 const isEnabled = e.target.checked
                 const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
@@ -271,8 +271,8 @@ export default function Settings({ data, updateStore }) {
                   ...current,
                   settings: {
                     ...current.settings,
-                    carryBalanceToNextMonth: isEnabled,
-                    lastCheckedMonth: isEnabled ? currentMonth : current.settings?.lastCheckedMonth
+                    resetBalanceEachMonth: isEnabled,
+                    lastCheckedMonth: !isEnabled ? currentMonth : current.settings?.lastCheckedMonth
                   }
                 }))
               }}
@@ -282,12 +282,12 @@ export default function Settings({ data, updateStore }) {
               width: '48px',
               height: '28px',
               borderRadius: '14px',
-              background: (data.settings?.carryBalanceToNextMonth || false) 
+              background: (data.settings?.resetBalanceEachMonth || false) 
                 ? theme.colors.accentPurple 
                 : theme.colors.bgCardDark,
               position: 'relative',
               transition: theme.transitions.normal,
-              border: `1px solid ${(data.settings?.carryBalanceToNextMonth || false) 
+              border: `1px solid ${(data.settings?.resetBalanceEachMonth || false) 
                 ? theme.colors.accentPurple 
                 : theme.colors.borderSubtle}`
             }}>
@@ -298,7 +298,7 @@ export default function Settings({ data, updateStore }) {
                 background: theme.colors.textPrimary,
                 position: 'absolute',
                 top: '3px',
-                left: (data.settings?.carryBalanceToNextMonth || false) ? '24px' : '3px',
+                left: (data.settings?.resetBalanceEachMonth || false) ? '24px' : '3px',
                 transition: theme.transitions.normal,
                 boxShadow: theme.shadows.card
               }} />

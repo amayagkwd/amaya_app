@@ -6,12 +6,18 @@ import { getMonthTransactions, calculateMonthStats } from '../../hooks/usePaymen
 import { calculateMedianDailySpend } from '../../utils/medianCalculator'
 import { useBudget } from '../../hooks/useBudget'
 import AddTransactionButton from '../common/AddTransactionButton'
+import { showToast } from '../common/Toast'
+import uuidv4 from '../../utils/uuid'
 import theme, { componentStyles } from '../../theme'
 
-export default function Dashboard({ data, onOpenBottomSheet }) {
+export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const navigate = useNavigate()
   const [currentForecastIndex, setCurrentForecastIndex] = useState(0)
   const forecastCarouselRef = useRef(null)
+  const [balanceEditOpen, setBalanceEditOpen] = useState(false)
+  const [editedBalance, setEditedBalance] = useState('')
+  const [balanceDate, setBalanceDate] = useState('')
+  const [balanceNote, setBalanceNote] = useState('')
   
   // Get budget data
   const budgetData = useBudget(data)
@@ -104,6 +110,48 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
       .slice(0, 4)
   }, [data.payments.transactions])
 
+  const handleBalanceClick = (e) => {
+    e.stopPropagation()
+    setEditedBalance(String(stats.balance))
+    setBalanceDate(new Date().toISOString().split('T')[0])
+    setBalanceNote('')
+    setBalanceEditOpen(true)
+  }
+
+  const handleBalanceSave = () => {
+    const newBalance = parseFloat(editedBalance)
+    if (isNaN(newBalance)) return
+
+    const difference = newBalance - stats.balance
+    if (difference !== 0) {
+      // Create a balance adjustment transaction
+      const transaction = {
+        id: uuidv4(),
+        type: 'balance-update',
+        amount: Math.abs(difference),
+        category: 'Balance Updated',
+        categoryId: 'balance-update',
+        date: balanceDate,
+        note: balanceNote.trim() || null,
+        timestamp: Date.now(),
+        isBalanceUpdate: true,
+        balanceChange: difference
+      }
+
+      updateStore(current => ({
+        ...current,
+        payments: {
+          ...current.payments,
+          transactions: [...current.payments.transactions, transaction]
+        }
+      }))
+
+      showToast(`Balance updated by ${formatCurrency(Math.abs(difference), data.profile.country)}`)
+    }
+
+    setBalanceEditOpen(false)
+  }
+
   return (
     <div
       style={{
@@ -151,25 +199,11 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
 
       {/* Payments */}
       <div
-        onClick={() => navigate('/payments')}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') navigate('/payments')
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-3px)'
-          e.currentTarget.style.borderColor = 'rgba(0,229,204,0.28)'
-          e.currentTarget.style.boxShadow = `${theme.dashboardShadows.card}, ${theme.dashboardShadows.cyan}`
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'translateY(0)'
-          e.currentTarget.style.borderColor = theme.dashboardColors.border
-          e.currentTarget.style.boxShadow = theme.dashboardShadows.card
-        }}
         style={{
           ...componentStyles.dashboardCard,
-          cursor: 'pointer',
+          cursor: 'default',
           position: 'relative',
           overflow: 'hidden',
           padding: '18px 20px 18px',
@@ -237,6 +271,7 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
         </div>
 
         <div
+          onClick={handleBalanceClick}
           style={{
             marginTop: 16,
             marginBottom: 14,
@@ -246,6 +281,18 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             fontWeight: 850,
             letterSpacing: '-0.055em',
             position: 'relative',
+            cursor: 'pointer',
+            display: 'inline-block',
+            padding: '8px 12px',
+            marginLeft: '-12px',
+            borderRadius: '12px',
+            transition: 'background 180ms ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
           }}
         >
           {formatCurrency(stats.balance, data.profile.country)}
@@ -259,7 +306,13 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             flexWrap: 'wrap',
           }}
         >
-          <div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenBottomSheet('transaction', 'income')
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div
               style={{
                 display: 'inline-flex',
@@ -271,6 +324,13 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
                 color: theme.dashboardColors.cyan,
                 fontSize: 14,
                 fontWeight: 750,
+                transition: 'transform 180ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
               }}
             >
               <span style={{ fontSize: 16, lineHeight: 1 }}>↑</span>
@@ -298,7 +358,13 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
             }}
           />
 
-          <div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenBottomSheet('transaction', 'expense')
+            }}
+            style={{ cursor: 'pointer' }}
+          >
             <div
               style={{
                 display: 'inline-flex',
@@ -310,6 +376,13 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
                 color: theme.dashboardColors.pink,
                 fontSize: 14,
                 fontWeight: 750,
+                transition: 'transform 180ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
               }}
             >
               <span style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
@@ -677,6 +750,187 @@ export default function Dashboard({ data, onOpenBottomSheet }) {
 
       {/* Floating add button is intentionally kept outside the cards. */}
       <AddTransactionButton onClick={onOpenBottomSheet} />
+
+      {/* Balance Edit Modal */}
+      {balanceEditOpen && (
+        <>
+          <div
+            onClick={() => setBalanceEditOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.7)',
+              zIndex: 300
+            }}
+          />
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: theme.colors.bgModal,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            borderRadius: `${theme.borderRadius.xl} ${theme.borderRadius.xl} 0 0`,
+            padding: theme.spacing.xl,
+            zIndex: 301,
+            maxWidth: theme.layout.maxWidth,
+            margin: '0 auto',
+            border: `1px solid ${theme.colors.borderSubtle}`,
+            borderBottom: 'none'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '4px',
+              background: theme.colors.borderMedium,
+              borderRadius: '2px',
+              margin: `0 auto ${theme.spacing.xl}`
+            }} />
+            
+            <h3 style={{
+              fontSize: theme.typography.h3,
+              fontWeight: theme.typography.bold,
+              color: theme.colors.textPrimary,
+              margin: `0 0 ${theme.spacing.xl} 0`,
+              textAlign: 'center'
+            }}>
+              Edit Balance
+            </h3>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: theme.spacing.sm, 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textPrimary, 
+                fontWeight: theme.typography.medium 
+              }}>
+                New Balance
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={editedBalance}
+                onChange={e => setEditedBalance(e.target.value)}
+                autoFocus
+                placeholder="0"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  paddingLeft: '32px',
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+              <span style={{
+                position: 'relative',
+                top: '-38px',
+                left: '12px',
+                color: theme.colors.textSecondary
+              }}>₹</span>
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: theme.spacing.sm, 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textPrimary, 
+                fontWeight: theme.typography.medium 
+              }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={balanceDate}
+                onChange={e => setBalanceDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: theme.spacing.sm, 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textPrimary, 
+                fontWeight: theme.typography.medium 
+              }}>
+                Note (optional)
+              </label>
+              <input
+                type="text"
+                value={balanceNote}
+                onChange={e => setBalanceNote(e.target.value)}
+                placeholder="e.g. Cash deposit"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+              <button
+                onClick={() => setBalanceEditOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.lg,
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  fontWeight: theme.typography.medium,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBalanceSave}
+                disabled={editedBalance === '' || isNaN(parseFloat(editedBalance))}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.lg,
+                  background: (editedBalance !== '' && !isNaN(parseFloat(editedBalance))) ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: 'none',
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  fontWeight: theme.typography.medium,
+                  cursor: (editedBalance !== '' && !isNaN(parseFloat(editedBalance))) ? 'pointer' : 'not-allowed',
+                  opacity: (editedBalance !== '' && !isNaN(parseFloat(editedBalance))) ? 1 : 0.5
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Small responsive correction for narrow screens. */}
       <style>{`

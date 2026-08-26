@@ -25,6 +25,7 @@ function AppContent() {
   const { addTransaction, deleteTransaction } = usePayments(data, updateStore)
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [bottomSheetMode, setBottomSheetMode] = useState('transaction')
+  const [bottomSheetInitialType, setBottomSheetInitialType] = useState(null)
   
   // Handle monthly balance carry-over
   useMonthlyBalanceCarry(data, updateStore)
@@ -38,8 +39,9 @@ function AppContent() {
     }))
   }
   
-  const handleOpenBottomSheet = (mode = 'transaction') => {
+  const handleOpenBottomSheet = (mode = 'transaction', initialType = null) => {
     setBottomSheetMode(mode)
+    setBottomSheetInitialType(initialType)
     setBottomSheetOpen(true)
   }
   
@@ -68,7 +70,7 @@ function AppContent() {
         minHeight: `calc(100vh - ${theme.layout.topBarHeight})`
       }}>
         <Routes>
-          <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={() => handleOpenBottomSheet('transaction')} updateStore={updateStore} />} />
+          <Route path="/" element={<Dashboard data={data} onOpenBottomSheet={handleOpenBottomSheet} updateStore={updateStore} />} />
           <Route path="/payments" element={<Payments data={data} updateStore={updateStore} onDelete={deleteTransaction} onOpenBottomSheet={() => handleOpenBottomSheet('transaction')} />} />
           <Route path="/insights" element={<Insights data={data} updateStore={updateStore} onOpenBottomSheet={() => handleOpenBottomSheet('transaction')} />} />
           <Route path="/settleup" element={<SettleUp data={data} updateStore={updateStore} onOpenBottomSheet={() => handleOpenBottomSheet('settleup')} />} />
@@ -90,6 +92,7 @@ function AppContent() {
         data={data}
         updateStore={updateStore}
         mode={bottomSheetMode}
+        initialType={bottomSheetInitialType}
       />
       
       <InstallBanner />

@@ -217,7 +217,20 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
       if (!categoryByMonth[monthIndex]) categoryByMonth[monthIndex] = {}
       const category = categories.find(c => c.id === t.categoryId)
       const isBalanceTransaction = t.note?.startsWith('Balance of ')
-      const categoryName = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
+      const isBalanceUpdate = t.isBalanceUpdate || false
+      const isMonthBalance = t.categoryId === 'month-balance'
+      
+      let categoryName
+      if (isMonthBalance) {
+        categoryName = t.category || 'Balance'
+      } else if (isBalanceTransaction) {
+        categoryName = 'Balance Transaction'
+      } else if (isBalanceUpdate) {
+        categoryName = 'Balance Updated'
+      } else {
+        categoryName = category?.name || 'Unknown'
+      }
+      
       categoryByMonth[monthIndex][categoryName] = (categoryByMonth[monthIndex][categoryName] || 0) + t.amount
     })
     
@@ -300,7 +313,20 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     incomeTxns.forEach(t => {
       const category = categories.find(c => c.id === t.categoryId)
       const isBalanceTransaction = t.note?.startsWith('Balance of ')
-      const name = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
+      const isBalanceUpdate = t.isBalanceUpdate || false
+      const isMonthBalance = t.categoryId === 'month-balance'
+      
+      let name
+      if (isMonthBalance) {
+        name = t.category || 'Balance'
+      } else if (isBalanceTransaction) {
+        name = 'Balance Transaction'
+      } else if (isBalanceUpdate) {
+        name = 'Balance Updated'
+      } else {
+        name = category?.name || 'Unknown'
+      }
+      
       byCategory[name] = (byCategory[name] || 0) + t.amount
     })
     
@@ -321,7 +347,20 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     expenseTxns.forEach(t => {
       const category = categories.find(c => c.id === t.categoryId)
       const isBalanceTransaction = t.note?.startsWith('Balance of ')
-      const name = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
+      const isBalanceUpdate = t.isBalanceUpdate || false
+      const isMonthBalance = t.categoryId === 'month-balance'
+      
+      let name
+      if (isMonthBalance) {
+        name = t.category || 'Balance'
+      } else if (isBalanceTransaction) {
+        name = 'Balance Transaction'
+      } else if (isBalanceUpdate) {
+        name = 'Balance Updated'
+      } else {
+        name = category?.name || 'Unknown'
+      }
+      
       byCategory[name] = (byCategory[name] || 0) + t.amount
     })
     
@@ -753,7 +792,20 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
               {weeklyData.transactionsByDate[selectedDay.dateStr]?.map(txn => {
                 const category = categories.find(c => c.id === txn.categoryId)
                 const isBalanceTransaction = txn.note?.startsWith('Balance of ')
-                const displayName = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
+                const isBalanceUpdate = txn.isBalanceUpdate || false
+                const isMonthBalance = txn.categoryId === 'month-balance'
+                
+                let displayName
+                if (isMonthBalance) {
+                  displayName = txn.category || 'Balance'
+                } else if (isBalanceTransaction) {
+                  displayName = 'Balance Transaction'
+                } else if (isBalanceUpdate) {
+                  displayName = 'Balance Updated'
+                } else {
+                  displayName = category?.name || 'Unknown'
+                }
+                
                 return (
                   <div 
                     key={txn.id}
@@ -766,7 +818,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                       justifyContent: 'space-between',
                       alignItems: 'center'
                     }}
-                  >
+                  >         >
                     <div style={{ flex: 1 }}>
                       <div style={{ 
                         fontWeight: theme.typography.medium, 

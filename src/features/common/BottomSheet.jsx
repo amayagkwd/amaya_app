@@ -5,7 +5,7 @@ import { getCurrencyByCountry } from '../../utils/countries'
 import uuidv4 from '../../utils/uuid'
 import theme from '../../theme'
 
-export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore, mode = 'transaction' }) {
+export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore, mode = 'transaction', initialType = null }) {
   const navigate = useNavigate()
   const [type, setType] = useState('expense')
   const [amount, setAmount] = useState('')
@@ -23,7 +23,9 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
   
   useEffect(() => {
     if (isOpen) {
-      setType(mode === 'settleup' ? 'owed' : 'expense')
+      // Use initialType if provided, otherwise default based on mode
+      const defaultType = initialType || (mode === 'settleup' ? 'owed' : 'expense')
+      setType(defaultType)
       setAmount('')
       setCategoryId('')
       setDate(new Date().toISOString().split('T')[0])
@@ -37,7 +39,7 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
       setRemindDaysBefore(1)
       setRecurMonthly(false)
     }
-  }, [isOpen, mode])
+  }, [isOpen, mode, initialType])
   
   // Get current month's date range
   const currentDate = new Date(date)
@@ -141,6 +143,17 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
           borderRadius: '2px',
           margin: `0 auto ${theme.spacing.xl}`
         }} />
+        
+        {/* Title based on mode */}
+        <h3 style={{
+          fontSize: theme.typography.h3,
+          fontWeight: theme.typography.bold,
+          color: theme.colors.textPrimary,
+          margin: `0 0 ${theme.spacing.xl} 0`,
+          textAlign: 'center'
+        }}>
+          {mode === 'reminder' ? 'Reminder' : mode === 'settleup' ? 'Settle Up' : 'Transaction'}
+        </h3>
         
         {mode === 'reminder' ? (
           <>

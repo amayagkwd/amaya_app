@@ -589,7 +589,32 @@ export default function PaymentsHistory({
             {txns.map(t => {
               const category = categories.find(c => c.id === t.categoryId)
               const isBalanceTransaction = t.note?.startsWith('Balance of ')
-              const displayName = isBalanceTransaction ? 'Balance Transaction' : (category?.name || 'Unknown')
+              const isBalanceUpdate = t.isBalanceUpdate || false
+              const isMonthBalance = t.categoryId === 'month-balance'
+              
+              // Determine display name
+              let displayName
+              if (isMonthBalance) {
+                displayName = t.category || 'Balance'
+              } else if (isBalanceTransaction) {
+                displayName = 'Balance Transaction'
+              } else if (isBalanceUpdate) {
+                displayName = 'Balance Updated'
+              } else {
+                displayName = category?.name || 'Unknown'
+              }
+              
+              // For balance updates and month balance, use white color and show +/- based on change
+              const amountColor = (isBalanceUpdate || isMonthBalance)
+                ? theme.colors.textPrimary 
+                : (t.type === 'income' ? theme.colors.accentCyan : theme.colors.accentPink)
+              
+              const amountPrefix = (isBalanceUpdate || isMonthBalance)
+                ? (t.balanceChange > 0 ? '+' : '') 
+                : (t.type === 'income' ? '+' : '-')
+              
+              const amountToShow = (isBalanceUpdate || isMonthBalance) ? Math.abs(t.balanceChange) : t.amount
+              
               return (
                 <div
                   key={t.id}
@@ -618,10 +643,10 @@ export default function PaymentsHistory({
                   <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
                     <span style={{
                       fontWeight: theme.typography.semiBold,
-                      color: t.type === 'income' ? theme.colors.accentCyan : theme.colors.accentPink,
+                      color: amountColor,
                       fontSize: theme.typography.h6
                     }}>
-                      {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount, country)}
+                      {amountPrefix}{formatCurrency(amountToShow, country)}
                     </span>
                     <button
                       onClick={() => onEdit(t)}
