@@ -12,6 +12,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [isYearly, setIsYearly] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
+  const [activeFilter, setActiveFilter] = useState(null)
   
   const allTransactions = useMemo(() => {
     if (isYearly) {
@@ -43,6 +44,10 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
       }
     }))
     setEditingTransaction(null)
+  }
+  
+  const handleStatCardClick = (filterType) => {
+    setActiveFilter(activeFilter === filterType ? null : filterType)
   }
   
   return (
@@ -86,9 +91,27 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
         </div>
       
         <div style={{ display: 'flex', gap: theme.spacing.sm }}>
-          <StatCard label="Income" value={formatLargeNumber(stats.income, data.profile.country)} color={theme.colors.accentCyan} />
-          <StatCard label="Expenses" value={formatLargeNumber(stats.expenses, data.profile.country)} color={theme.colors.accentPink} />
-          <StatCard label="Balance" value={formatLargeNumber(stats.balance, data.profile.country)} color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink} />
+          <StatCard 
+            label="Income" 
+            value={formatLargeNumber(stats.income, data.profile.country)} 
+            color={theme.colors.accentCyan} 
+            onClick={() => handleStatCardClick('income')}
+            isActive={activeFilter === 'income'}
+          />
+          <StatCard 
+            label="Expenses" 
+            value={formatLargeNumber(stats.expenses, data.profile.country)} 
+            color={theme.colors.accentPink} 
+            onClick={() => handleStatCardClick('expense')}
+            isActive={activeFilter === 'expense'}
+          />
+          <StatCard 
+            label="Balance" 
+            value={formatLargeNumber(stats.balance, data.profile.country)} 
+            color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink}
+            onClick={() => handleStatCardClick('balance')}
+            isActive={activeFilter === 'balance'}
+          />
         </div>
       </div>
       
@@ -108,6 +131,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           country={data.profile.country}
           onDelete={onDelete}
           onEdit={handleEdit}
+          quickFilter={activeFilter}
         />
       </div>
       
@@ -125,21 +149,26 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   )
 }
 
-function StatCard({ label, value, color }) {
+function StatCard({ label, value, color, onClick, isActive }) {
   return (
-    <div style={{
-      flex: 1,
-      minWidth: 0,
-      background: theme.colors.bgCard,
-      backdropFilter: theme.backdropFilter,
-      WebkitBackdropFilter: theme.backdropFilter,
-      padding: `${theme.spacing.md} ${theme.spacing.sm}`,
-      borderRadius: theme.borderRadius.lg,
-      textAlign: 'center',
-      border: `1px solid ${theme.colors.borderSubtle}`,
-      boxShadow: theme.shadows.card,
-      overflow: 'hidden'
-    }}>
+    <div 
+      onClick={onClick}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        background: isActive ? theme.colors.bgCardHover : theme.colors.bgCard,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        padding: `${theme.spacing.md} ${theme.spacing.sm}`,
+        borderRadius: theme.borderRadius.lg,
+        textAlign: 'center',
+        border: isActive ? `2px solid ${color}` : `1px solid ${theme.colors.borderSubtle}`,
+        boxShadow: theme.shadows.card,
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        WebkitTapHighlightColor: 'transparent'
+      }}>
       <div style={{ fontSize: theme.typography.caption, color: theme.colors.textSecondary, marginBottom: theme.spacing.xs, fontWeight: theme.typography.medium }}>{label}</div>
       <div style={{ 
         fontSize: theme.typography.h4, 

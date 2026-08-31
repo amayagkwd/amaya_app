@@ -8,7 +8,8 @@ export default function PaymentsHistory({
   categories, 
   country, 
   onDelete, 
-  onEdit 
+  onEdit,
+  quickFilter
 }) {
   const [showFilters, setShowFilters] = useState(false)
   const [typeFilter, setTypeFilter] = useState('all')
@@ -26,9 +27,25 @@ export default function PaymentsHistory({
   const transactions = useMemo(() => {
     let filtered = [...allTransactions]
     
+    // Quick filter from stat cards (takes priority)
+    if (quickFilter) {
+      if (quickFilter === 'income') {
+        filtered = filtered.filter(t => t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
+      } else if (quickFilter === 'expense') {
+        filtered = filtered.filter(t => t.type === 'expense' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
+      } else if (quickFilter === 'balance') {
+        filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update')
+      }
+      return filtered
+    }
+    
     // Type filter
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(t => t.type === typeFilter)
+      if (typeFilter === 'balance') {
+        filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update')
+      } else {
+        filtered = filtered.filter(t => t.type === typeFilter && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
+      }
     }
     
     // Category filter
@@ -53,7 +70,7 @@ export default function PaymentsHistory({
     }
     
     return filtered
-  }, [allTransactions, typeFilter, categoryFilter, classificationFilter, amountOperator, amountValue])
+  }, [allTransactions, typeFilter, categoryFilter, classificationFilter, amountOperator, amountValue, quickFilter])
   
   // Get available categories based on type filter
   const availableCategories = useMemo(() => {
@@ -68,7 +85,7 @@ export default function PaymentsHistory({
   const handleTypeFilterChange = (newType) => {
     setTypeFilter(newType)
     setCategoryFilter('all')
-    if (newType === 'income') {
+    if (newType === 'income' || newType === 'balance') {
       setClassificationFilter('all')
     }
     setTypeDropdownOpen(false)
@@ -95,6 +112,7 @@ export default function PaymentsHistory({
     if (typeFilter === 'all') return 'All'
     if (typeFilter === 'income') return 'Income'
     if (typeFilter === 'expense') return 'Expense'
+    if (typeFilter === 'balance') return 'Balance'
   }
   
   const getCategoryLabel = () => {
@@ -244,7 +262,7 @@ export default function PaymentsHistory({
                     zIndex: 101,
                     overflow: 'hidden'
                   }}>
-                    {['all', 'income', 'expense'].map(type => (
+                    {['all', 'income', 'expense', 'balance'].map(type => (
                       <button
                         key={type}
                         onClick={() => handleTypeFilterChange(type)}
