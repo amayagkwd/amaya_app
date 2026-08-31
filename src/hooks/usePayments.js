@@ -89,9 +89,9 @@ export function calculateMonthStats(transactions) {
   let balanceAdjustments = 0
   
   transactions.forEach(t => {
-    if (t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'balance-update') {
-      // Balance updates don't count as income or expense, they're adjustments
-      balanceAdjustments += t.balanceChange || 0
+    if (t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'balance-update' || t.categoryId === 'initial-balance') {
+      // Balance updates and initial balance don't count as income or expense, they're adjustments
+      balanceAdjustments += t.balanceChange || t.amount || 0
     } else if (t.type === 'income') {
       income += t.amount
     } else if (t.type === 'expense') {

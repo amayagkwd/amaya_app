@@ -20,7 +20,9 @@ const initialState = {
       enabled: false,
       mode: 'spend', // 'spend' or 'keep'
       amount: 0
-    }
+    },
+    initialBalanceSkipped: false,
+    tutorialCompleted: false
   }
 }
 

@@ -591,10 +591,13 @@ export default function PaymentsHistory({
               const isBalanceTransaction = t.note?.startsWith('Balance of ')
               const isBalanceUpdate = t.isBalanceUpdate || false
               const isMonthBalance = t.categoryId === 'month-balance'
+              const isInitialBalance = t.categoryId === 'initial-balance'
               
               // Determine display name
               let displayName
-              if (isMonthBalance) {
+              if (isInitialBalance) {
+                displayName = 'Initial Balance'
+              } else if (isMonthBalance) {
                 displayName = t.category || 'Balance'
               } else if (isBalanceTransaction) {
                 displayName = 'Balance Transaction'
@@ -604,16 +607,18 @@ export default function PaymentsHistory({
                 displayName = category?.name || 'Unknown'
               }
               
-              // For balance updates and month balance, use white color and show +/- based on change
-              const amountColor = (isBalanceUpdate || isMonthBalance)
+              // For balance updates, month balance, and initial balance, use white color and show +/- based on change
+              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance)
                 ? theme.colors.textPrimary 
                 : (t.type === 'income' ? theme.colors.accentCyan : theme.colors.accentPink)
               
-              const amountPrefix = (isBalanceUpdate || isMonthBalance)
-                ? (t.balanceChange > 0 ? '+' : '') 
+              const amountPrefix = (isBalanceUpdate || isMonthBalance || isInitialBalance)
+                ? (((t.balanceChange || t.amount) > 0) ? '+' : '') 
                 : (t.type === 'income' ? '+' : '-')
               
-              const amountToShow = (isBalanceUpdate || isMonthBalance) ? Math.abs(t.balanceChange) : t.amount
+              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance) 
+                ? Math.abs(t.balanceChange || t.amount) 
+                : t.amount
               
               return (
                 <div

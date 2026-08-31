@@ -199,6 +199,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
 
       {/* Payments */}
       <div
+        id="tutorial-payments-card"
         role="button"
         tabIndex={0}
         style={{

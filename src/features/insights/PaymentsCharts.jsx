@@ -552,7 +552,9 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
       ) : (
         // Weekly view for monthly selection
         weeklyData.weeks.length > 0 && (
-          <div style={{ 
+          <div 
+          id="tutorial-bar-chart"
+          style={{ 
           background: theme.colors.bgCard,
           backdropFilter: theme.backdropFilter,
           WebkitBackdropFilter: theme.backdropFilter,
@@ -971,7 +973,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
         document.body
       )}
       
-      <div>
+      <div id="tutorial-pie-charts">
         <div 
           ref={carouselRef}
           onScroll={handleCarouselScroll}
