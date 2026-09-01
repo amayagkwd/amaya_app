@@ -25,7 +25,13 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     )
   }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
   
-  const stats = useMemo(() => calculateMonthStats(allTransactions), [allTransactions])
+  const stats = useMemo(() => {
+    // For yearly view, exclude month-balance from stats calculation to avoid double-counting
+    const txnsForStats = isYearly 
+      ? allTransactions.filter(t => t.categoryId !== 'month-balance')
+      : allTransactions
+    return calculateMonthStats(txnsForStats)
+  }, [allTransactions, isYearly])
   
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction)

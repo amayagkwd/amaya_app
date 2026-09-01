@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getGreeting, getTodayDate } from '../../utils/formatDate'
 import { formatCurrency } from '../../utils/formatCurrency'
 import { getMonthTransactions, calculateMonthStats } from '../../hooks/usePayments'
-import { calculateMedianDailySpend } from '../../utils/medianCalculator'
+import { calculateMedianDailySpend, calculateHistoricalMedianDailySpend } from '../../utils/medianCalculator'
 import { useBudget } from '../../hooks/useBudget'
 import AddTransactionButton from '../common/AddTransactionButton'
 import { showToast } from '../common/Toast'
@@ -18,8 +18,9 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const [editedBalance, setEditedBalance] = useState('')
   const [balanceDate, setBalanceDate] = useState('')
   const [balanceNote, setBalanceNote] = useState('')
+  const [isYearly, setIsYearly] = useState(false)
   
-  // Get budget data
+  // Get budget data (always uses current month, not affected by yearly toggle)
   const budgetData = useBudget(data)
 
   // Get settings
@@ -47,52 +48,111 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
 
   const stats = useMemo(() => {
     const now = new Date()
+    const currentYear = now.getFullYear()
 
-    const transactions = getMonthTransactions(
+    let transactions
+    if (isYearly) {
+      transactions = data.payments.transactions.filter(t => {
+        if (!t.date) return false
+        const txnDate = new Date(t.date)
+        return txnDate.getFullYear() === currentYear && t.categoryId !== 'month-balance'
+      })
+    } else {
+      transactions = getMonthTransactions(
+        data.payments.transactions,
+        now.getFullYear(),
+        now.getMonth()
+      )
+    }
+
+    return calculateMonthStats(transactions)
+  }, [data.payments.transactions, isYearly])
+  
+  // Always calculate current real balance for budget and forecast (regardless of view)
+  const currentBalance = useMemo(() => {
+    const now = new Date()
+    const currentMonthTransactions = getMonthTransactions(
       data.payments.transactions,
       now.getFullYear(),
       now.getMonth()
     )
-
-    return calculateMonthStats(transactions)
+    return calculateMonthStats(currentMonthTransactions).balance
   }, [data.payments.transactions])
 
   const forecast = useMemo(() => {
     const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
     const currentDay = now.getDate()
     const daysElapsed = currentDay
 
-    // Don't show forecast if less than 10 days have passed
-    if (daysElapsed < 10) {
-      return null
+    // Check if we should show countdown (only once at app start)
+    let hasSeenForecast = data.settings?.hasSeenForecast || false
+    
+    // Auto-set hasSeenForecast to true if user has transactions from previous months
+    if (!hasSeenForecast) {
+      const currentMonth = now.toISOString().slice(0, 7) // "YYYY-MM"
+      const hasPreviousMonthData = data.payments.transactions.some(t => {
+        if (!t.date) return false
+        return t.date < currentMonth + '-01'
+      })
+      
+      if (hasPreviousMonthData) {
+        hasSeenForecast = true
+        updateStore(current => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            hasSeenForecast: true
+          }
+        }))
+      }
+    }
+    
+    // Show countdown only if: haven't seen it before AND less than 10 days
+    if (!hasSeenForecast && daysElapsed < 10) {
+      return {
+        isCountdown: true,
+        daysRemaining: 10 - daysElapsed
+      }
+    }
+    
+    // Mark as seen once we're past day 10
+    if (!hasSeenForecast && daysElapsed >= 10) {
+      updateStore(current => ({
+        ...current,
+        settings: {
+          ...current.settings,
+          hasSeenForecast: true
+        }
+      }))
     }
 
+    const year = now.getFullYear()
+    const month = now.getMonth()
     const totalDaysInMonth = new Date(year, month + 1, 0).getDate()
     const daysRemaining = totalDaysInMonth - daysElapsed
 
-    // Calculate median daily spend from day 1 to current day
-    const medianDailySpend = calculateMedianDailySpend(
-      data.payments.transactions,
-      year,
-      month,
-      daysElapsed
-    )
+    // Calculate median daily spend using ALL historical transactions
+    const medianDailySpend = calculateHistoricalMedianDailySpend(data.payments.transactions)
 
     const projectedRemainingSpend = medianDailySpend * daysRemaining
-    const projectedMonthEndBalance = stats.balance - projectedRemainingSpend
+    
+    // Use the current real balance (not the view-filtered balance)
+    const projectedMonthEndBalance = currentBalance - projectedRemainingSpend
 
     return {
+      isCountdown: false,
       dailySpendForecast: medianDailySpend,
-      monthEndProjection: projectedMonthEndBalance
+      monthEndProjection: projectedMonthEndBalance,
+      // Flag if we have very limited data (first few days)
+      isEarlyMonth: daysElapsed < 5
     }
-  }, [data.payments.transactions, stats.balance])
+  }, [data.payments.transactions, data.settings?.hasSeenForecast, currentBalance, updateStore])
 
   const showForecast = forecast !== null
 
   // Determine if we should show the forecast grid
-  const showForecastGrid = showForecast && (isBudgetEnabled || isPredictMonthEndEnabled)
+  // Show grid if: budget is enabled OR (forecast exists AND prediction is enabled)
+  const showForecastGrid = isBudgetEnabled || (showForecast && isPredictMonthEndEnabled)
 
   const balanceColor = stats.balance >= 0 ? theme.dashboardColors.cyan : theme.dashboardColors.pink
 
@@ -404,6 +464,59 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
         </div>
       </div>
 
+      {/* Monthly/Yearly Toggle */}
+      <div style={{
+        marginTop: 16,
+        display: 'flex',
+        justifyContent: 'center',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div style={{
+          display: 'inline-flex',
+          background: theme.colors.bgCard,
+          borderRadius: '20px',
+          padding: '4px',
+          border: `1px solid ${theme.colors.borderSubtle}`,
+          boxShadow: theme.shadows.card
+        }}>
+          <button
+            onClick={() => setIsYearly(false)}
+            style={{
+              padding: '6px 20px',
+              background: !isYearly ? theme.colors.accentPurple : 'transparent',
+              color: !isYearly ? theme.colors.textPrimary : theme.colors.textSecondary,
+              border: 'none',
+              borderRadius: '16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontFamily: theme.typography.fontFamily
+            }}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setIsYearly(true)}
+            style={{
+              padding: '6px 20px',
+              background: isYearly ? theme.colors.accentPurple : 'transparent',
+              color: isYearly ? theme.colors.textPrimary : theme.colors.textSecondary,
+              border: 'none',
+              borderRadius: '16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontFamily: theme.typography.fontFamily
+            }}
+          >
+            Yearly
+          </button>
+        </div>
+      </div>
+
       {/* Forecast cards */}
       {showForecastGrid && (
         <div
@@ -512,40 +625,16 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 flexDirection: 'column'
               }}
             >
-              <div 
-                ref={forecastCarouselRef}
-                onScroll={handleForecastScroll}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
-                style={{
+              {forecast && forecast.isCountdown ? (
+                // Countdown message before day 10
+                <div style={{ 
+                  padding: '18px 20px',
                   display: 'flex',
-                  overflowX: 'scroll',
-                  scrollSnapType: 'x mandatory',
-                  gap: '0px',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  WebkitOverflowScrolling: 'auto',
-                  flex: 1
-                }}
-              >
-                <style>
-                  {`
-                    div::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}
-                </style>
-                
-                {/* Month end projection */}
-                <div style={{ 
-                  minWidth: '100%', 
-                  scrollSnapAlign: 'start',
-                  scrollSnapStop: 'always',
-                  padding: '18px 20px 0px',
-                  boxSizing: 'border-box'
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '100px'
                 }}>
-                  <div style={{ position: 'relative', zIndex: 10 }}>
+                  <div style={{ textAlign: 'center', position: 'relative', zIndex: 10 }}>
                     <h3
                       style={{
                         margin: 0,
@@ -553,85 +642,148 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                         fontSize: 14,
                         fontWeight: 700,
                         letterSpacing: '-0.02em',
+                        marginBottom: '8px'
                       }}
                     >
-                      Month End Projection
+                      Projections
                     </h3>
                     <p style={{
-                      marginTop: 14,
-                      marginBottom: 0,
+                      margin: 0,
                       fontFamily: theme.typography.fontFamily,
-                      fontSize: 26,
-                      fontWeight: 600,
-                      color: 'white',
-                      letterSpacing: '-0.02em',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: theme.dashboardColors.muted,
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.4
                     }}>
-                      {formatCurrency(forecast.monthEndProjection, data.profile.country)}
+                      Available in {forecast.daysRemaining} day{forecast.daysRemaining !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
-
-                {/* Daily spend forecast */}
-                <div style={{ 
-                  minWidth: '100%', 
-                  scrollSnapAlign: 'start',
-                  scrollSnapStop: 'always',
-                  padding: '18px 20px 0px',
-                  boxSizing: 'border-box'
-                }}>
-                  <div style={{ position: 'relative', zIndex: 10 }}>
-                    <h3
-                      style={{
-                        margin: 0,
-                        color: theme.colors.accentPurple,
-                        fontSize: 14,
-                        fontWeight: 700,
-                        letterSpacing: '-0.02em',
-                      }}
-                    >
-                      Daily Spend Forecast
-                    </h3>
-                    <p style={{
-                      marginTop: 14,
-                      marginBottom: 0,
-                      fontFamily: theme.typography.fontFamily,
-                      fontSize: 26,
-                      fontWeight: 600,
-                      color: 'white',
-                      letterSpacing: '-0.02em',
-                    }}>
-                      {formatCurrency(forecast.dailySpendForecast, data.profile.country)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dot navigation inside the second box */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 0 16px',
-                position: 'relative',
-                zIndex: 10
-              }}>
-                {[0, 1].map(index => (
-                  <div
-                    key={index}
-                    onClick={() => scrollToForecast(index)}
+              ) : (
+                <>
+                  <div 
+                    ref={forecastCarouselRef}
+                    onScroll={handleForecastScroll}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
                     style={{
-                      width: currentForecastIndex === index ? '10px' : '8px',
-                      height: currentForecastIndex === index ? '10px' : '8px',
-                      borderRadius: '50%',
-                      background: currentForecastIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      opacity: currentForecastIndex === index ? 1 : 0.6
+                      display: 'flex',
+                      overflowX: 'scroll',
+                      scrollSnapType: 'x mandatory',
+                      gap: '0px',
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      WebkitOverflowScrolling: 'auto',
+                      flex: 1
                     }}
-                  />
-                ))}
-              </div>
+                  >
+                    <style>
+                      {`
+                        div::-webkit-scrollbar {
+                          display: none;
+                        }
+                      `}
+                    </style>
+                    
+                    {/* Month end projection */}
+                    <div style={{ 
+                      minWidth: '100%', 
+                      scrollSnapAlign: 'start',
+                      scrollSnapStop: 'always',
+                      padding: '18px 20px 0px',
+                      boxSizing: 'border-box'
+                    }}>
+                      <div style={{ position: 'relative', zIndex: 10 }}>
+                        <h3
+                          style={{
+                            margin: 0,
+                            color: theme.colors.accentPurple,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            letterSpacing: '-0.02em',
+                          }}
+                        >
+                          Month End Projection
+                        </h3>
+                        <p style={{
+                          marginTop: 14,
+                          marginBottom: 0,
+                          fontFamily: theme.typography.fontFamily,
+                          fontSize: 26,
+                          fontWeight: 600,
+                          color: 'white',
+                          letterSpacing: '-0.02em',
+                        }}>
+                          {formatCurrency(forecast.monthEndProjection, data.profile.country)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Daily spend forecast */}
+                    <div style={{ 
+                      minWidth: '100%', 
+                      scrollSnapAlign: 'start',
+                      scrollSnapStop: 'always',
+                      padding: '18px 20px 0px',
+                      boxSizing: 'border-box'
+                    }}>
+                      <div style={{ position: 'relative', zIndex: 10 }}>
+                        <h3
+                          style={{
+                            margin: 0,
+                            color: theme.colors.accentPurple,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            letterSpacing: '-0.02em',
+                          }}
+                        >
+                          Daily Spend Forecast
+                        </h3>
+                        <p style={{
+                          marginTop: 14,
+                          marginBottom: 0,
+                          fontFamily: theme.typography.fontFamily,
+                          fontSize: 26,
+                          fontWeight: 600,
+                          color: 'white',
+                          letterSpacing: '-0.02em',
+                        }}>
+                          {formatCurrency(forecast.dailySpendForecast, data.profile.country)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dot navigation inside the second box */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 0 16px',
+                    position: 'relative',
+                    zIndex: 10
+                  }}>
+                    {[0, 1].map(index => (
+                      <div
+                        key={index}
+                        onClick={() => scrollToForecast(index)}
+                        style={{
+                          width: currentForecastIndex === index ? '10px' : '8px',
+                          height: currentForecastIndex === index ? '10px' : '8px',
+                          borderRadius: '50%',
+                          background: currentForecastIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          opacity: currentForecastIndex === index ? 1 : 0.6
+                        }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -684,8 +836,42 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           {recentTransactions.length > 0 ? (
             recentTransactions.map((transaction) => {
               const transactionDate = new Date(transaction.date)
+              
+              // Check if this is a balance transaction
+              const isBalanceUpdate = transaction.isBalanceUpdate || false
+              const isMonthBalance = transaction.categoryId === 'month-balance'
+              const isInitialBalance = transaction.categoryId === 'initial-balance'
+              const isManualBalanceUpdate = isBalanceUpdate && transaction.categoryId === 'balance-update'
+              
               const isIncome = transaction.type === 'income'
-              const amountColor = isIncome ? theme.dashboardColors.cyan : theme.dashboardColors.pink
+              
+              // Determine display name
+              let displayName
+              if (isInitialBalance) {
+                displayName = 'Initial Balance'
+              } else if (isMonthBalance) {
+                displayName = transaction.category || 'Balance'
+              } else if (isManualBalanceUpdate) {
+                displayName = 'Balance Updated'
+              } else {
+                displayName = transaction.category
+              }
+              
+              // Color logic: balance transactions are white, income is cyan, expense is pink
+              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance)
+                ? theme.dashboardColors.white
+                : (isIncome ? theme.dashboardColors.cyan : theme.dashboardColors.pink)
+              
+              // Prefix logic: initial/month balance = no prefix, manual balance = +/-, income/expense = +/-
+              const amountPrefix = (isMonthBalance || isInitialBalance)
+                ? ''
+                : isManualBalanceUpdate
+                ? ((transaction.balanceChange >= 0) ? '+' : '')
+                : (isIncome ? '+' : '-')
+              
+              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance)
+                ? Math.abs(transaction.balanceChange || transaction.amount)
+                : transaction.amount
               
               return (
                 <div
@@ -709,7 +895,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                         fontWeight: 600,
                       }}
                     >
-                      {transaction.category}
+                      {displayName}
                     </div>
                     <div
                       style={{
@@ -729,7 +915,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                       letterSpacing: '-0.02em',
                     }}
                   >
-                    {isIncome ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount), data.profile.country)}
+                    {amountPrefix}{formatCurrency(amountToShow, data.profile.country)}
                   </div>
                 </div>
               )

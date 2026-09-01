@@ -625,13 +625,19 @@ export default function PaymentsHistory({
                 displayName = category?.name || 'Unknown'
               }
               
-              // For balance updates, month balance, and initial balance, use white color and show +/- based on change
+              // For balance updates, month balance, and initial balance, use white color
+              // Initial balance and month balance: NO +/- prefix (just the amount)
+              // Manual balance updates: SHOW +/- prefix based on change
+              const isManualBalanceUpdate = isBalanceUpdate && t.categoryId === 'balance-update'
+              
               const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance)
                 ? theme.colors.textPrimary 
                 : (t.type === 'income' ? theme.colors.accentCyan : theme.colors.accentPink)
               
-              const amountPrefix = (isBalanceUpdate || isMonthBalance || isInitialBalance)
-                ? (((t.balanceChange || t.amount) > 0) ? '+' : '') 
+              const amountPrefix = (isMonthBalance || isInitialBalance)
+                ? '' // No prefix for month balance and initial balance
+                : isManualBalanceUpdate
+                ? (((t.balanceChange || t.amount) >= 0) ? '+' : '') 
                 : (t.type === 'income' ? '+' : '-')
               
               const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance) 

@@ -5,6 +5,8 @@ export function useMonthlyBalanceCarry(data, updateStore) {
   const hasRunRef = useRef(false)
   const migrationDoneRef = useRef(false)
   const timestampFixDoneRef = useRef(false)
+  const doubleCountFixDoneRef = useRef(false)
+  const lastTransactionsHashRef = useRef('')
   
   useEffect(() => {
     // Prevent multiple runs in the same render cycle
@@ -14,6 +16,162 @@ export function useMonthlyBalanceCarry(data, updateStore) {
     const resetBalanceEnabled = settings.resetBalanceEachMonth || false
     const lastCheckedMonth = settings.lastCheckedMonth
     const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
+    
+    // Create a hash of non-month-balance transactions to detect changes
+    const regularTransactions = data.payments.transactions.filter(t => 
+      t.categoryId !== 'month-balance'
+    )
+    const transactionsHash = JSON.stringify(
+      regularTransactions.map(t => ({ id: t.id, amount: t.amount, date: t.date, type: t.type }))
+    )
+    
+    const transactionsChanged = lastTransactionsHashRef.current !== '' && 
+                                 lastTransactionsHashRef.current !== transactionsHash
+    lastTransactionsHashRef.current = transactionsHash
+    
+    // If non-month-balance transactions changed, recalculate all month-balance transactions
+    if (transactionsChanged && settings.monthBalanceDoubleCountFixed) {
+      console.log('🔄 Transactions changed, recalculating month-balance transactions...')
+      hasRunRef.current = true
+      
+      const monthBalanceTransactions = data.payments.transactions.filter(t => 
+        t.categoryId === 'month-balance' && t.isBalanceUpdate && t.date
+      )
+      
+      console.log(`📊 Found ${monthBalanceTransactions.length} month-balance transactions to check`)
+      
+      if (monthBalanceTransactions.length > 0) {
+        const fixedTransactions = [...data.payments.transactions]
+        let hasChanges = false
+        
+        monthBalanceTransactions.forEach(monthBalanceTxn => {
+          const txnDate = new Date(monthBalanceTxn.date)
+          if (isNaN(txnDate.getTime())) return
+          
+          const month = txnDate.getMonth()
+          const year = txnDate.getFullYear()
+          const prevMonth = month === 0 ? 11 : month - 1
+          const prevYear = month === 0 ? year - 1 : year
+          const prevMonthString = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`
+          
+          const correctBalance = calculateEndOfMonthBalance(data, prevMonthString)
+          
+          console.log(`  Checking ${monthBalanceTxn.category} (${monthBalanceTxn.date}): current=${monthBalanceTxn.balanceChange}, correct=${correctBalance}`)
+          
+          if (correctBalance !== monthBalanceTxn.balanceChange) {
+            hasChanges = true
+            const txnIndex = fixedTransactions.findIndex(t => t.id === monthBalanceTxn.id)
+            if (txnIndex !== -1) {
+              fixedTransactions[txnIndex] = {
+                ...fixedTransactions[txnIndex],
+                balanceChange: correctBalance,
+                amount: Math.abs(correctBalance)
+              }
+              console.log(`  ✅ Updated ${monthBalanceTxn.category}: ${monthBalanceTxn.balanceChange} → ${correctBalance}`)
+            }
+          }
+        })
+        
+        if (hasChanges) {
+          updateStore(current => ({
+            ...current,
+            payments: {
+              ...current.payments,
+              transactions: fixedTransactions
+            }
+          }))
+          
+          setTimeout(() => {
+            hasRunRef.current = false
+          }, 1000)
+          return
+        }
+      }
+      
+      setTimeout(() => {
+        hasRunRef.current = false
+      }, 1000)
+    }
+    
+    // Migration 3: Fix double-counting in month-balance transactions
+    if (!doubleCountFixDoneRef.current && !settings.monthBalanceDoubleCountFixed) {
+      doubleCountFixDoneRef.current = true
+      
+      // Find all month-balance transactions
+      const monthBalanceTransactions = data.payments.transactions.filter(t => 
+        t.categoryId === 'month-balance' && t.isBalanceUpdate && t.date
+      )
+      
+      if (monthBalanceTransactions.length > 0) {
+        const fixedTransactions = [...data.payments.transactions]
+        let hasChanges = false
+        
+        // For each month-balance transaction, recalculate the correct balance
+        monthBalanceTransactions.forEach(monthBalanceTxn => {
+          const txnDate = new Date(monthBalanceTxn.date)
+          if (isNaN(txnDate.getTime())) return
+          
+          // Get the previous month
+          const month = txnDate.getMonth()
+          const year = txnDate.getFullYear()
+          const prevMonth = month === 0 ? 11 : month - 1
+          const prevYear = month === 0 ? year - 1 : year
+          const prevMonthString = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`
+          
+          // Calculate what the balance SHOULD be
+          const correctBalance = calculateEndOfMonthBalance(data, prevMonthString)
+          
+          // If it's different, update it
+          if (correctBalance !== monthBalanceTxn.balanceChange) {
+            hasChanges = true
+            const txnIndex = fixedTransactions.findIndex(t => t.id === monthBalanceTxn.id)
+            if (txnIndex !== -1) {
+              fixedTransactions[txnIndex] = {
+                ...fixedTransactions[txnIndex],
+                balanceChange: correctBalance,
+                amount: Math.abs(correctBalance)
+              }
+              console.log(`Fixed month-balance for ${monthBalanceTxn.date}: ${monthBalanceTxn.balanceChange} → ${correctBalance}`)
+            }
+          }
+        })
+        
+        if (hasChanges) {
+          updateStore(current => ({
+            ...current,
+            payments: {
+              ...current.payments,
+              transactions: fixedTransactions
+            },
+            settings: {
+              ...current.settings,
+              monthBalanceDoubleCountFixed: true
+            }
+          }))
+          return
+        } else {
+          // No changes needed, just mark as done
+          updateStore(current => ({
+            ...current,
+            settings: {
+              ...current.settings,
+              monthBalanceDoubleCountFixed: true
+            }
+          }))
+          return
+        }
+      } else {
+        // No month-balance transactions to fix
+        updateStore(current => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            monthBalanceDoubleCountFixed: true
+          }
+        }))
+        return
+      }
+    }
     
     // Migration 2: Fix timestamps for existing balance transactions
     if (!timestampFixDoneRef.current && !settings.balanceTimestampsFixed) {
@@ -195,8 +353,16 @@ function calculateEndOfMonthBalance(data, monthString) {
     
     // Include all transactions up to and including the last day of the specified month
     if (tDate <= endOfMonth) {
-      if (transaction.isBalanceUpdate) {
-        balance += transaction.balanceChange
+      // Skip month-balance carry-forward transactions to avoid double-counting
+      // These are balance transactions from PREVIOUS months carried forward
+      // We only want: initial balance (once), manual balance updates, and regular income/expenses
+      if (transaction.categoryId === 'month-balance') {
+        // Skip month balance carry forwards - they're already included in the previous month's calculation
+        return
+      }
+      
+      if (transaction.isBalanceUpdate || transaction.categoryId === 'initial-balance' || transaction.categoryId === 'balance-update') {
+        balance += transaction.balanceChange || transaction.amount
       } else if (transaction.type === 'income') {
         balance += transaction.amount
       } else if (transaction.type === 'expense') {
