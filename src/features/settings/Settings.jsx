@@ -83,7 +83,7 @@ export default function Settings({ data, updateStore }) {
       </div>
       
       {/* Setup */}
-      <div id="tutorial-setup-option" style={componentStyles.settingsCard}>
+      <div style={componentStyles.settingsCard}>
         <button
           onClick={() => navigate('/setup')}
           style={componentStyles.settingsButton}

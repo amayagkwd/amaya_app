@@ -22,7 +22,7 @@ const initialState = {
       amount: 0
     },
     initialBalanceSkipped: false,
-    tutorialCompleted: false
+    addTransactionTipSeen: false
   }
 }
 

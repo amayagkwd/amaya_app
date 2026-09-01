@@ -3,7 +3,6 @@ import theme from '../../theme'
 export default function AddTransactionButton({ onClick, mode = 'transaction' }) {
   return (
     <button
-      id="tutorial-add-button"
       onClick={onClick}
       style={{
         position: 'fixed',
