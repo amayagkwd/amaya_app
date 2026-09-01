@@ -71,6 +71,46 @@ export default function PaymentsHistory({
     
     return filtered
   }, [allTransactions, typeFilter, categoryFilter, classificationFilter, amountOperator, amountValue, quickFilter])
+
+  // Calculate filtered total (only for specific filters, not amount filters)
+  const filteredTotal = useMemo(() => {
+    const hasRelevantFilter = quickFilter || typeFilter !== 'all' || categoryFilter !== 'all' || classificationFilter !== 'all'
+    if (!hasRelevantFilter) return null
+    
+    return transactions.reduce((sum, t) => {
+      if (t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance') {
+        return sum + t.amount
+      } else if (t.type === 'expense' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance') {
+        return sum - t.amount
+      } else if (t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update') {
+        return sum + (t.balanceChange || t.amount)
+      }
+      return sum
+    }, 0)
+  }, [transactions, quickFilter, typeFilter, categoryFilter, classificationFilter])
+
+  // Determine the prefix for the total
+  const getTotalDisplay = () => {
+    if (filteredTotal === null) return null
+    
+    // For income filters
+    if (quickFilter === 'income' || (typeFilter === 'income' && !quickFilter)) {
+      return { prefix: '+', color: theme.colors.accentCyan }
+    }
+    // For expense filters
+    if (quickFilter === 'expense' || (typeFilter === 'expense' && !quickFilter)) {
+      return { prefix: '-', color: theme.colors.accentPink }
+    }
+    // For balance or mixed
+    return { prefix: '', color: theme.colors.textPrimary }
+  }
+
+  const clearFilters = () => {
+    setTypeFilter('all')
+    setCategoryFilter('all')
+    setClassificationFilter('all')
+    setAmountValue('')
+  }
   
   // Get available categories based on type filter
   const availableCategories = useMemo(() => {
@@ -157,7 +197,7 @@ export default function PaymentsHistory({
   }
   
   return (
-    <div>
+    <div style={{ position: 'relative', paddingBottom: filteredTotal !== null ? '60px' : '0' }}>
       {/* Filter Button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: theme.spacing.lg, paddingRight: theme.spacing.sm }}>
         <button
@@ -202,7 +242,7 @@ export default function PaymentsHistory({
           zIndex: 50
         }}>
           {/* Main Filter Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: theme.spacing.sm }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: theme.spacing.sm, marginBottom: theme.spacing.md }}>
             {/* Type Filter */}
             <div style={{ position: 'relative' }}>
               <label style={{ 
@@ -581,6 +621,35 @@ export default function PaymentsHistory({
               </div>
             </div>
           </div>
+          
+          {/* Clear Filters Button */}
+          <button
+            onClick={clearFilters}
+            style={{
+              width: '100%',
+              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+              background: 'transparent',
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: theme.typography.body,
+              color: theme.colors.textSecondary,
+              fontWeight: theme.typography.medium,
+              outline: 'none',
+              transition: 'all 0.2s ease',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = theme.colors.bgCardHover
+              e.currentTarget.style.color = theme.colors.textPrimary
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = theme.colors.textSecondary
+            }}
+          >
+            Clear Filters
+          </button>
         </div>
       )}
       
@@ -705,6 +774,41 @@ export default function PaymentsHistory({
             })}
           </div>
         ))
+      )}
+      
+      {/* Filtered Total Display */}
+      {filteredTotal !== null && getTotalDisplay() && (
+        <div style={{
+          position: 'fixed',
+          bottom: `calc(${theme.layout.bottomNavHeight} + 8px)`,
+          left: theme.spacing.lg,
+          background: theme.colors.bgModal,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          padding: `${theme.spacing.sm} ${theme.spacing.lg}`,
+          borderRadius: theme.borderRadius.xl,
+          border: `1px solid ${theme.colors.borderMedium}`,
+          boxShadow: theme.shadows.card,
+          zIndex: 99,
+          display: 'flex',
+          alignItems: 'center',
+          gap: theme.spacing.sm
+        }}>
+          <span style={{
+            fontSize: theme.typography.body,
+            color: theme.colors.textSecondary,
+            fontWeight: theme.typography.medium
+          }}>
+            Total:
+          </span>
+          <span style={{
+            fontSize: theme.typography.h5,
+            fontWeight: theme.typography.semiBold,
+            color: getTotalDisplay().color
+          }}>
+            {getTotalDisplay().prefix}{formatCurrency(Math.abs(filteredTotal), country)}
+          </span>
+        </div>
       )}
     </div>
   )

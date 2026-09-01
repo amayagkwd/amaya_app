@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { formatCurrency } from '../../utils/formatCurrency'
 import theme, { componentStyles } from '../../theme'
 
 export default function BudgetSetup({ data, updateStore }) {
@@ -12,25 +11,18 @@ export default function BudgetSetup({ data, updateStore }) {
   const [amount, setAmount] = useState(existingBudget?.amount?.toString() || '')
   const [isEnabled, setIsEnabled] = useState(existingBudget?.enabled || false)
 
-  const handleSave = () => {
-    if (isEnabled && (!amount || parseFloat(amount) <= 0)) {
-      // Don't save if budget is enabled but amount is invalid
-      return
-    }
-
+  const saveBudget = (enabled, budgetMode, budgetAmount) => {
     updateStore(current => ({
       ...current,
       settings: {
         ...current.settings,
         budget: {
-          enabled: isEnabled,
-          mode: mode,
-          amount: parseFloat(amount) || 0
+          enabled: enabled,
+          mode: budgetMode,
+          amount: parseFloat(budgetAmount) || 0
         }
       }
     }))
-
-    navigate('/settings')
   }
 
   return (
@@ -77,7 +69,12 @@ export default function BudgetSetup({ data, updateStore }) {
               <input
                 type="checkbox"
                 checked={isEnabled}
-                onChange={(e) => setIsEnabled(e.target.checked)}
+                onChange={(e) => {
+                  const newValue = e.target.checked
+                  setIsEnabled(newValue)
+                  // Save immediately when toggling
+                  saveBudget(newValue, mode, amount)
+                }}
                 style={{ display: 'none' }}
               />
               <div style={{
@@ -118,7 +115,10 @@ export default function BudgetSetup({ data, updateStore }) {
               </h3>
 
               <button
-                onClick={() => setMode('spend')}
+                onClick={() => {
+                  setMode('spend')
+                  saveBudget(isEnabled, 'spend', amount)
+                }}
                 style={{
                   ...componentStyles.settingsButton,
                   background: mode === 'spend' ? 'rgba(124, 111, 255, 0.15)' : 'transparent',
@@ -163,7 +163,10 @@ export default function BudgetSetup({ data, updateStore }) {
               </button>
 
               <button
-                onClick={() => setMode('keep')}
+                onClick={() => {
+                  setMode('keep')
+                  saveBudget(isEnabled, 'keep', amount)
+                }}
                 style={{
                   ...componentStyles.settingsButton,
                   background: mode === 'keep' ? 'rgba(124, 111, 255, 0.15)' : 'transparent',
@@ -237,6 +240,7 @@ export default function BudgetSetup({ data, updateStore }) {
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
+                    onBlur={(e) => saveBudget(isEnabled, mode, e.target.value)}
                     placeholder="0"
                     style={{
                       flex: 1,
@@ -283,35 +287,6 @@ export default function BudgetSetup({ data, updateStore }) {
             </div>
           </>
         )}
-
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          style={{
-            width: '100%',
-            padding: '14px',
-            marginTop: '20px',
-            background: theme.colors.accentPurple,
-            color: theme.colors.textPrimary,
-            border: 'none',
-            borderRadius: theme.borderRadius.xl,
-            fontSize: theme.typography.h5,
-            fontWeight: theme.typography.semiBold,
-            cursor: 'pointer',
-            transition: theme.transitions.normal,
-            boxShadow: theme.shadows.glow.purple
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)'
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 111, 255, 0.4)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = theme.shadows.glow.purple
-          }}
-        >
-          Save
-        </button>
       </div>
     </>
   )

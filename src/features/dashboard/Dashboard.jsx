@@ -14,6 +14,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const navigate = useNavigate()
   const [currentForecastIndex, setCurrentForecastIndex] = useState(0)
   const forecastCarouselRef = useRef(null)
+  const [currentPaymentsIndex, setCurrentPaymentsIndex] = useState(0)
+  const paymentsCarouselRef = useRef(null)
   const [balanceEditOpen, setBalanceEditOpen] = useState(false)
   const [editedBalance, setEditedBalance] = useState('')
   const [balanceDate, setBalanceDate] = useState('')
@@ -40,6 +42,25 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     if (forecastCarouselRef.current) {
       const containerWidth = forecastCarouselRef.current.offsetWidth
       forecastCarouselRef.current.scrollTo({
+        left: index * containerWidth,
+        behavior: 'smooth'
+      })
+    }
+  }
+
+  const handlePaymentsScroll = () => {
+    if (paymentsCarouselRef.current) {
+      const scrollLeft = paymentsCarouselRef.current.scrollLeft
+      const containerWidth = paymentsCarouselRef.current.offsetWidth
+      const index = Math.round(scrollLeft / containerWidth)
+      setCurrentPaymentsIndex(index)
+    }
+  }
+
+  const scrollToPayments = (index) => {
+    if (paymentsCarouselRef.current) {
+      const containerWidth = paymentsCarouselRef.current.offsetWidth
+      paymentsCarouselRef.current.scrollTo({
         left: index * containerWidth,
         behavior: 'smooth'
       })
@@ -257,7 +278,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
         </p>
       </section>
 
-      {/* Payments */}
+      {/* Payments - Now with carousel */}
       <div
         role="button"
         tabIndex={0}
@@ -266,200 +287,430 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           cursor: 'default',
           position: 'relative',
           overflow: 'hidden',
-          padding: '18px 20px 18px',
+          padding: 0,
           transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
           zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <div
+        <div 
+          ref={paymentsCarouselRef}
+          onScroll={handlePaymentsScroll}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            position: 'relative',
+            overflowX: 'scroll',
+            scrollSnapType: 'x mandatory',
+            gap: '0px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'auto',
+            flex: 1
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
-              width: 36,
-              height: 36,
-              borderRadius: 11,
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
-                <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
-                <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </div>
-
-            <h3
+          <style>
+            {`
+              div::-webkit-scrollbar {
+                display: none;
+              }
+            `}
+          </style>
+          
+          {/* First card - Bank Account */}
+          <div style={{ 
+            minWidth: '100%', 
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
+            padding: '18px 20px',
+            boxSizing: 'border-box'
+          }}>
+            <div
               style={{
-                margin: 0,
-                color: theme.colors.accentPurple,
-                fontSize: 17,
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                position: 'relative',
               }}
             >
-              Payments
-            </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
+                  width: 36,
+                  height: 36,
+                  borderRadius: 11,
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                <h3
+                  style={{
+                    margin: 0,
+                    color: theme.colors.accentPurple,
+                    fontSize: 17,
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Bank Account
+                </h3>
+              </div>
+
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: theme.dashboardColors.cyan,
+                  background: 'rgba(0,229,204,0.10)',
+                  border: '1px solid rgba(0,229,204,0.28)',
+                  boxShadow: '0 0 22px rgba(0,229,204,0.12)',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+
+            <div
+              onClick={handleBalanceClick}
+              style={{
+                marginTop: 16,
+                marginBottom: 14,
+                color: balanceColor,
+                fontSize: 'clamp(38px, 10vw, 50px)',
+                lineHeight: 0.95,
+                fontWeight: 850,
+                letterSpacing: '-0.055em',
+                position: 'relative',
+                cursor: 'pointer',
+                display: 'inline-block',
+                padding: '8px 12px',
+                marginLeft: '-12px',
+                borderRadius: '12px',
+                transition: 'background 180ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
+              {formatCurrency(stats.balance, data.profile.country)}
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                gap: 14,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenBottomSheet('transaction', 'income')
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '7px 12px',
+                    borderRadius: 999,
+                    background: theme.dashboardColors.cyanSoft,
+                    color: theme.dashboardColors.cyan,
+                    fontSize: 14,
+                    fontWeight: 750,
+                    transition: 'transform 180ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.05)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)'
+                  }}
+                >
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>↑</span>
+                  {formatCurrency(stats.income, data.profile.country)}
+                </div>
+                <div
+                  style={{
+                    marginTop: 5,
+                    paddingLeft: 5,
+                    color: theme.dashboardColors.cyan,
+                    fontSize: 12,
+                    fontWeight: 650,
+                  }}
+                >
+                  Income
+                </div>
+              </div>
+
+              <div
+                style={{
+                  width: 1,
+                  minHeight: 32,
+                  background: 'rgba(157,174,196,0.24)',
+                  alignSelf: 'center',
+                }}
+              />
+
+              <div
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenBottomSheet('transaction', 'expense')
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '7px 12px',
+                    borderRadius: 999,
+                    background: theme.dashboardColors.pinkSoft,
+                    color: theme.dashboardColors.pink,
+                    fontSize: 14,
+                    fontWeight: 750,
+                    transition: 'transform 180ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.05)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)'
+                  }}
+                >
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
+                  {formatCurrency(stats.expenses, data.profile.country)}
+                </div>
+                <div
+                  style={{
+                    marginTop: 5,
+                    paddingLeft: 5,
+                    color: theme.dashboardColors.pink,
+                    fontSize: 12,
+                    fontWeight: 650,
+                  }}
+                >
+                  Expense
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
+          {/* Second card - Credit Card */}
+          <div style={{ 
+            minWidth: '100%', 
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
+            padding: '18px 20px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                position: 'relative',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
+                  width: 36,
+                  height: 36,
+                  borderRadius: 11,
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                <h3
+                  style={{
+                    margin: 0,
+                    color: theme.colors.accentPurple,
+                    fontSize: 17,
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Credit Card
+                </h3>
+              </div>
+
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: theme.dashboardColors.cyan,
+                  background: 'rgba(0,229,204,0.10)',
+                  border: '1px solid rgba(0,229,204,0.28)',
+                  boxShadow: '0 0 22px rgba(0,229,204,0.12)',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+            
+            <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: theme.dashboardColors.cyan,
-              background: 'rgba(0,229,204,0.10)',
-              border: '1px solid rgba(0,229,204,0.28)',
-              boxShadow: '0 0 22px rgba(0,229,204,0.12)',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+              flex: 1,
+              color: theme.dashboardColors.muted,
+              fontSize: 14,
+              fontWeight: 500
+            }}>
+              Coming Soon
+            </div>
           </div>
-        </div>
 
-        <div
-          onClick={handleBalanceClick}
-          style={{
-            marginTop: 16,
-            marginBottom: 14,
-            color: balanceColor,
-            fontSize: 'clamp(38px, 10vw, 50px)',
-            lineHeight: 0.95,
-            fontWeight: 850,
-            letterSpacing: '-0.055em',
-            position: 'relative',
-            cursor: 'pointer',
-            display: 'inline-block',
-            padding: '8px 12px',
-            marginLeft: '-12px',
-            borderRadius: '12px',
-            transition: 'background 180ms ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-          }}
-        >
-          {formatCurrency(stats.balance, data.profile.country)}
-        </div>
-
-        <div
-          style={{
+          {/* Third card - Cash */}
+          <div style={{ 
+            minWidth: '100%', 
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
+            padding: '18px 20px',
+            boxSizing: 'border-box',
             display: 'flex',
-            alignItems: 'stretch',
-            gap: 14,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div
-            onClick={(e) => {
-              e.stopPropagation()
-              onOpenBottomSheet('transaction', 'income')
-            }}
-            style={{ cursor: 'pointer' }}
-          >
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
             <div
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '7px 12px',
-                borderRadius: 999,
-                background: theme.dashboardColors.cyanSoft,
-                color: theme.dashboardColors.cyan,
-                fontSize: 14,
-                fontWeight: 750,
-                transition: 'transform 180ms ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'
+                justifyContent: 'space-between',
+                gap: 12,
+                position: 'relative',
               }}
             >
-              <span style={{ fontSize: 16, lineHeight: 1 }}>↑</span>
-              {formatCurrency(stats.income, data.profile.country)}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
+                  width: 36,
+                  height: 36,
+                  borderRadius: 11,
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                <h3
+                  style={{
+                    margin: 0,
+                    color: theme.colors.accentPurple,
+                    fontSize: 17,
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Cash
+                </h3>
+              </div>
+
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: theme.dashboardColors.cyan,
+                  background: 'rgba(0,229,204,0.10)',
+                  border: '1px solid rgba(0,229,204,0.28)',
+                  boxShadow: '0 0 22px rgba(0,229,204,0.12)',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </div>
-            <div
-              style={{
-                marginTop: 5,
-                paddingLeft: 5,
-                color: theme.dashboardColors.cyan,
-                fontSize: 12,
-                fontWeight: 650,
-              }}
-            >
-              Income
+            
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              color: theme.dashboardColors.muted,
+              fontSize: 14,
+              fontWeight: 500
+            }}>
+              Coming Soon
             </div>
           </div>
+        </div>
 
-          <div
-            style={{
-              width: 1,
-              minHeight: 32,
-              background: 'rgba(157,174,196,0.24)',
-              alignSelf: 'center',
-            }}
-          />
-
-          <div
-            onClick={(e) => {
-              e.stopPropagation()
-              onOpenBottomSheet('transaction', 'expense')
-            }}
-            style={{ cursor: 'pointer' }}
-          >
+        {/* Dot navigation */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '12px 0 16px',
+          position: 'relative',
+          zIndex: 10
+        }}>
+          {[0, 1, 2].map(index => (
             <div
+              key={index}
+              onClick={() => scrollToPayments(index)}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '7px 12px',
-                borderRadius: 999,
-                background: theme.dashboardColors.pinkSoft,
-                color: theme.dashboardColors.pink,
-                fontSize: 14,
-                fontWeight: 750,
-                transition: 'transform 180ms ease',
+                width: currentPaymentsIndex === index ? '7px' : '6px',
+                height: currentPaymentsIndex === index ? '7px' : '6px',
+                borderRadius: '50%',
+                background: currentPaymentsIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                opacity: currentPaymentsIndex === index ? 1 : 0.6
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'
-              }}
-            >
-              <span style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
-              {formatCurrency(stats.expenses, data.profile.country)}
-            </div>
-            <div
-              style={{
-                marginTop: 5,
-                paddingLeft: 5,
-                color: theme.dashboardColors.pink,
-                fontSize: 12,
-                fontWeight: 650,
-              }}
-            >
-              Expense
-            </div>
-          </div>
+            />
+          ))}
         </div>
       </div>
 
@@ -760,7 +1011,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '6px',
                     padding: '12px 0 16px',
                     position: 'relative',
                     zIndex: 10
@@ -770,8 +1021,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                         key={index}
                         onClick={() => scrollToForecast(index)}
                         style={{
-                          width: currentForecastIndex === index ? '10px' : '8px',
-                          height: currentForecastIndex === index ? '10px' : '8px',
+                          width: currentForecastIndex === index ? '7px' : '6px',
+                          height: currentForecastIndex === index ? '7px' : '6px',
                           borderRadius: '50%',
                           background: currentForecastIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
                           cursor: 'pointer',
