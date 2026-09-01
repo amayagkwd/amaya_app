@@ -2,28 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    
+
     <!-- Viewport - Critical for PWA -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4f46e5" />
-    <meta name="description" content="Tracker - Your personal finance and productivity app" />
+    <meta
+      name="description"
+      content="Tracker - Your personal finance and productivity app"
+    />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
-    
+
+    <!-- WhatsApp / Social Media Link Preview -->
+    <meta property="og:title" content="Tracker" />
+    <meta
+      property="og:description"
+      content="Your personal finance and productivity app"
+    />
+    <meta
+      property="og:image"
+      content="https://track-your-payments.netlify.app/512.png"
+    />
+    <meta
+      property="og:url"
+      content="https://track-your-payments.netlify.app/"
+    />
+    <meta property="og:type" content="website" />
+
     <!-- Icons -->
     <link rel="apple-touch-icon" href="/192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    
+
     <title>Tracker</title>
   </head>
+
   <body>
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
