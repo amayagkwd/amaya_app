@@ -32,14 +32,11 @@ export function useMonthlyBalanceCarry(data, updateStore) {
     // If non-month-balance transactions changed or first load, recalculate all month-balance transactions
     // On first load, always verify the balance transactions are correct
     if ((transactionsChanged || isFirstLoad) && settings.monthBalanceDoubleCountFixed) {
-      console.log('🔄 Recalculating month-balance transactions...', isFirstLoad ? '(first load)' : '(transactions changed)')
       hasRunRef.current = true
       
       const monthBalanceTransactions = data.payments.transactions.filter(t => 
         t.categoryId === 'month-balance' && t.isBalanceUpdate && t.date
       )
-      
-      console.log(`📊 Found ${monthBalanceTransactions.length} month-balance transactions to check`)
       
       if (monthBalanceTransactions.length > 0) {
         const fixedTransactions = [...data.payments.transactions]
@@ -57,8 +54,6 @@ export function useMonthlyBalanceCarry(data, updateStore) {
           
           const correctBalance = calculateEndOfMonthBalance(data, prevMonthString)
           
-          console.log(`  Checking ${monthBalanceTxn.category} (${monthBalanceTxn.date}): current=${monthBalanceTxn.balanceChange}, correct=${correctBalance}`)
-          
           if (correctBalance !== monthBalanceTxn.balanceChange) {
             hasChanges = true
             const txnIndex = fixedTransactions.findIndex(t => t.id === monthBalanceTxn.id)
@@ -68,7 +63,6 @@ export function useMonthlyBalanceCarry(data, updateStore) {
                 balanceChange: correctBalance,
                 amount: Math.abs(correctBalance)
               }
-              console.log(`  ✅ Updated ${monthBalanceTxn.category}: ${monthBalanceTxn.balanceChange} → ${correctBalance}`)
             }
           }
         })
@@ -132,7 +126,6 @@ export function useMonthlyBalanceCarry(data, updateStore) {
                 balanceChange: correctBalance,
                 amount: Math.abs(correctBalance)
               }
-              console.log(`Fixed month-balance for ${monthBalanceTxn.date}: ${monthBalanceTxn.balanceChange} → ${correctBalance}`)
             }
           }
         })

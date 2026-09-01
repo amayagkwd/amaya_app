@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { countries } from '../../utils/countries'
 import theme from '../../theme'
+import InstallBanner from '../standalone/InstallBanner'
 
 export default function OnboardingModal({ onComplete }) {
   const [name, setName] = useState('')
@@ -20,16 +21,18 @@ export default function OnboardingModal({ onComplete }) {
   }
   
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: theme.colors.bgPrimary,
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
+    <>
+      <InstallBanner />
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: theme.colors.bgPrimary,
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
       <div style={{
         background: theme.colors.bgModal,
         backdropFilter: theme.backdropFilter,
@@ -136,6 +139,7 @@ export default function OnboardingModal({ onComplete }) {
         </form>
       </div>
     </div>
+    </>
   )
 }
 

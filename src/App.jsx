@@ -124,8 +124,7 @@ function AppContent() {
   }
   
   const handleSaveReminder = (reminderData) => {
-    // TODO: Implement reminder save functionality
-    console.log('Reminder saved:', reminderData)
+    // Reminder functionality coming soon
   }
   
   if (needsOnboarding) {

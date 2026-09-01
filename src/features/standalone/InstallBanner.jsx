@@ -17,28 +17,19 @@ export default function InstallBanner() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true
 
-    console.log('📱 PWA Install Check:', {
-      isIOS: isIOSDevice,
-      isStandalone,
-      userAgent: ua
-    })
-
     // Don't show anything if already installed
     if (isStandalone) {
-      console.log('✅ App already installed')
       return
     }
 
     // Show iOS hint if on iOS and not already installed
     if (isIOSDevice) {
-      console.log('✅ Showing iOS install hint')
       setShowIOSInstallHint(true)
       return
     }
 
     // Android/Desktop - Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
-      console.log('🎉 beforeinstallprompt fired! Showing install button.')
       e.preventDefault() // Prevent the mini-infobar from appearing
       setDeferredPrompt(e) // Save the event to trigger later
       setShowInstallBtn(true) // Show our custom install button
@@ -53,21 +44,12 @@ export default function InstallBanner() {
 
   const installPWA = async () => {
     if (!deferredPrompt) {
-      console.log('❌ No deferred prompt available')
       return
     }
 
-    console.log('📲 Triggering install prompt...')
     deferredPrompt.prompt() // Show the install prompt
     
     const choiceResult = await deferredPrompt.userChoice
-    console.log('User choice:', choiceResult.outcome)
-    
-    if (choiceResult.outcome === 'accepted') {
-      console.log('✅ User accepted the install')
-    } else {
-      console.log('❌ User dismissed the install')
-    }
     
     setDeferredPrompt(null)
     setShowInstallBtn(false)
@@ -103,7 +85,7 @@ export default function InstallBanner() {
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: '12px',
-          zIndex: 1000,
+          zIndex: 10001,
           boxShadow: '0 -2px 16px rgba(0,0,0,0.15)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -181,7 +163,7 @@ export default function InstallBanner() {
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: '12px',
-            zIndex: 1000,
+            zIndex: 10001,
             boxShadow: '0 -2px 16px rgba(0,0,0,0.15)',
             cursor: 'pointer'
           }}
@@ -242,7 +224,7 @@ export default function InstallBanner() {
               position: 'fixed',
               inset: 0,
               background: 'rgba(0,0,0,0.5)',
-              zIndex: 1001
+              zIndex: 10002
             }}
           />
           <div style={{
@@ -253,7 +235,7 @@ export default function InstallBanner() {
             background: '#fff',
             borderRadius: '16px 16px 0 0',
             padding: '24px',
-            zIndex: 1002,
+            zIndex: 10003,
             maxHeight: '80vh',
             overflowY: 'auto'
           }}>
