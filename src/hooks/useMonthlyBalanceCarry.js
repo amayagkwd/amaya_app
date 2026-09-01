@@ -25,13 +25,14 @@ export function useMonthlyBalanceCarry(data, updateStore) {
       regularTransactions.map(t => ({ id: t.id, amount: t.amount, date: t.date, type: t.type }))
     )
     
-    const transactionsChanged = lastTransactionsHashRef.current !== '' && 
-                                 lastTransactionsHashRef.current !== transactionsHash
+    const isFirstLoad = lastTransactionsHashRef.current === ''
+    const transactionsChanged = lastTransactionsHashRef.current !== transactionsHash
     lastTransactionsHashRef.current = transactionsHash
     
-    // If non-month-balance transactions changed, recalculate all month-balance transactions
-    if (transactionsChanged && settings.monthBalanceDoubleCountFixed) {
-      console.log('🔄 Transactions changed, recalculating month-balance transactions...')
+    // If non-month-balance transactions changed or first load, recalculate all month-balance transactions
+    // On first load, always verify the balance transactions are correct
+    if ((transactionsChanged || isFirstLoad) && settings.monthBalanceDoubleCountFixed) {
+      console.log('🔄 Recalculating month-balance transactions...', isFirstLoad ? '(first load)' : '(transactions changed)')
       hasRunRef.current = true
       
       const monthBalanceTransactions = data.payments.transactions.filter(t => 
