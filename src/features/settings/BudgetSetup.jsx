@@ -241,6 +241,16 @@ export default function BudgetSetup({ data, updateStore }) {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     onBlur={(e) => saveBudget(isEnabled, mode, e.target.value)}
+                    onKeyDown={(e) => {
+                      // Prevent arrow keys from changing the value
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault()
+                      }
+                    }}
+                    onWheel={(e) => {
+                      // Prevent scroll from changing the value
+                      e.target.blur()
+                    }}
                     placeholder="0"
                     style={{
                       flex: 1,

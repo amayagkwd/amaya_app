@@ -22,7 +22,13 @@ export default function Insights({ data, onOpenBottomSheet }) {
     )
   }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
   
-  const stats = useMemo(() => calculateMonthStats(allTransactions), [allTransactions])
+  const stats = useMemo(() => {
+    // For yearly view, exclude month-balance from stats calculation to avoid double-counting
+    const txnsForStats = isYearly 
+      ? allTransactions.filter(t => t.categoryId !== 'month-balance')
+      : allTransactions
+    return calculateMonthStats(txnsForStats)
+  }, [allTransactions, isYearly])
   
   return (
     <>

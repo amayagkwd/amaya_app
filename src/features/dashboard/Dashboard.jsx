@@ -181,12 +181,18 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const recentTransactions = useMemo(() => {
     return [...data.payments.transactions]
       .sort((a, b) => {
-        const dateA = new Date(a.date)
-        const dateB = new Date(b.date)
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB - dateA
+        // Sort by timestamp first (most recent first)
+        const timestampA = a.timestamp || 0
+        const timestampB = b.timestamp || 0
+        
+        if (timestampA !== timestampB) {
+          return timestampB - timestampA
         }
-        return (b.timestamp || 0) - (a.timestamp || 0)
+        
+        // If timestamps are the same, fall back to date
+        const dateA = new Date(a.date || 0)
+        const dateB = new Date(b.date || 0)
+        return dateB - dateA
       })
       .slice(0, 4)
   }, [data.payments.transactions])
@@ -1116,7 +1122,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
               const amountPrefix = (isMonthBalance || isInitialBalance)
                 ? ''
                 : isManualBalanceUpdate
-                ? ((transaction.balanceChange >= 0) ? '+' : '')
+                ? ((transaction.balanceChange >= 0) ? '+' : '-')
                 : (isIncome ? '+' : '-')
               
               const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance)

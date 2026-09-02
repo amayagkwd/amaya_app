@@ -706,7 +706,7 @@ export default function PaymentsHistory({
               const amountPrefix = (isMonthBalance || isInitialBalance)
                 ? '' // No prefix for month balance and initial balance
                 : isManualBalanceUpdate
-                ? (((t.balanceChange || t.amount) >= 0) ? '+' : '') 
+                ? ((t.balanceChange >= 0) ? '+' : '-')
                 : (t.type === 'income' ? '+' : '-')
               
               const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance) 
