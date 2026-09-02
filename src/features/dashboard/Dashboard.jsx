@@ -829,17 +829,30 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                       {budgetData.dashboardCondition.message}
                     </p>
                   ) : (
-                    <p style={{
-                      marginTop: 14,
-                      marginBottom: 0,
-                      fontFamily: theme.typography.fontFamily,
-                      fontSize: 26,
-                      fontWeight: 600,
-                      color: budgetData.dailyAllowance >= 0 ? 'white' : theme.dashboardColors.pink,
-                      letterSpacing: '-0.02em',
-                    }}>
-                      {formatCurrency(budgetData.dailyAllowance, data.profile.country)}
-                    </p>
+                    <>
+                      <p style={{
+                        marginTop: 14,
+                        marginBottom: 0,
+                        fontFamily: theme.typography.fontFamily,
+                        fontSize: 26,
+                        fontWeight: 600,
+                        color: budgetData.dailyAllowance >= 0 ? 'white' : theme.dashboardColors.pink,
+                        letterSpacing: '-0.02em',
+                      }}>
+                        {formatCurrency(budgetData.dailyAllowance, data.profile.country)}
+                      </p>
+                      <p style={{
+                        marginTop: 8,
+                        marginBottom: 0,
+                        fontFamily: theme.typography.fontFamily,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: theme.dashboardColors.muted,
+                        letterSpacing: '-0.01em',
+                      }}>
+                        Total Spendable: {formatCurrency(budgetData.spendableRemaining, data.profile.country)}
+                      </p>
+                    </>
                   )
                 ) : (
                   <>
