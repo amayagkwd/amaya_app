@@ -286,6 +286,14 @@ export default function InstallBanner() {
                   fontWeight: 600
                 }}>Share</strong> button in Safari
               </li>
+              <li style={{ marginBottom: '12px' }}>
+                Select <strong style={{ 
+                  padding: '2px 6px',
+                  background: '#f3f4f6',
+                  borderRadius: '4px',
+                  fontWeight: 600
+                }}>View More</strong>
+              </li>
               <li>
                 Select <strong style={{ 
                   padding: '2px 6px',

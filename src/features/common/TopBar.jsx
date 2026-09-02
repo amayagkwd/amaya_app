@@ -6,6 +6,16 @@ export default function TopBar() {
   const location = useLocation()
   const showBackButton = location.pathname !== '/'
   
+  const handleBackClick = () => {
+    // Settings sub-pages should go back to settings
+    if (['/profile', '/setup', '/budget-setup', '/reminders'].includes(location.pathname)) {
+      navigate('/settings')
+    } else {
+      // All other pages go to dashboard
+      navigate('/')
+    }
+  }
+  
   return (
     <div style={{
       minHeight: theme.layout.topBarHeight,
@@ -25,7 +35,7 @@ export default function TopBar() {
     }}>
       {showBackButton ? (
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBackClick}
           style={{
             background: 'none',
             border: 'none',

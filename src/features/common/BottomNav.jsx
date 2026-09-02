@@ -16,16 +16,17 @@ export default function BottomNav() {
   const isActive = (path) => location.pathname === path
   
   const handleNavClick = (path) => {
+    if (location.pathname === path) {
+      return // Already on this page
+    }
+    
     if (path === '/') {
-      // When navigating to home from another page, replace to avoid back button going to that page
-      if (location.pathname !== '/') {
-        navigate('/', { replace: true })
-      }
+      // Always replace when going to dashboard
+      navigate('/', { replace: true })
     } else {
-      // For other nav items, use normal navigation so phone back button works
-      if (location.pathname !== path) {
-        navigate(path)
-      }
+      // For all other navigation from bottom nav, replace instead of push
+      // This prevents history buildup and makes back button go to dashboard
+      navigate(path, { replace: true })
     }
   }
   

@@ -7,6 +7,7 @@ import TopBar from './features/common/TopBar'
 import BottomNav from './features/common/BottomNav'
 import BottomSheet from './features/common/BottomSheet'
 import Toast from './features/common/Toast'
+import NavigationHandler from './features/common/NavigationHandler'
 import OnboardingModal from './features/onboarding/OnboardingModal'
 import InitialBalanceModal from './features/onboarding/InitialBalanceModal'
 import AddTransactionTip from './features/onboarding/AddTransactionTip'
@@ -147,6 +148,7 @@ function AppContent() {
       background: theme.colors.bgPrimary,
       fontFamily: theme.typography.fontFamily
     }}>
+      <NavigationHandler />
       <TopBar />
       
       <main style={{

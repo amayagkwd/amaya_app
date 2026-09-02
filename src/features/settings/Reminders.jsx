@@ -11,26 +11,7 @@ export default function Reminders({ data, updateStore, onOpenBottomSheet }) {
       <div style={componentStyles.backgroundShine} />
       
       <div style={{ ...componentStyles.pageContainer, position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-          <button
-            onClick={() => navigate('/settings')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: theme.colors.textSecondary,
-              cursor: 'pointer',
-              padding: '8px',
-              marginLeft: '-8px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h2 style={{ ...componentStyles.pageHeader, margin: '0 0 0 8px' }}>Reminders</h2>
-        </div>
+        <h2 style={componentStyles.pageHeader}>Reminders</h2>
 
         {/* Empty State */}
         <div style={{
