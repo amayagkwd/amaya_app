@@ -6,7 +6,7 @@ import theme from '../../theme'
 
 const COLORS = ['#10b981', '#4f46e5', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16']
 
-export default function PaymentsCharts({ allTransactions, categories, country, isYearly, selectedYear }) {
+export default function PaymentsCharts({ allTransactions, categories, country, isYearly, selectedYear, selectedDate, navigate }) {
   const [selectedDay, setSelectedDay] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(null)
   const [currentChartIndex, setCurrentChartIndex] = useState(0)
@@ -1007,6 +1007,12 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
               colors={COLORS.slice().reverse()}
               legendOpen={legendOpen['expense'] || false}
               onToggleLegend={() => setLegendOpen(prev => ({ ...prev, expense: !prev['expense'] }))}
+              chartType="expense"
+              isYearly={isYearly}
+              selectedDate={selectedDate}
+              selectedYear={selectedYear}
+              categories={categories}
+              navigate={navigate}
             />
           </div>
           
@@ -1022,6 +1028,12 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
               colors={COLORS}
               legendOpen={legendOpen['income'] || false}
               onToggleLegend={() => setLegendOpen(prev => ({ ...prev, income: !prev['income'] }))}
+              chartType="income"
+              isYearly={isYearly}
+              selectedDate={selectedDate}
+              selectedYear={selectedYear}
+              categories={categories}
+              navigate={navigate}
             />
           </div>
           
@@ -1037,6 +1049,12 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
               colors={['#4f46e5', '#f43f5e']}
               legendOpen={legendOpen['needs'] || false}
               onToggleLegend={() => setLegendOpen(prev => ({ ...prev, needs: !prev['needs'] }))}
+              chartType="needs-wants"
+              isYearly={isYearly}
+              selectedDate={selectedDate}
+              selectedYear={selectedYear}
+              categories={categories}
+              navigate={navigate}
             />
           </div>
         </div>
@@ -1069,7 +1087,32 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
   )
 }
 
-function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend }) {
+function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend, chartType, isYearly, selectedDate, selectedYear, categories, navigate }) {
+  
+  const handleLegendItemClick = (itemName) => {
+    if (!navigate) return
+    
+    // Build navigation state based on chart type
+    const navigationState = {
+      filterType: chartType, // 'expense', 'income', or 'needs-wants'
+      filterValue: itemName, // category name or 'Needs'/'Wants'
+      isYearly,
+      selectedDate,
+      selectedYear
+    }
+    
+    // Find the category ID if it's a category-based filter
+    if (chartType === 'expense' || chartType === 'income') {
+      const category = categories?.find(c => c.name === itemName)
+      if (category) {
+        navigationState.categoryId = category.id
+      }
+    }
+    
+    // Navigate to payments page with state
+    navigate('/payments', { state: navigationState })
+  }
+  
   if (!chartData) {
     return (
       <div style={{ 
@@ -1185,12 +1228,25 @@ function ChartCard({ title, chartData, colors, style, legendOpen, onToggleLegend
           {chartData.data.map((entry, index) => (
             <div 
               key={entry.name}
+              onClick={() => handleLegendItemClick(entry.name)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: `${theme.spacing.sm} 0`,
-                fontSize: theme.typography.bodySmall
+                padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+                fontSize: theme.typography.bodySmall,
+                cursor: navigate ? 'pointer' : 'default',
+                borderRadius: theme.borderRadius.sm,
+                transition: 'background 0.2s ease',
+                marginBottom: '4px'
+              }}
+              onMouseEnter={(e) => {
+                if (navigate) {
+                  e.currentTarget.style.background = theme.colors.bgCardHover
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>

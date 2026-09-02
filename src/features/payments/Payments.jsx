@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import PaymentsHistory from './PaymentsHistory'
 import EditTransactionModal from './EditTransactionModal'
 import AddTransactionButton from '../common/AddTransactionButton'
@@ -8,11 +9,61 @@ import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '
 import theme, { componentStyles } from '../../theme'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
+  const location = useLocation()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [isYearly, setIsYearly] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [activeFilter, setActiveFilter] = useState(null)
+  const [appliedCategoryFilter, setAppliedCategoryFilter] = useState(null)
+  const [appliedClassificationFilter, setAppliedClassificationFilter] = useState(null)
+  const [appliedTypeFilter, setAppliedTypeFilter] = useState(null)
+  
+  // Handle navigation state from Insights page
+  useEffect(() => {
+    if (location.state) {
+      const { filterType, filterValue, categoryId, isYearly: navIsYearly, selectedDate: navDate, selectedYear: navYear } = location.state
+      
+      // Reset all filters first
+      setAppliedTypeFilter(null)
+      setAppliedCategoryFilter(null)
+      setAppliedClassificationFilter(null)
+      
+      // Set period
+      if (navIsYearly !== undefined) {
+        setIsYearly(navIsYearly)
+      }
+      if (navDate) {
+        setSelectedDate(new Date(navDate))
+      }
+      if (navYear) {
+        setSelectedYear(navYear)
+      }
+      
+      // Apply filters based on chart type - set category/classification filters only
+      if (filterType === 'expense') {
+        setAppliedTypeFilter('expense')
+        if (categoryId) {
+          setAppliedCategoryFilter(categoryId)
+        }
+      } else if (filterType === 'income') {
+        setAppliedTypeFilter('income')
+        if (categoryId) {
+          setAppliedCategoryFilter(categoryId)
+        }
+      } else if (filterType === 'needs-wants') {
+        setAppliedTypeFilter('expense') // Needs/wants are expense classifications
+        if (filterValue === 'Needs') {
+          setAppliedClassificationFilter('need')
+        } else if (filterValue === 'Wants') {
+          setAppliedClassificationFilter('want')
+        }
+      }
+      
+      // Clear navigation state after processing
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state, location.key]) // Add location.key to trigger on every navigation
   
   const allTransactions = useMemo(() => {
     if (isYearly) {
@@ -138,6 +189,9 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           onDelete={onDelete}
           onEdit={handleEdit}
           quickFilter={activeFilter}
+          appliedCategoryFilter={appliedCategoryFilter}
+          appliedClassificationFilter={appliedClassificationFilter}
+          appliedTypeFilter={appliedTypeFilter}
         />
       </div>
       

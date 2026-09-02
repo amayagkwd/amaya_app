@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { formatCurrency } from '../../utils/formatCurrency'
 import { formatDate } from '../../utils/formatDate'
 import theme from '../../theme'
@@ -9,7 +9,10 @@ export default function PaymentsHistory({
   country, 
   onDelete, 
   onEdit,
-  quickFilter
+  quickFilter,
+  appliedCategoryFilter,
+  appliedClassificationFilter,
+  appliedTypeFilter
 }) {
   const [showFilters, setShowFilters] = useState(false)
   const [typeFilter, setTypeFilter] = useState('all')
@@ -17,6 +20,16 @@ export default function PaymentsHistory({
   const [classificationFilter, setClassificationFilter] = useState('all')
   const [amountOperator, setAmountOperator] = useState('more')
   const [amountValue, setAmountValue] = useState('')
+  
+  // Update filters when navigation props change
+  useEffect(() => {
+    if (appliedTypeFilter || appliedCategoryFilter || appliedClassificationFilter) {
+      setShowFilters(true)
+      setTypeFilter(appliedTypeFilter || 'all')
+      setCategoryFilter(appliedCategoryFilter || 'all')
+      setClassificationFilter(appliedClassificationFilter || 'all')
+    }
+  }, [appliedTypeFilter, appliedCategoryFilter, appliedClassificationFilter])
   
   // Dropdown open states
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
@@ -27,7 +40,7 @@ export default function PaymentsHistory({
   const transactions = useMemo(() => {
     let filtered = [...allTransactions]
     
-    // Quick filter from stat cards (takes priority)
+    // Quick filter from stat cards or navigation (applies first)
     if (quickFilter) {
       if (quickFilter === 'income') {
         filtered = filtered.filter(t => t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
@@ -36,11 +49,11 @@ export default function PaymentsHistory({
       } else if (quickFilter === 'balance') {
         filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update')
       }
-      return filtered
+      // Don't return early - apply additional filters below
     }
     
-    // Type filter
-    if (typeFilter !== 'all') {
+    // Type filter (only if no quickFilter)
+    if (!quickFilter && typeFilter !== 'all') {
       if (typeFilter === 'balance') {
         filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update')
       } else {
@@ -48,12 +61,12 @@ export default function PaymentsHistory({
       }
     }
     
-    // Category filter
+    // Category filter (applies after quick filter or type filter)
     if (categoryFilter !== 'all') {
       filtered = filtered.filter(t => t.categoryId === categoryFilter)
     }
     
-    // Classification filter (needs/wants)
+    // Classification filter (needs/wants) (applies after other filters)
     if (classificationFilter !== 'all') {
       filtered = filtered.filter(t => t.classification === classificationFilter)
     }
@@ -241,10 +254,10 @@ export default function PaymentsHistory({
           position: 'relative',
           zIndex: 50
         }}>
-          {/* Main Filter Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: theme.spacing.sm, marginBottom: theme.spacing.md }}>
+          {/* Filter Grid - Fixed 2x2 Layout */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.sm, marginBottom: theme.spacing.md }}>
             {/* Type Filter */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', minWidth: 0 }}>
               <label style={{ 
                 display: 'block',
                 fontSize: theme.typography.caption, 
@@ -329,7 +342,7 @@ export default function PaymentsHistory({
             </div>
 
             {/* Category Filter */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', minWidth: 0 }}>
               <label style={{ 
                 display: 'block',
                 fontSize: theme.typography.caption, 
@@ -434,7 +447,7 @@ export default function PaymentsHistory({
             </div>
 
             {/* Classification Filter (Needs/Wants) */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', minWidth: 0 }}>
               <label style={{ 
                 display: 'block',
                 fontSize: theme.typography.caption, 
@@ -520,7 +533,7 @@ export default function PaymentsHistory({
             </div>
 
             {/* Amount Filter */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', minWidth: 0, gridColumn: 'span 1' }}>
               <label style={{ 
                 display: 'block',
                 fontSize: theme.typography.caption, 
@@ -530,11 +543,12 @@ export default function PaymentsHistory({
               }}>
                 Amount
               </label>
-              <div style={{ display: 'flex', gap: '4px' }}>
+              <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
                 <button
                   onClick={() => setAmountDropdownOpen(!amountDropdownOpen)}
                   style={{
-                    flex: '0 0 50px',
+                    flex: '0 0 auto',
+                    width: '50px',
                     padding: `${theme.spacing.sm} 8px`,
                     background: theme.colors.bgCard,
                     border: `1px solid ${theme.colors.borderSubtle}`,

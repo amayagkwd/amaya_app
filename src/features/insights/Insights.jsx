@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AddTransactionButton from '../common/AddTransactionButton'
 import PeriodSelector from '../payments/PeriodSelector'
 import PaymentsCharts from './PaymentsCharts'
@@ -7,6 +8,7 @@ import { formatLargeNumber } from '../../utils/formatLargeNumber'
 import theme, { componentStyles } from '../../theme'
 
 export default function Insights({ data, onOpenBottomSheet }) {
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [isYearly, setIsYearly] = useState(false)
@@ -61,6 +63,8 @@ export default function Insights({ data, onOpenBottomSheet }) {
           country={data.profile.country}
           isYearly={isYearly}
           selectedYear={selectedYear}
+          selectedDate={selectedDate}
+          navigate={navigate}
         />
       </div>
       
