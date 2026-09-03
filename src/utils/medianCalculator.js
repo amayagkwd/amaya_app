@@ -1,11 +1,13 @@
 export function calculateMedianDailySpend(transactions, year, month, daysElapsed) {
-  // Get expense transactions for specified month
+  // Get expense transactions for specified month (bank only)
   const monthExpenses = transactions.filter(t => {
     const date = new Date(t.date)
+    const paymentMode = t.paymentMode || 'bank' // Default to bank for old transactions
     return (
       date.getFullYear() === year &&
       date.getMonth() === month &&
-      t.type === 'expense'
+      t.type === 'expense' &&
+      paymentMode === 'bank'
     )
   })
 
@@ -30,10 +32,11 @@ export function calculateMedianDailySpend(transactions, year, month, daysElapsed
 }
 
 export function calculateHistoricalMedianDailySpend(transactions) {
-  // Get ALL expense transactions with valid dates
-  const allExpenses = transactions.filter(t => 
-    t.type === 'expense' && t.date && t.date !== ''
-  )
+  // Get ALL expense transactions with valid dates (bank only)
+  const allExpenses = transactions.filter(t => {
+    const paymentMode = t.paymentMode || 'bank' // Default to bank for old transactions
+    return t.type === 'expense' && t.date && t.date !== '' && paymentMode === 'bank'
+  })
   
   if (allExpenses.length === 0) return 0
   

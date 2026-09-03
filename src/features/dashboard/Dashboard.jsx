@@ -1243,7 +1243,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                         color: budgetData.dailyAllowance >= 0 ? 'white' : theme.dashboardColors.pink,
                         letterSpacing: '-0.02em',
                       }}>
-                        {formatCurrency(budgetData.dailyAllowance, data.profile.country)}
+                        {budgetData.dailyAllowance < 0 ? '-' : ''}{formatCurrency(budgetData.dailyAllowance, data.profile.country)}
                       </p>
                       <p style={{
                         marginTop: 8,
@@ -1254,7 +1254,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                         color: theme.dashboardColors.muted,
                         letterSpacing: '-0.01em',
                       }}>
-                        Total Spendable: {formatCurrency(budgetData.spendableRemaining, data.profile.country)}
+                        Total Spendable: {budgetData.spendableRemaining < 0 ? '-' : ''}{formatCurrency(budgetData.spendableRemaining, data.profile.country)}
                       </p>
                     </>
                   )
