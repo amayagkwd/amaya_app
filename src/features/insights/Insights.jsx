@@ -29,7 +29,8 @@ export default function Insights({ data, onOpenBottomSheet }) {
     const txnsForStats = isYearly 
       ? allTransactions.filter(t => t.categoryId !== 'month-balance')
       : allTransactions
-    return calculateMonthStats(txnsForStats)
+    // Calculate bank-only stats
+    return calculateMonthStats(txnsForStats, 'bank')
   }, [allTransactions, isYearly])
   
   return (

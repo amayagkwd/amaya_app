@@ -71,7 +71,7 @@ export default function TopBar() {
           letterSpacing: '0.15em',
           textTransform: 'uppercase'
         }}>
-          This application has no limitation
+          Your Money, At a Glance
         </p>
       </div>
     </div>

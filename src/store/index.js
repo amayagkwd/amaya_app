@@ -11,7 +11,9 @@ const initialState = {
   payments: {
     categories: [],
     transactions: [],
-    previousCategories: []
+    previousCategories: [],
+    cashBalance: 0,
+    creditCardBalance: 0
   },
   settings: {
     carryBalanceToNextMonth: false,
@@ -22,7 +24,9 @@ const initialState = {
       amount: 0
     },
     initialBalanceSkipped: false,
-    addTransactionTipSeen: false
+    addTransactionTipSeen: false,
+    isCashEnabled: false,
+    isCreditEnabled: false
   }
 }
 

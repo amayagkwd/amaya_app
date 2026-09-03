@@ -30,6 +30,7 @@ function AppContent() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [bottomSheetMode, setBottomSheetMode] = useState('transaction')
   const [bottomSheetInitialType, setBottomSheetInitialType] = useState(null)
+  const [bottomSheetInitialPaymentMode, setBottomSheetInitialPaymentMode] = useState(null)
   const [showInitialBalance, setShowInitialBalance] = useState(false)
   const [showAddTransactionTip, setShowAddTransactionTip] = useState(false)
   
@@ -118,9 +119,10 @@ function AppContent() {
     setShowAddTransactionTip(false)
   }
   
-  const handleOpenBottomSheet = (mode = 'transaction', initialType = null) => {
+  const handleOpenBottomSheet = (mode = 'transaction', initialType = null, initialPaymentMode = null) => {
     setBottomSheetMode(mode)
     setBottomSheetInitialType(initialType)
+    setBottomSheetInitialPaymentMode(initialPaymentMode)
     setBottomSheetOpen(true)
   }
   
@@ -182,6 +184,7 @@ function AppContent() {
         updateStore={updateStore}
         mode={bottomSheetMode}
         initialType={bottomSheetInitialType}
+        initialPaymentMode={bottomSheetInitialPaymentMode}
       />
       
       <InstallBanner />

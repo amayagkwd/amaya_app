@@ -25,7 +25,8 @@ export function useBudget(data) {
       month
     )
     
-    const stats = calculateMonthStats(transactions)
+    // Calculate bank-only stats for budget
+    const stats = calculateMonthStats(transactions, 'bank')
     
     let spendableRemaining
     let dashboardCondition = null // Will hold the message if conditions are met

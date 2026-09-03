@@ -43,11 +43,11 @@ export default function PaymentsHistory({
     // Quick filter from stat cards or navigation (applies first)
     if (quickFilter) {
       if (quickFilter === 'income') {
-        filtered = filtered.filter(t => t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
+        filtered = filtered.filter(t => t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance' && t.categoryId !== 'cash-balance')
       } else if (quickFilter === 'expense') {
-        filtered = filtered.filter(t => t.type === 'expense' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
+        filtered = filtered.filter(t => t.type === 'expense' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance' && t.categoryId !== 'cash-balance')
       } else if (quickFilter === 'balance') {
-        filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update')
+        filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update' || t.categoryId === 'cash-balance')
       }
       // Don't return early - apply additional filters below
     }
@@ -55,9 +55,9 @@ export default function PaymentsHistory({
     // Type filter (only if no quickFilter)
     if (!quickFilter && typeFilter !== 'all') {
       if (typeFilter === 'balance') {
-        filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update')
+        filtered = filtered.filter(t => t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update' || t.categoryId === 'cash-balance')
       } else {
-        filtered = filtered.filter(t => t.type === typeFilter && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance')
+        filtered = filtered.filter(t => t.type === typeFilter && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance' && t.categoryId !== 'cash-balance')
       }
     }
     
@@ -91,11 +91,11 @@ export default function PaymentsHistory({
     if (!hasRelevantFilter) return null
     
     return transactions.reduce((sum, t) => {
-      if (t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance') {
+      if (t.type === 'income' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance' && t.categoryId !== 'cash-balance') {
         return sum + t.amount
-      } else if (t.type === 'expense' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance') {
+      } else if (t.type === 'expense' && !t.isBalanceUpdate && t.categoryId !== 'month-balance' && t.categoryId !== 'initial-balance' && t.categoryId !== 'cash-balance') {
         return sum - t.amount
-      } else if (t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update') {
+      } else if (t.isBalanceUpdate || t.categoryId === 'month-balance' || t.categoryId === 'initial-balance' || t.categoryId === 'balance-update' || t.categoryId === 'cash-balance') {
         return sum + (t.balanceChange || t.amount)
       }
       return sum
@@ -693,6 +693,41 @@ export default function PaymentsHistory({
               const isBalanceUpdate = t.isBalanceUpdate || false
               const isMonthBalance = t.categoryId === 'month-balance'
               const isInitialBalance = t.categoryId === 'initial-balance'
+              const isCashBalance = t.categoryId === 'cash-balance'
+              
+              // Determine payment mode (default to 'bank' for old transactions)
+              const paymentMode = t.paymentMode || 'bank'
+              
+              // Get mode colors and icon
+              const getModeColor = (mode) => {
+                switch(mode) {
+                  case 'cash': return '#00E5CC'
+                  case 'credit': return '#7C6FFF'
+                  case 'bank':
+                  default: return '#5B9EFF'
+                }
+              }
+              
+              const getModeIcon = (mode) => {
+                switch(mode) {
+                  case 'cash': return '/cash-svgrepo-com.svg'
+                  case 'credit': return '/credit-card-svgrepo-com.svg'
+                  case 'bank':
+                  default: return '/bank-svgrepo-com.svg'
+                }
+              }
+              
+              const getModeFilter = (mode) => {
+                switch(mode) {
+                  case 'cash': return 'brightness(0) saturate(100%) invert(73%) sepia(65%) saturate(2613%) hue-rotate(129deg) brightness(97%) contrast(101%)'
+                  case 'credit': return 'brightness(0) saturate(100%) invert(51%) sepia(67%) saturate(2792%) hue-rotate(229deg) brightness(101%) contrast(101%)'
+                  case 'bank':
+                  default: return 'brightness(0) saturate(100%) invert(59%) sepia(46%) saturate(2138%) hue-rotate(192deg) brightness(103%) contrast(101%)'
+                }
+              }
+              
+              const modeColor = getModeColor(paymentMode)
+              const categoryColor = modeColor // Use payment mode color for category name
               
               // Determine display name
               let displayName
@@ -700,6 +735,8 @@ export default function PaymentsHistory({
                 displayName = 'Initial Balance'
               } else if (isMonthBalance) {
                 displayName = t.category || 'Balance'
+              } else if (isCashBalance) {
+                displayName = 'Cash Balance'
               } else if (isBalanceTransaction) {
                 displayName = 'Balance Transaction'
               } else if (isBalanceUpdate) {
@@ -708,22 +745,22 @@ export default function PaymentsHistory({
                 displayName = category?.name || 'Unknown'
               }
               
-              // For balance updates, month balance, and initial balance, use white color
+              // For balance updates, month balance, and initial balance, use cyan color
               // Initial balance and month balance: NO +/- prefix (just the amount)
               // Manual balance updates: SHOW +/- prefix based on change
               const isManualBalanceUpdate = isBalanceUpdate && t.categoryId === 'balance-update'
               
-              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance)
-                ? theme.colors.textPrimary 
+              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance)
+                ? theme.colors.accentCyan 
                 : (t.type === 'income' ? theme.colors.accentCyan : theme.colors.accentPink)
               
-              const amountPrefix = (isMonthBalance || isInitialBalance)
-                ? '' // No prefix for month balance and initial balance
+              const amountPrefix = (isMonthBalance || isInitialBalance || isCashBalance)
+                ? '+' // Show + for initial balances
                 : isManualBalanceUpdate
                 ? ((t.balanceChange >= 0) ? '+' : '-')
                 : (t.type === 'income' ? '+' : '-')
               
-              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance) 
+              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance) 
                 ? Math.abs(t.balanceChange || t.amount) 
                 : t.amount
               
@@ -741,9 +778,34 @@ export default function PaymentsHistory({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     border: `1px solid ${theme.colors.borderSubtle}`,
-                    boxShadow: theme.shadows.card
+                    borderLeft: `4px solid ${modeColor}`,
+                    boxShadow: theme.shadows.card,
+                    gap: theme.spacing.md
                   }}
                 >
+                  {/* Payment Mode Icon */}
+                  <div style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    background: `${modeColor}15`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <img 
+                      src={getModeIcon(paymentMode)} 
+                      alt={paymentMode} 
+                      width="16" 
+                      height="16"
+                      style={{ 
+                        display: 'block',
+                        filter: getModeFilter(paymentMode)
+                      }}
+                    />
+                  </div>
+                  
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: theme.typography.medium, color: theme.colors.textPrimary, fontSize: theme.typography.h6 }}>{displayName}</div>
                     {t.note && (

@@ -9,6 +9,7 @@ import AddTransactionButton from '../common/AddTransactionButton'
 import { showToast } from '../common/Toast'
 import uuidv4 from '../../utils/uuid'
 import theme, { componentStyles } from '../../theme'
+import Cash from '../payments/Cash'
 
 export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const navigate = useNavigate()
@@ -21,6 +22,11 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const [balanceDate, setBalanceDate] = useState('')
   const [balanceNote, setBalanceNote] = useState('')
   const [isYearly, setIsYearly] = useState(false)
+  const [cashModalOpen, setCashModalOpen] = useState(false)
+  const [cashBalanceEditOpen, setCashBalanceEditOpen] = useState(false)
+  const [editedCashBalance, setEditedCashBalance] = useState('')
+  const [cashBalanceDate, setCashBalanceDate] = useState('')
+  const [cashBalanceNote, setCashBalanceNote] = useState('')
   
   // Get budget data (always uses current month, not affected by yearly toggle)
   const budgetData = useBudget(data)
@@ -28,6 +34,52 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   // Get settings
   const isBudgetEnabled = data.settings?.budget?.enabled || false
   const isPredictMonthEndEnabled = data.settings?.predictMonthEnd || false
+
+  // Calculate cash stats separately
+  const cashStats = useMemo(() => {
+    const now = new Date()
+    let cashTransactions
+    
+    if (isYearly) {
+      const currentYear = now.getFullYear()
+      cashTransactions = data.payments.transactions.filter(t => {
+        if (!t.date) return false
+        const txnDate = new Date(t.date)
+        return txnDate.getFullYear() === currentYear
+      })
+    } else {
+      cashTransactions = getMonthTransactions(
+        data.payments.transactions,
+        now.getFullYear(),
+        now.getMonth()
+      )
+    }
+
+    return calculateMonthStats(cashTransactions, 'cash')
+  }, [data.payments.transactions, isYearly])
+
+  // Calculate credit stats separately
+  const creditStats = useMemo(() => {
+    const now = new Date()
+    let creditTransactions
+    
+    if (isYearly) {
+      const currentYear = now.getFullYear()
+      creditTransactions = data.payments.transactions.filter(t => {
+        if (!t.date) return false
+        const txnDate = new Date(t.date)
+        return txnDate.getFullYear() === currentYear
+      })
+    } else {
+      creditTransactions = getMonthTransactions(
+        data.payments.transactions,
+        now.getFullYear(),
+        now.getMonth()
+      )
+    }
+
+    return calculateMonthStats(creditTransactions, 'credit')
+  }, [data.payments.transactions, isYearly])
 
   const handleForecastScroll = () => {
     if (forecastCarouselRef.current) {
@@ -86,10 +138,11 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
       )
     }
 
-    return calculateMonthStats(transactions)
+    // Calculate bank-only stats (default payment mode or explicitly 'bank')
+    return calculateMonthStats(transactions, 'bank')
   }, [data.payments.transactions, isYearly])
   
-  // Always calculate current real balance for budget and forecast (regardless of view)
+  // Always calculate current real balance for budget and forecast (regardless of view) - BANK ONLY
   const currentBalance = useMemo(() => {
     const now = new Date()
     const currentMonthTransactions = getMonthTransactions(
@@ -97,7 +150,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
       now.getFullYear(),
       now.getMonth()
     )
-    return calculateMonthStats(currentMonthTransactions).balance
+    return calculateMonthStats(currentMonthTransactions, 'bank').balance
   }, [data.payments.transactions])
 
   const forecast = useMemo(() => {
@@ -239,6 +292,87 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     setBalanceEditOpen(false)
   }
 
+  const handleCashClick = () => {
+    setCashModalOpen(true)
+  }
+
+  const handleCashSave = (amount) => {
+    // Create initial cash balance transaction
+    const transaction = {
+      id: uuidv4(),
+      type: 'cash-balance',
+      amount: amount,
+      category: 'Cash Balance',
+      categoryId: 'cash-balance',
+      date: new Date().toISOString().split('T')[0],
+      note: 'Initial cash balance',
+      timestamp: Date.now(),
+      paymentMode: 'cash'
+    }
+
+    updateStore(current => ({
+      ...current,
+      payments: {
+        ...current.payments,
+        cashBalance: amount,
+        transactions: [...current.payments.transactions, transaction]
+      },
+      settings: {
+        ...current.settings,
+        isCashEnabled: true
+      }
+    }))
+
+    showToast(`Cash balance set to ${formatCurrency(amount, data.profile.country)}`)
+    setCashModalOpen(false)
+  }
+
+  const handleCashClose = () => {
+    setCashModalOpen(false)
+  }
+
+  const handleCashBalanceClick = (e) => {
+    e.stopPropagation()
+    setEditedCashBalance(String(cashStats.balance))
+    setCashBalanceDate(new Date().toISOString().split('T')[0])
+    setCashBalanceNote('')
+    setCashBalanceEditOpen(true)
+  }
+
+  const handleCashBalanceSave = () => {
+    const newBalance = parseFloat(editedCashBalance)
+    if (isNaN(newBalance)) return
+
+    const difference = newBalance - cashStats.balance
+    if (difference !== 0) {
+      // Create a balance adjustment transaction for cash
+      const transaction = {
+        id: uuidv4(),
+        type: 'cash-balance-update',
+        amount: Math.abs(difference),
+        category: 'Cash Balance Updated',
+        categoryId: 'cash-balance-update',
+        date: cashBalanceDate,
+        note: cashBalanceNote.trim() || null,
+        timestamp: Date.now(),
+        paymentMode: 'cash',
+        balanceChange: difference
+      }
+
+      updateStore(current => ({
+        ...current,
+        payments: {
+          ...current.payments,
+          transactions: [...current.payments.transactions, transaction]
+        }
+      }))
+
+      showToast(`Cash balance updated by ${formatCurrency(Math.abs(difference), data.profile.country)}`)
+    }
+
+    setCashBalanceEditOpen(false)
+  }
+
   return (
     <div
       style={{
@@ -326,12 +460,45 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           </style>
           
           {/* First card - Bank Account */}
-          <div style={{ 
+          <div 
+            className="payment-card-bank"
+            style={{ 
             minWidth: '100%', 
             scrollSnapAlign: 'start',
             scrollSnapStop: 'always',
             padding: '18px 20px',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            position: 'relative',
+            overflow: 'hidden',
+            isolation: 'isolate',
+            background: `
+              radial-gradient(
+                circle at 0% 0%,
+                rgba(91, 158, 255, 0.32) 0%,
+                rgba(91, 158, 255, 0.12) 45%,
+                transparent 75%
+              ),
+              radial-gradient(
+                ellipse at 0% 100%,
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(0, 0, 0, 0.6) 30%,
+                transparent 60%
+              ),
+              linear-gradient(
+                180deg,
+                transparent 0%,
+                transparent 70%,
+                rgba(0, 0, 0, 0.5) 85%,
+                rgba(0, 0, 0, 1) 100%
+              ),
+              linear-gradient(
+                180deg,
+                rgba(16, 32, 52, 0.98) 0%,
+                rgba(10, 18, 28, 0.98) 50%,
+                rgba(6, 10, 14, 0.98) 75%,
+                rgba(0, 0, 0, 1) 100%
+              )
+            `
           }}>
             <div
               style={{
@@ -344,22 +511,30 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{
-                  ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   width: 36,
                   height: 36,
                   borderRadius: 11,
+                  background: 'rgba(91,158,255,0.12)',
                 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                  <img 
+                    src="/bank-svgrepo-com.svg" 
+                    alt="Bank" 
+                    width="20" 
+                    height="20"
+                    style={{ 
+                      display: 'block',
+                      filter: 'brightness(0) saturate(100%) invert(59%) sepia(46%) saturate(2138%) hue-rotate(192deg) brightness(103%) contrast(101%)'
+                    }}
+                  />
                 </div>
 
                 <h3
                   style={{
                     margin: 0,
-                    color: theme.colors.accentPurple,
+                    color: '#5B9EFF',
                     fontSize: 17,
                     fontWeight: 700,
                     letterSpacing: '-0.02em',
@@ -367,28 +542,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 >
                   Bank Account
                 </h3>
-              </div>
-
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: theme.dashboardColors.cyan,
-                  background: 'rgba(0,229,204,0.10)',
-                  border: '1px solid rgba(0,229,204,0.28)',
-                  boxShadow: '0 0 22px rgba(0,229,204,0.12)',
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
               </div>
             </div>
 
@@ -526,7 +679,9 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           </div>
 
           {/* Second card - Credit Card */}
-          <div style={{ 
+          <div 
+            className="payment-card-credit"
+            style={{ 
             minWidth: '100%', 
             scrollSnapAlign: 'start',
             scrollSnapStop: 'always',
@@ -534,7 +689,38 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            position: 'relative',
+            overflow: 'hidden',
+            isolation: 'isolate',
+            background: `
+              radial-gradient(
+                circle at 0% 0%,
+                rgba(124, 111, 255, 0.32) 0%,
+                rgba(124, 111, 255, 0.12) 45%,
+                transparent 75%
+              ),
+              radial-gradient(
+                ellipse at 0% 100%,
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(0, 0, 0, 0.6) 30%,
+                transparent 60%
+              ),
+              linear-gradient(
+                180deg,
+                transparent 0%,
+                transparent 70%,
+                rgba(0, 0, 0, 0.5) 85%,
+                rgba(0, 0, 0, 1) 100%
+              ),
+              linear-gradient(
+                180deg,
+                rgba(30, 24, 55, 0.98) 0%,
+                rgba(13, 15, 28, 0.98) 50%,
+                rgba(6, 8, 14, 0.98) 75%,
+                rgba(0, 0, 0, 1) 100%
+              )
+            `
           }}>
             <div
               style={{
@@ -547,22 +733,30 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{
-                  ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   width: 36,
                   height: 36,
                   borderRadius: 11,
+                  background: 'rgba(124,111,255,0.12)',
                 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                  <img 
+                    src="/credit-card-svgrepo-com.svg" 
+                    alt="Credit Card" 
+                    width="20" 
+                    height="20"
+                    style={{ 
+                      display: 'block',
+                      filter: 'brightness(0) saturate(100%) invert(51%) sepia(67%) saturate(2792%) hue-rotate(229deg) brightness(101%) contrast(101%)'
+                    }}
+                  />
                 </div>
 
                 <h3
                   style={{
                     margin: 0,
-                    color: theme.colors.accentPurple,
+                    color: '#7C6FFF',
                     fontSize: 17,
                     fontWeight: 700,
                     letterSpacing: '-0.02em',
@@ -571,45 +765,57 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                   Credit Card
                 </h3>
               </div>
-
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: theme.dashboardColors.cyan,
-                  background: 'rgba(0,229,204,0.10)',
-                  border: '1px solid rgba(0,229,204,0.28)',
-                  boxShadow: '0 0 22px rgba(0,229,204,0.12)',
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
             </div>
             
-            <div style={{
+            <div 
+              style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flex: 1,
-              color: theme.dashboardColors.muted,
-              fontSize: 14,
-              fontWeight: 500
+              padding: '12px',
+              opacity: 0.6,
+              pointerEvents: 'none'
             }}>
-              Coming Soon
+              <div style={{
+                border: `2px dashed rgba(124, 111, 255, 0.3)`,
+                borderRadius: '12px',
+                padding: '24px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%'
+              }}>
+                <div style={{
+                  fontSize: '32px',
+                  lineHeight: 1,
+                  marginBottom: '4px'
+                }}>🚧</div>
+                <div style={{
+                  color: theme.colors.accentPurple,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  textAlign: 'center'
+                }}>
+                  Coming Soon
+                </div>
+                <div style={{
+                  color: theme.colors.textSecondary,
+                  fontSize: 12,
+                  textAlign: 'center'
+                }}>
+                  Credit card tracking
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Third card - Cash */}
-          <div style={{ 
+          <div 
+            className="payment-card-cash"
+            style={{ 
             minWidth: '100%', 
             scrollSnapAlign: 'start',
             scrollSnapStop: 'always',
@@ -617,7 +823,38 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            position: 'relative',
+            overflow: 'hidden',
+            isolation: 'isolate',
+            background: `
+              radial-gradient(
+                circle at 0% 0%,
+                rgba(0, 229, 204, 0.28) 0%,
+                rgba(0, 229, 204, 0.10) 45%,
+                transparent 75%
+              ),
+              radial-gradient(
+                ellipse at 0% 100%,
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(0, 0, 0, 0.6) 30%,
+                transparent 60%
+              ),
+              linear-gradient(
+                180deg,
+                transparent 0%,
+                transparent 70%,
+                rgba(0, 0, 0, 0.5) 85%,
+                rgba(0, 0, 0, 1) 100%
+              ),
+              linear-gradient(
+                180deg,
+                rgba(12, 42, 44, 0.98) 0%,
+                rgba(9, 20, 25, 0.98) 50%,
+                rgba(5, 12, 15, 0.98) 75%,
+                rgba(0, 0, 0, 1) 100%
+              )
+            `
           }}>
             <div
               style={{
@@ -630,22 +867,30 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{
-                  ...componentStyles.dashboardIconBox('#B9B2FF', 'rgba(100,87,190,0.12)'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   width: 36,
                   height: 36,
                   borderRadius: 11,
+                  background: 'rgba(0,229,204,0.12)',
                 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <rect x="3" y="5" width="18" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M3 8.5h18" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M15.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                  <img 
+                    src="/cash-svgrepo-com.svg" 
+                    alt="Cash" 
+                    width="20" 
+                    height="20"
+                    style={{ 
+                      display: 'block',
+                      filter: 'brightness(0) saturate(100%) invert(73%) sepia(65%) saturate(2613%) hue-rotate(129deg) brightness(97%) contrast(101%)'
+                    }}
+                  />
                 </div>
 
                 <h3
                   style={{
                     margin: 0,
-                    color: theme.colors.accentPurple,
+                    color: '#00E5CC',
                     fontSize: 17,
                     fontWeight: 700,
                     letterSpacing: '-0.02em',
@@ -654,40 +899,190 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                   Cash
                 </h3>
               </div>
-
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: theme.dashboardColors.cyan,
-                  background: 'rgba(0,229,204,0.10)',
-                  border: '1px solid rgba(0,229,204,0.28)',
-                  boxShadow: '0 0 22px rgba(0,229,204,0.12)',
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4 18V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M7 14l3-3 2.5 2 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M16 7h1.5v1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
             </div>
             
-            <div style={{
+            <div 
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!data.settings?.isCashEnabled) {
+                  handleCashClick()
+                }
+              }}
+              style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flex: 1,
-              color: theme.dashboardColors.muted,
-              fontSize: 14,
-              fontWeight: 500
+              cursor: !data.settings?.isCashEnabled ? 'pointer' : 'default',
+              padding: '12px'
             }}>
-              Coming Soon
+              {!data.settings?.isCashEnabled ? (
+                <div style={{
+                  border: `2px dashed ${theme.colors.accentPurple}`,
+                  borderRadius: '12px',
+                  padding: '24px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(185, 178, 255, 0.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}>
+                  <div style={{
+                    fontSize: '28px',
+                    color: theme.colors.accentPurple,
+                    lineHeight: 1
+                  }}>+</div>
+                  <div style={{
+                    color: theme.colors.accentPurple,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textAlign: 'center'
+                  }}>
+                    Click to add Cash
+                  </div>
+                </div>
+              ) : (
+                <div style={{ width: '100%' }}>
+                  <div
+                    onClick={handleCashBalanceClick}
+                    style={{
+                      marginTop: 16,
+                      marginBottom: 14,
+                      color: cashStats.balance >= 0 ? theme.dashboardColors.cyan : theme.dashboardColors.pink,
+                      fontSize: 'clamp(38px, 10vw, 50px)',
+                      lineHeight: 0.95,
+                      fontWeight: 850,
+                      letterSpacing: '-0.055em',
+                      cursor: 'pointer',
+                      display: 'inline-block',
+                      padding: '8px 12px',
+                      marginLeft: '-12px',
+                      borderRadius: '12px',
+                      transition: 'background 180ms ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    {formatCurrency(cashStats.balance, data.profile.country)}
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'stretch',
+                      gap: 14,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenBottomSheet('transaction', 'income', 'cash')
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '7px 12px',
+                          borderRadius: 999,
+                          background: theme.dashboardColors.cyanSoft,
+                          color: theme.dashboardColors.cyan,
+                          fontSize: 14,
+                          fontWeight: 750,
+                          transition: 'transform 180ms ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)'
+                        }}
+                      >
+                        <span style={{ fontSize: 16, lineHeight: 1 }}>↑</span>
+                        {formatCurrency(cashStats.income, data.profile.country)}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 5,
+                          paddingLeft: 5,
+                          color: theme.dashboardColors.cyan,
+                          fontSize: 12,
+                          fontWeight: 650,
+                        }}
+                      >
+                        Income
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        width: 1,
+                        minHeight: 32,
+                        background: 'rgba(157,174,196,0.24)',
+                        alignSelf: 'center',
+                      }}
+                    />
+
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenBottomSheet('transaction', 'expense', 'cash')
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '7px 12px',
+                          borderRadius: 999,
+                          background: theme.dashboardColors.pinkSoft,
+                          color: theme.dashboardColors.pink,
+                          fontSize: 14,
+                          fontWeight: 750,
+                          transition: 'transform 180ms ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)'
+                        }}
+                      >
+                        <span style={{ fontSize: 16, lineHeight: 1 }}>↓</span>
+                        {formatCurrency(cashStats.expenses, data.profile.country)}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 5,
+                          paddingLeft: 5,
+                          color: theme.dashboardColors.pink,
+                          fontSize: 12,
+                          fontWeight: 650,
+                        }}
+                      >
+                        Expense
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -700,23 +1095,32 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
           gap: '6px',
           padding: '12px 0 16px',
           position: 'relative',
-          zIndex: 10
+          zIndex: 10,
+          background: 'rgba(0, 0, 0, 1)'
         }}>
-          {[0, 1, 2].map(index => (
-            <div
-              key={index}
-              onClick={() => scrollToPayments(index)}
-              style={{
-                width: currentPaymentsIndex === index ? '7px' : '6px',
-                height: currentPaymentsIndex === index ? '7px' : '6px',
-                borderRadius: '50%',
-                background: currentPaymentsIndex === index ? theme.dashboardColors.cyan : theme.dashboardColors.border,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                opacity: currentPaymentsIndex === index ? 1 : 0.6
-              }}
-            />
-          ))}
+          {[0, 1, 2].map(index => {
+            const dotColor = index === 0 
+              ? '#5B9EFF'
+              : index === 1
+              ? '#7C6FFF'
+              : '#00E5CC'
+            
+            return (
+              <div
+                key={index}
+                onClick={() => scrollToPayments(index)}
+                style={{
+                  width: currentPaymentsIndex === index ? '7px' : '6px',
+                  height: currentPaymentsIndex === index ? '7px' : '6px',
+                  borderRadius: '50%',
+                  background: currentPaymentsIndex === index ? dotColor : 'rgba(255, 255, 255, 0.3)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  opacity: currentPaymentsIndex === index ? 1 : 0.6
+                }}
+              />
+            )
+          })}
         </div>
       </div>
 
@@ -1110,9 +1514,28 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
               const isBalanceUpdate = transaction.isBalanceUpdate || false
               const isMonthBalance = transaction.categoryId === 'month-balance'
               const isInitialBalance = transaction.categoryId === 'initial-balance'
+              const isCashBalance = transaction.categoryId === 'cash-balance'
               const isManualBalanceUpdate = isBalanceUpdate && transaction.categoryId === 'balance-update'
               
               const isIncome = transaction.type === 'income'
+              
+              // Get category name from categories array
+              const category = data.payments.categories.find(c => c.id === transaction.categoryId)
+              
+              // Determine payment mode (default to 'bank' for old transactions)
+              const paymentMode = transaction.paymentMode || 'bank'
+              
+              // Get mode color for category name
+              const getModeColor = (mode) => {
+                switch(mode) {
+                  case 'cash': return '#00E5CC'
+                  case 'credit': return '#7C6FFF'
+                  case 'bank':
+                  default: return '#5B9EFF'
+                }
+              }
+              
+              const categoryColor = getModeColor(paymentMode)
               
               // Determine display name
               let displayName
@@ -1120,25 +1543,27 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 displayName = 'Initial Balance'
               } else if (isMonthBalance) {
                 displayName = transaction.category || 'Balance'
+              } else if (isCashBalance) {
+                displayName = 'Cash Balance'
               } else if (isManualBalanceUpdate) {
                 displayName = 'Balance Updated'
               } else {
-                displayName = transaction.category
+                displayName = category?.name || transaction.category || 'Unknown'
               }
               
-              // Color logic: balance transactions are white, income is cyan, expense is pink
-              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance)
-                ? theme.dashboardColors.white
+              // Color logic: balance transactions and cash balance are cyan, income is cyan, expense is pink
+              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance)
+                ? theme.dashboardColors.cyan
                 : (isIncome ? theme.dashboardColors.cyan : theme.dashboardColors.pink)
               
-              // Prefix logic: initial/month balance = no prefix, manual balance = +/-, income/expense = +/-
-              const amountPrefix = (isMonthBalance || isInitialBalance)
-                ? ''
+              // Prefix logic: initial/month/cash balance = +, manual balance = +/-, income/expense = +/-
+              const amountPrefix = (isMonthBalance || isInitialBalance || isCashBalance)
+                ? '+'
                 : isManualBalanceUpdate
                 ? ((transaction.balanceChange >= 0) ? '+' : '-')
                 : (isIncome ? '+' : '-')
               
-              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance)
+              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance)
                 ? Math.abs(transaction.balanceChange || transaction.amount)
                 : transaction.amount
               
@@ -1152,11 +1577,22 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                     padding: '12px 16px',
                     background: theme.dashboardColors.card,
                     border: `1px solid ${theme.dashboardColors.border}`,
+                    borderLeft: `4px solid ${categoryColor}`,
                     borderRadius: 14,
                     boxShadow: theme.dashboardShadows.card,
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{
+                        color: theme.dashboardColors.muted,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        minWidth: 40,
+                      }}
+                    >
+                      {String(transactionDate.getDate()).padStart(2, '0')}/{String(transactionDate.getMonth() + 1).padStart(2, '0')}
+                    </div>
                     <div
                       style={{
                         color: theme.dashboardColors.white,
@@ -1165,15 +1601,6 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                       }}
                     >
                       {displayName}
-                    </div>
-                    <div
-                      style={{
-                        color: theme.dashboardColors.muted,
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {transactionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
                   </div>
                   <div
@@ -1388,8 +1815,230 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
         </>
       )}
 
+      {/* Cash Modal */}
+      <Cash
+        isOpen={cashModalOpen}
+        onClose={handleCashClose}
+        onSave={handleCashSave}
+        country={data.profile.country}
+      />
+
+      {/* Cash Balance Edit Modal */}
+      {cashBalanceEditOpen && (
+        <>
+          <div
+            onClick={() => setCashBalanceEditOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.7)',
+              zIndex: 300
+            }}
+          />
+          <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: theme.colors.bgModal,
+            backdropFilter: theme.backdropFilter,
+            WebkitBackdropFilter: theme.backdropFilter,
+            borderRadius: `${theme.borderRadius.xl} ${theme.borderRadius.xl} 0 0`,
+            padding: theme.spacing.xl,
+            zIndex: 301,
+            maxWidth: theme.layout.maxWidth,
+            margin: '0 auto',
+            border: `1px solid ${theme.colors.borderSubtle}`,
+            borderBottom: 'none'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '4px',
+              background: theme.colors.borderMedium,
+              borderRadius: '2px',
+              margin: `0 auto ${theme.spacing.xl}`
+            }} />
+            
+            <h3 style={{
+              fontSize: theme.typography.h3,
+              fontWeight: theme.typography.bold,
+              color: theme.colors.textPrimary,
+              margin: `0 0 ${theme.spacing.xl} 0`,
+              textAlign: 'center'
+            }}>
+              Edit Cash Balance
+            </h3>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: theme.spacing.sm, 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textPrimary, 
+                fontWeight: theme.typography.medium 
+              }}>
+                New Cash Balance
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={editedCashBalance}
+                onChange={e => setEditedCashBalance(e.target.value)}
+                autoFocus
+                placeholder="0"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  paddingLeft: '32px',
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+              <span style={{
+                position: 'relative',
+                top: '-38px',
+                left: '12px',
+                color: theme.colors.textSecondary
+              }}>₹</span>
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: theme.spacing.sm, 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textPrimary, 
+                fontWeight: theme.typography.medium 
+              }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={cashBalanceDate}
+                onChange={e => setCashBalanceDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: theme.spacing.sm, 
+                fontSize: theme.typography.body, 
+                color: theme.colors.textPrimary, 
+                fontWeight: theme.typography.medium 
+              }}>
+                Note (optional)
+              </label>
+              <input
+                type="text"
+                value={cashBalanceNote}
+                onChange={e => setCashBalanceNote(e.target.value)}
+                placeholder="e.g. Cash withdrawal"
+                style={{
+                  width: '100%',
+                  padding: theme.spacing.md,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  boxSizing: 'border-box',
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+              <button
+                onClick={() => setCashBalanceEditOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.lg,
+                  background: theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  fontWeight: theme.typography.medium,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCashBalanceSave}
+                disabled={editedCashBalance === '' || isNaN(parseFloat(editedCashBalance))}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.lg,
+                  background: (editedCashBalance !== '' && !isNaN(parseFloat(editedCashBalance))) ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: 'none',
+                  borderRadius: theme.borderRadius.sm,
+                  fontSize: theme.typography.h5,
+                  fontWeight: theme.typography.medium,
+                  cursor: (editedCashBalance !== '' && !isNaN(parseFloat(editedCashBalance))) ? 'pointer' : 'not-allowed',
+                  opacity: (editedCashBalance !== '' && !isNaN(parseFloat(editedCashBalance))) ? 1 : 0.5
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Small responsive correction for narrow screens. */}
       <style>{`
+        /* Payment card glow effects */
+        .payment-card-bank::before,
+        .payment-card-credit::before,
+        .payment-card-cash::before {
+          content: '';
+          position: absolute;
+          width: 200px;
+          height: 200px;
+          top: -100px;
+          left: -70px;
+          background: radial-gradient(
+            circle,
+            var(--card-glow) 0%,
+            rgba(0, 0, 0, 0) 70%
+          );
+          filter: blur(30px);
+          opacity: 0.4;
+          pointer-events: none;
+          z-index: -1;
+        }
+        
+        .payment-card-bank {
+          --card-glow: rgba(91, 158, 255, 0.5);
+        }
+        
+        .payment-card-credit {
+          --card-glow: rgba(124, 111, 255, 0.5);
+        }
+        
+        .payment-card-cash {
+          --card-glow: rgba(0, 229, 204, 0.5);
+        }
+      
         @media (max-width: 560px) {
           .dashboard-forecast-grid {
             grid-template-columns: 1fr;

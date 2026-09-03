@@ -6,6 +6,7 @@ export function useMonthlyBalanceCarry(data, updateStore) {
   const migrationDoneRef = useRef(false)
   const timestampFixDoneRef = useRef(false)
   const doubleCountFixDoneRef = useRef(false)
+  const paymentModeMigrationDoneRef = useRef(false)
   const lastTransactionsHashRef = useRef('')
   
   useEffect(() => {
@@ -13,6 +14,58 @@ export function useMonthlyBalanceCarry(data, updateStore) {
     if (hasRunRef.current) return
     
     const settings = data.settings || {}
+    
+    // Migration 0: Add paymentMode to all old transactions
+    if (!paymentModeMigrationDoneRef.current && !settings.paymentModeMigrationDone) {
+      paymentModeMigrationDoneRef.current = true
+      
+      const fixedTransactions = data.payments.transactions.map(t => {
+        // Skip if already has paymentMode
+        if (t.paymentMode) return t
+        
+        // Cash balance transactions should have paymentMode='cash'
+        if (t.categoryId === 'cash-balance' || t.categoryId === 'cash-balance-update' || t.isCashTransaction) {
+          return { ...t, paymentMode: 'cash' }
+        }
+        
+        // Credit balance transactions should have paymentMode='credit'
+        if (t.categoryId === 'credit-balance' || t.categoryId === 'credit-balance-update') {
+          return { ...t, paymentMode: 'credit' }
+        }
+        
+        // All other transactions default to 'bank'
+        return { ...t, paymentMode: 'bank' }
+      })
+      
+      // Check if any transactions were actually modified
+      const hasChanges = fixedTransactions.some((t, i) => t.paymentMode !== data.payments.transactions[i].paymentMode)
+      
+      if (hasChanges) {
+        updateStore(current => ({
+          ...current,
+          payments: {
+            ...current.payments,
+            transactions: fixedTransactions
+          },
+          settings: {
+            ...current.settings,
+            paymentModeMigrationDone: true
+          }
+        }))
+        return
+      } else {
+        // No changes needed, just mark as done
+        updateStore(current => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            paymentModeMigrationDone: true
+          }
+        }))
+        return
+      }
+    }
+    
     const resetBalanceEnabled = settings.resetBalanceEachMonth || false
     const lastCheckedMonth = settings.lastCheckedMonth
     const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
@@ -31,7 +84,8 @@ export function useMonthlyBalanceCarry(data, updateStore) {
     
     // If non-month-balance transactions changed or first load, recalculate all month-balance transactions
     // On first load, always verify the balance transactions are correct
-    if ((transactionsChanged || isFirstLoad) && settings.monthBalanceDoubleCountFixed) {
+    // BUT: Skip recalculation if migration was just done (to avoid overwriting correct values)
+    if ((transactionsChanged || isFirstLoad) && settings.monthBalanceDoubleCountFixed && settings.paymentModeMigrationDone) {
       hasRunRef.current = true
       
       const monthBalanceTransactions = data.payments.transactions.filter(t => 
@@ -333,7 +387,7 @@ export function useMonthlyBalanceCarry(data, updateStore) {
 }
 
 function calculateEndOfMonthBalance(data, monthString) {
-  // Calculate cumulative balance up to the end of the specified month
+  // Calculate cumulative balance up to the end of the specified month (BANK ONLY)
   const [year, month] = monthString.split('-').map(Number)
   const endOfMonth = new Date(year, month, 0, 23, 59, 59) // Last day of the month
   
@@ -347,20 +401,32 @@ function calculateEndOfMonthBalance(data, monthString) {
     
     // Include all transactions up to and including the last day of the specified month
     if (tDate <= endOfMonth) {
+      // Get transaction payment mode (default to 'bank' for old transactions)
+      const paymentMode = transaction.paymentMode || 'bank'
+      
       // Skip month-balance carry-forward transactions to avoid double-counting
       // These are balance transactions from PREVIOUS months carried forward
       // We only want: initial balance (once), manual balance updates, and regular income/expenses
       if (transaction.categoryId === 'month-balance') {
-        // Skip month balance carry forwards - they're already included in the previous month's calculation
+        // Skip ALL month-balance transactions - they should never be included in calculations
         return
       }
       
       if (transaction.isBalanceUpdate || transaction.categoryId === 'initial-balance' || transaction.categoryId === 'balance-update') {
-        balance += transaction.balanceChange || transaction.amount
+        // Only include bank balance updates
+        if (paymentMode === 'bank') {
+          balance += transaction.balanceChange || transaction.amount
+        }
       } else if (transaction.type === 'income') {
-        balance += transaction.amount
+        // Only include bank income
+        if (paymentMode === 'bank') {
+          balance += transaction.amount
+        }
       } else if (transaction.type === 'expense') {
-        balance -= transaction.amount
+        // Only include bank expenses
+        if (paymentMode === 'bank') {
+          balance -= transaction.amount
+        }
       }
     }
   })

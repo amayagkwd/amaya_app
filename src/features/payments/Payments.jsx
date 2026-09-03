@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import PaymentsHistory from './PaymentsHistory'
 import EditTransactionModal from './EditTransactionModal'
@@ -18,6 +18,8 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
   const [appliedCategoryFilter, setAppliedCategoryFilter] = useState(null)
   const [appliedClassificationFilter, setAppliedClassificationFilter] = useState(null)
   const [appliedTypeFilter, setAppliedTypeFilter] = useState(null)
+  const [currentPaymentIndex, setCurrentPaymentIndex] = useState(0)
+  const paymentCarouselRef = useRef(null)
   
   // Handle navigation state from Insights page
   useEffect(() => {
@@ -81,8 +83,50 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     const txnsForStats = isYearly 
       ? allTransactions.filter(t => t.categoryId !== 'month-balance')
       : allTransactions
-    return calculateMonthStats(txnsForStats)
+    // Calculate bank-only stats (transactions without paymentMode or with paymentMode='bank')
+    return calculateMonthStats(txnsForStats, 'bank')
   }, [allTransactions, isYearly])
+
+  // Calculate cash stats separately
+  const cashStats = useMemo(() => {
+    return calculateMonthStats(allTransactions, 'cash')
+  }, [allTransactions])
+
+  // Calculate credit stats separately
+  const creditStats = useMemo(() => {
+    return calculateMonthStats(allTransactions, 'credit')
+  }, [allTransactions])
+
+  // Determine which payment methods to show
+  const paymentMethods = useMemo(() => {
+    const methods = [{ type: 'bank', label: 'Bank Account' }]
+    if (data.settings?.isCreditEnabled) {
+      methods.push({ type: 'credit', label: 'Credit Card' })
+    }
+    if (data.settings?.isCashEnabled) {
+      methods.push({ type: 'cash', label: 'Cash' })
+    }
+    return methods
+  }, [data.settings?.isCashEnabled, data.settings?.isCreditEnabled])
+
+  const handlePaymentScroll = () => {
+    if (paymentCarouselRef.current) {
+      const scrollLeft = paymentCarouselRef.current.scrollLeft
+      const containerWidth = paymentCarouselRef.current.offsetWidth
+      const index = Math.round(scrollLeft / containerWidth)
+      setCurrentPaymentIndex(index)
+    }
+  }
+
+  const scrollToPayment = (index) => {
+    if (paymentCarouselRef.current) {
+      const containerWidth = paymentCarouselRef.current.offsetWidth
+      paymentCarouselRef.current.scrollTo({
+        left: index * containerWidth,
+        behavior: 'smooth'
+      })
+    }
+  }
   
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction)
@@ -147,28 +191,116 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           />
         </div>
       
-        <div style={{ display: 'flex', gap: theme.spacing.sm }}>
-          <StatCard 
-            label="Income" 
-            value={formatLargeNumber(stats.income, data.profile.country)} 
-            color={theme.colors.accentCyan} 
-            onClick={() => handleStatCardClick('income')}
-            isActive={activeFilter === 'income'}
-          />
-          <StatCard 
-            label="Expenses" 
-            value={formatLargeNumber(stats.expenses, data.profile.country)} 
-            color={theme.colors.accentPink} 
-            onClick={() => handleStatCardClick('expense')}
-            isActive={activeFilter === 'expense'}
-          />
-          <StatCard 
-            label="Balance" 
-            value={formatLargeNumber(stats.balance, data.profile.country)} 
-            color={stats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink}
-            onClick={() => handleStatCardClick('balance')}
-            isActive={activeFilter === 'balance'}
-          />
+        {/* Scrollable payment method cards */}
+        <div style={{ position: 'relative' }}>
+          <div 
+            ref={paymentCarouselRef}
+            onScroll={handlePaymentScroll}
+            style={{
+              display: 'flex',
+              overflowX: 'scroll',
+              scrollSnapType: 'x mandatory',
+              gap: '0px',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'auto',
+              marginBottom: theme.spacing.md
+            }}
+          >
+            <style>
+              {`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}
+            </style>
+
+            {paymentMethods.map((method, index) => {
+              let currentStats
+              if (method.type === 'cash') {
+                currentStats = cashStats
+              } else if (method.type === 'credit') {
+                currentStats = creditStats
+              } else {
+                currentStats = stats // bank
+              }
+              
+              return (
+                <div 
+                  key={method.type}
+                  style={{ 
+                    minWidth: '100%', 
+                    scrollSnapAlign: 'start',
+                    scrollSnapStop: 'always',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: theme.spacing.sm
+                  }}
+                >
+                  <div style={{
+                    textAlign: 'center',
+                    fontSize: theme.typography.body,
+                    fontWeight: theme.typography.semiBold,
+                    color: theme.colors.accentPurple,
+                    marginBottom: theme.spacing.xs
+                  }}>
+                    {method.label}
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                    <StatCard 
+                      label="Income" 
+                      value={formatLargeNumber(currentStats.income, data.profile.country)} 
+                      color={theme.colors.accentCyan} 
+                      onClick={() => handleStatCardClick('income')}
+                      isActive={activeFilter === 'income'}
+                    />
+                    <StatCard 
+                      label="Expenses" 
+                      value={formatLargeNumber(currentStats.expenses, data.profile.country)} 
+                      color={theme.colors.accentPink} 
+                      onClick={() => handleStatCardClick('expense')}
+                      isActive={activeFilter === 'expense'}
+                    />
+                    <StatCard 
+                      label="Balance" 
+                      value={formatLargeNumber(currentStats.balance, data.profile.country)} 
+                      color={currentStats.balance >= 0 ? theme.colors.textPrimary : theme.colors.accentPink}
+                      onClick={() => handleStatCardClick('balance')}
+                      isActive={activeFilter === 'balance'}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Dot navigation - only show if more than one payment method */}
+          {paymentMethods.length > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '6px',
+              paddingTop: theme.spacing.sm
+            }}>
+              {paymentMethods.map((_, index) => (
+                <div
+                  key={index}
+                  onClick={() => scrollToPayment(index)}
+                  style={{
+                    width: currentPaymentIndex === index ? '7px' : '6px',
+                    height: currentPaymentIndex === index ? '7px' : '6px',
+                    borderRadius: '50%',
+                    background: currentPaymentIndex === index ? theme.colors.accentPurple : theme.colors.borderMedium,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: currentPaymentIndex === index ? 1 : 0.6
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
       

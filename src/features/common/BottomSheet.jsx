@@ -5,7 +5,7 @@ import { getCurrencyByCountry } from '../../utils/countries'
 import uuidv4 from '../../utils/uuid'
 import theme from '../../theme'
 
-export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore, mode = 'transaction', initialType = null }) {
+export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore, mode = 'transaction', initialType = null, initialPaymentMode = null }) {
   const navigate = useNavigate()
   const [type, setType] = useState('expense')
   const [amount, setAmount] = useState('')
@@ -13,6 +13,7 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [note, setNote] = useState('')
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
+  const [paymentMode, setPaymentMode] = useState('bank') // 'bank', 'cash', 'credit'
   
   // Reminder-specific fields
   const [reminderName, setReminderName] = useState('')
@@ -31,6 +32,7 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
       setDate(new Date().toISOString().split('T')[0])
       setNote('')
       setCategoryDropdownOpen(false)
+      setPaymentMode(initialPaymentMode || 'bank') // Set initial payment mode if provided
       
       // Reset reminder fields
       setReminderName('')
@@ -39,7 +41,7 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
       setRemindDaysBefore(1)
       setRecurMonthly(false)
     }
-  }, [isOpen, mode, initialType])
+  }, [isOpen, mode, initialType, initialPaymentMode])
   
   // Get current month's date range
   const currentDate = new Date(date)
@@ -87,14 +89,23 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
     } else {
       const category = categories.find(c => c.id === categoryId)
       const currencySymbol = getCurrencyByCountry(data.profile.country)
-      onSave({
+      
+      // For settle-up mode, always use bank (no payment mode)
+      const transactionData = {
         type,
         amount: parseFloat(amount),
         categoryId,
         date,
         note: note.trim() || null,
         classification: category?.classification || null
-      })
+      }
+      
+      // Add payment mode only for regular transactions (not settle-up)
+      if (mode !== 'settleup') {
+        transactionData.paymentMode = paymentMode
+      }
+      
+      onSave(transactionData)
       showToast(`Logged ${currencySymbol}${amount} · ${category?.name || 'Transaction'}`)
     }
     onClose()
@@ -155,6 +166,69 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
           {mode === 'reminder' ? 'Reminder' : mode === 'settleup' ? 'Settle Up' : 'Transaction'}
         </h3>
         
+        {/* Payment Method Selection - only for regular transactions, at the top */}
+        {mode !== 'reminder' && mode !== 'settleup' && (
+          <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
+            <button
+              type="button"
+              onClick={() => setPaymentMode('bank')}
+              style={{
+                flex: 1,
+                padding: theme.spacing.md,
+                background: paymentMode === 'bank' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                color: theme.colors.textPrimary,
+                border: paymentMode === 'bank' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                cursor: 'pointer',
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium
+              }}
+            >
+              Bank
+            </button>
+            
+            {data.settings?.isCashEnabled && (
+              <button
+                type="button"
+                onClick={() => setPaymentMode('cash')}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.md,
+                  background: paymentMode === 'cash' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: paymentMode === 'cash' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  cursor: 'pointer',
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
+                }}
+              >
+                Cash
+              </button>
+            )}
+            
+            {data.settings?.isCreditEnabled && (
+              <button
+                type="button"
+                onClick={() => setPaymentMode('credit')}
+                style={{
+                  flex: 1,
+                  padding: theme.spacing.md,
+                  background: paymentMode === 'credit' ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                  color: theme.colors.textPrimary,
+                  border: paymentMode === 'credit' ? 'none' : `1px solid ${theme.colors.borderSubtle}`,
+                  borderRadius: theme.borderRadius.sm,
+                  cursor: 'pointer',
+                  fontSize: theme.typography.body,
+                  fontWeight: theme.typography.medium
+                }}
+              >
+                Credit
+              </button>
+            )}
+          </div>
+        )}
+
         {mode === 'reminder' ? (
           <>
             {/* Reminder Form */}
