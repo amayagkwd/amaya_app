@@ -20,14 +20,7 @@ export default function BottomNav() {
       return // Already on this page
     }
     
-    if (path === '/') {
-      // Always replace when going to dashboard
-      navigate('/', { replace: true })
-    } else {
-      // For all other navigation from bottom nav, replace instead of push
-      // This prevents history buildup and makes back button go to dashboard
-      navigate(path, { replace: true })
-    }
+    navigate(path)
   }
   
   return (
