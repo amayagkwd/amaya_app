@@ -27,6 +27,7 @@ import Reminders from './features/settings/Reminders'
 import theme from './theme'
 import uuidv4 from './utils/uuid'
 import * as DataRepository from './repositories/dataRepository'
+import { supabase } from './config/supabase'
 
 function AppContent() {
   const { user, loading: authLoading } = useAuth()
@@ -40,6 +41,7 @@ function AppContent() {
   const [showAddTransactionTip, setShowAddTransactionTip] = useState(false)
   const [showMigration, setShowMigration] = useState(false)
   const [needsMigrationCheck, setNeedsMigrationCheck] = useState(true)
+  const [migrationCheckComplete, setMigrationCheckComplete] = useState(false)
   
   // Handle monthly balance carry-over (only when data is loaded)
   useMonthlyBalanceCarry(data, updateStore)
@@ -83,15 +85,63 @@ function AppContent() {
   const hasExistingData = data.payments.transactions.length > 0 || data.payments.categories.length > 0
   const hasInitialBalance = data.payments.transactions.some(t => t.categoryId === 'initial-balance')
   
-  // Check if user has localStorage data to migrate
-  const hasLocalStorageData = needsMigrationCheck && DataRepository.hasLocalStorageData()
-  
   // Skip onboarding entirely - profile is created during signup/login
   // Only show initial balance prompt for brand new users (no existing data)
-  const needsInitialBalancePrompt = !hasExistingData && !hasInitialBalance && !data.settings.initialBalanceSkipped
+  // Wait for migration check to complete before showing initial balance
+  const needsInitialBalancePrompt = migrationCheckComplete && !hasExistingData && !hasInitialBalance && !data.settings.initialBalanceSkipped
   
   // Show tip after initial balance is handled and user hasn't seen it yet
   const needsAddTransactionTip = !needsInitialBalancePrompt && !data.settings.addTransactionTipSeen && !hasExistingData
+  
+  // Check migration status asynchronously
+  if (user && needsMigrationCheck && !migrationCheckComplete && !dataLoading) {
+    // Check if migration is needed
+    ;(async () => {
+      try {
+        const alreadyMigrated = await DataRepository.hasMigrated()
+        
+        // If already marked as migrated (or new user), skip migration check entirely
+        if (alreadyMigrated) {
+          setMigrationCheckComplete(true)
+          setNeedsMigrationCheck(false)
+          return
+        }
+        
+        // Check if this is a brand new user (no data anywhere)
+        // If new user, mark them immediately so we never ask for migration
+        if (!hasExistingData) {
+          // New user - mark as migrated immediately so we never ask
+          await supabase.from('migration_status').upsert({
+            user_id: user.id,
+            migrated: true,
+            migration_date: new Date().toISOString(),
+            transactions_count: 0,
+            categories_count: 0,
+            source: 'new_user'
+          })
+          setMigrationCheckComplete(true)
+          setNeedsMigrationCheck(false)
+          return
+        }
+        
+        // Only check localStorage for users who already have Supabase data
+        // (meaning they might have migrated previously)
+        const hasLocalData = DataRepository.hasLocalStorageData()
+        
+        // Show migration only if user has localStorage data but hasn't migrated
+        if (hasLocalData && !alreadyMigrated && hasExistingData) {
+          setShowMigration(true)
+        }
+        
+        setMigrationCheckComplete(true)
+        setNeedsMigrationCheck(false)
+      } catch (error) {
+        console.error('Migration check error:', error)
+        setMigrationCheckComplete(true)
+        setNeedsMigrationCheck(false)
+      }
+    })()
+  }
   
   const handleMigration = async () => {
     try {
@@ -107,24 +157,48 @@ function AppContent() {
         updateStore(migratedData)
         setShowMigration(false)
         setNeedsMigrationCheck(false)
+        setMigrationCheckComplete(true)
       } else {
         console.error('Migration failed:', result.message)
         alert('Migration failed: ' + result.message)
         setShowMigration(false)
         setNeedsMigrationCheck(false)
+        setMigrationCheckComplete(true)
       }
     } catch (error) {
       console.error('Migration error:', error)
       alert('Migration failed: ' + error.message)
       setShowMigration(false)
       setNeedsMigrationCheck(false)
+      setMigrationCheckComplete(true)
     }
   }
   
-  const handleSkipMigration = () => {
+  const handleSkipMigration = async () => {
+    // Mark migration as skipped in the database so we don't ask again
+    try {
+      const user = await DataRepository.getCurrentUser()
+      if (user) {
+        // Mark as migrated (even though we skipped) to prevent asking again
+        await DataRepository.getCurrentUser().then(async (u) => {
+          await supabase.from('migration_status').upsert({
+            user_id: u.id,
+            migrated: true,
+            migration_date: new Date().toISOString(),
+            transactions_count: 0,
+            categories_count: 0,
+            source: 'skipped'
+          })
+        })
+      }
+    } catch (error) {
+      console.error('Error marking migration as skipped:', error)
+    }
+    
     // Mark that we've checked for migration (don't ask again)
     setShowMigration(false)
     setNeedsMigrationCheck(false)
+    setMigrationCheckComplete(true)
     // Update settings to mark initial balance as skipped so we don't ask again
     updateStore(current => ({
       ...current,
@@ -223,11 +297,6 @@ function AppContent() {
   // if (needsOnboarding) {
   //   return <OnboardingModal onComplete={handleOnboardingComplete} />
   // }
-  
-  // Check for localStorage data migration
-  if (hasLocalStorageData && !showMigration && needsMigrationCheck) {
-    setShowMigration(true)
-  }
   
   if (showMigration) {
     return (

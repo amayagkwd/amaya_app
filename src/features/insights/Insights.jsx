@@ -4,6 +4,7 @@ import AddTransactionButton from '../common/AddTransactionButton'
 import PeriodSelector from '../payments/PeriodSelector'
 import PaymentsCharts from './PaymentsCharts'
 import { useFinancials } from '../../hooks/useFinancials'
+import { calculateStats } from '../../services/financialCalculations'
 import { formatLargeNumber } from '../../utils/formatLargeNumber'
 import theme, { componentStyles } from '../../theme'
 
@@ -22,16 +23,17 @@ export default function Insights({ data, onOpenBottomSheet }) {
     categories: data.payments.categories
   })
 
-  // For yearly view, exclude month-balance from the filtered transactions
-  const allTransactions = useMemo(() => {
-    const filtered = financials.filteredTransactions
-    if (isYearly) {
-      return filtered.filter(t => t.categoryId !== 'month-balance')
-    }
-    return filtered
-  }, [financials.filteredTransactions, isYearly])
+  // For yearly view, keep all transactions for display but exclude month-balance from stats
+  const allTransactions = financials.filteredTransactions
 
-  const stats = financials.stats
+  // Recalculate stats for yearly view without month-balance
+  const stats = useMemo(() => {
+    if (isYearly) {
+      const filtered = allTransactions.filter(t => t.categoryId !== 'month-balance')
+      return calculateStats(filtered, 'bank')
+    }
+    return financials.stats
+  }, [isYearly, allTransactions, financials.stats])
   
   return (
     <>

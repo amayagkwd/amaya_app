@@ -1,4 +1,5 @@
 import uuidv4 from '../utils/uuid'
+import * as DataRepository from '../repositories/dataRepository'
 
 /**
  * Hook for payment CRUD operations
@@ -7,20 +8,38 @@ import uuidv4 from '../utils/uuid'
  * Use useFinancials hook or import from the service directly for calculations.
  */
 export function usePayments(data, updateStore) {
-  const addTransaction = (transaction) => {
+  const addTransaction = async (transaction) => {
+    const newTransaction = { ...transaction, id: uuidv4(), timestamp: Date.now() }
+    
+    // Add to Supabase
+    try {
+      await DataRepository.addTransaction(newTransaction)
+    } catch (error) {
+      console.error('Error adding transaction to Supabase:', error)
+    }
+    
+    // Update local state
     updateStore(current => ({
       ...current,
       payments: {
         ...current.payments,
         transactions: [
           ...current.payments.transactions,
-          { ...transaction, id: uuidv4(), timestamp: Date.now() }
+          newTransaction
         ]
       }
     }))
   }
   
-  const deleteTransaction = (id) => {
+  const deleteTransaction = async (id) => {
+    // Delete from Supabase
+    try {
+      await DataRepository.deleteTransaction(id)
+    } catch (error) {
+      console.error('Error deleting transaction from Supabase:', error)
+    }
+    
+    // Update local state
     updateStore(current => ({
       ...current,
       payments: {
@@ -30,20 +49,38 @@ export function usePayments(data, updateStore) {
     }))
   }
   
-  const addCategory = (category) => {
+  const addCategory = async (category) => {
+    const newCategory = { ...category, id: uuidv4(), isDefault: false }
+    
+    // Add to Supabase
+    try {
+      await DataRepository.addCategory(newCategory)
+    } catch (error) {
+      console.error('Error adding category to Supabase:', error)
+    }
+    
+    // Update local state
     updateStore(current => ({
       ...current,
       payments: {
         ...current.payments,
         categories: [
           ...current.payments.categories,
-          { ...category, id: uuidv4(), isDefault: false }
+          newCategory
         ]
       }
     }))
   }
   
-  const updateCategory = (id, updates) => {
+  const updateCategory = async (id, updates) => {
+    // Update in Supabase
+    try {
+      await DataRepository.updateCategory(id, updates)
+    } catch (error) {
+      console.error('Error updating category in Supabase:', error)
+    }
+    
+    // Update local state
     updateStore(current => ({
       ...current,
       payments: {
@@ -55,7 +92,15 @@ export function usePayments(data, updateStore) {
     }))
   }
   
-  const deleteCategory = (id) => {
+  const deleteCategory = async (id) => {
+    // Delete from Supabase
+    try {
+      await DataRepository.deleteCategory(id)
+    } catch (error) {
+      console.error('Error deleting category from Supabase:', error)
+    }
+    
+    // Update local state
     updateStore(current => ({
       ...current,
       payments: {

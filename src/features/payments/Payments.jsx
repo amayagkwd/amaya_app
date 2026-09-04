@@ -6,6 +6,7 @@ import AddTransactionButton from '../common/AddTransactionButton'
 import PeriodSelector from './PeriodSelector'
 import { formatLargeNumber } from '../../utils/formatLargeNumber'
 import { useFinancials } from '../../hooks/useFinancials'
+import { calculateStats } from '../../services/financialCalculations'
 import theme, { componentStyles } from '../../theme'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
@@ -92,18 +93,33 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     categories: data.payments.categories
   })
 
-  // For yearly view, exclude month-balance from the filtered transactions
-  const allTransactions = useMemo(() => {
-    const filtered = bankFinancials.filteredTransactions
-    if (isYearly) {
-      return filtered.filter(t => t.categoryId !== 'month-balance')
-    }
-    return filtered
-  }, [bankFinancials.filteredTransactions, isYearly])
+  // For yearly view, keep all transactions for display but exclude month-balance from stats
+  const allTransactions = bankFinancials.filteredTransactions
 
-  const stats = bankFinancials.stats
-  const cashStats = cashFinancials.stats
-  const creditStats = creditFinancials.stats
+  // Recalculate stats for yearly view without month-balance
+  const stats = useMemo(() => {
+    if (isYearly) {
+      const filtered = allTransactions.filter(t => t.categoryId !== 'month-balance')
+      return calculateStats(filtered, 'bank')
+    }
+    return bankFinancials.stats
+  }, [isYearly, allTransactions, bankFinancials.stats])
+  
+  const cashStats = useMemo(() => {
+    if (isYearly) {
+      const filteredCash = cashFinancials.filteredTransactions.filter(t => t.categoryId !== 'month-balance')
+      return calculateStats(filteredCash, 'cash')
+    }
+    return cashFinancials.stats
+  }, [isYearly, cashFinancials.filteredTransactions, cashFinancials.stats])
+  
+  const creditStats = useMemo(() => {
+    if (isYearly) {
+      const filteredCredit = creditFinancials.filteredTransactions.filter(t => t.categoryId !== 'month-balance')
+      return calculateStats(filteredCredit, 'credit')
+    }
+    return creditFinancials.stats
+  }, [isYearly, creditFinancials.filteredTransactions, creditFinancials.stats])
 
   // Determine which payment methods to show
   const paymentMethods = useMemo(() => {

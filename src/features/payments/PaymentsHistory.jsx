@@ -694,6 +694,7 @@ export default function PaymentsHistory({
               const isMonthBalance = t.categoryId === 'month-balance'
               const isInitialBalance = t.categoryId === 'initial-balance'
               const isCashBalance = t.categoryId === 'cash-balance'
+              const isCashBalanceUpdate = t.categoryId === 'cash-balance-update'
               
               // Determine payment mode (default to 'bank' for old transactions)
               const paymentMode = t.paymentMode || 'bank'
@@ -735,6 +736,8 @@ export default function PaymentsHistory({
                 displayName = 'Initial Balance'
               } else if (isMonthBalance) {
                 displayName = t.category || 'Balance'
+              } else if (isCashBalanceUpdate) {
+                displayName = 'Cash Balance Updated'
               } else if (isCashBalance) {
                 displayName = 'Cash Balance'
               } else if (isBalanceTransaction) {
@@ -749,18 +752,22 @@ export default function PaymentsHistory({
               // Initial balance and month balance: NO +/- prefix (just the amount)
               // Manual balance updates: SHOW +/- prefix based on change
               const isManualBalanceUpdate = isBalanceUpdate && t.categoryId === 'balance-update'
+              const isManualCashBalanceUpdate = isCashBalanceUpdate
               
-              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance)
-                ? theme.colors.accentCyan 
+              // Color: balance updates should be cyan for positive, pink for negative
+              const amountColor = (isMonthBalance || isInitialBalance || isCashBalance)
+                ? theme.colors.accentCyan
+                : (isManualBalanceUpdate || isManualCashBalanceUpdate)
+                ? (t.balanceChange >= 0 ? theme.colors.accentCyan : theme.colors.accentPink)
                 : (t.type === 'income' ? theme.colors.accentCyan : theme.colors.accentPink)
               
               const amountPrefix = (isMonthBalance || isInitialBalance || isCashBalance)
                 ? '+' // Show + for initial balances
-                : isManualBalanceUpdate
+                : (isManualBalanceUpdate || isManualCashBalanceUpdate)
                 ? ((t.balanceChange >= 0) ? '+' : '-')
                 : (t.type === 'income' ? '+' : '-')
               
-              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance) 
+              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance || isCashBalanceUpdate) 
                 ? Math.abs(t.balanceChange || t.amount) 
                 : t.amount
               

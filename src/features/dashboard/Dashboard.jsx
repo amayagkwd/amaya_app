@@ -1455,6 +1455,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
               const isMonthBalance = transaction.categoryId === 'month-balance'
               const isInitialBalance = transaction.categoryId === 'initial-balance'
               const isCashBalance = transaction.categoryId === 'cash-balance'
+              const isCashBalanceUpdate = transaction.categoryId === 'cash-balance-update'
               const isManualBalanceUpdate = isBalanceUpdate && transaction.categoryId === 'balance-update'
               
               const isIncome = transaction.type === 'income'
@@ -1483,6 +1484,8 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 displayName = 'Initial Balance'
               } else if (isMonthBalance) {
                 displayName = transaction.category || 'Balance'
+              } else if (isCashBalanceUpdate) {
+                displayName = 'Cash Balance Updated'
               } else if (isCashBalance) {
                 displayName = 'Cash Balance'
               } else if (isManualBalanceUpdate) {
@@ -1491,19 +1494,21 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
                 displayName = category?.name || transaction.category || 'Unknown'
               }
               
-              // Color logic: balance transactions and cash balance are cyan, income is cyan, expense is pink
-              const amountColor = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance)
+              // Color logic: initial/month/cash balance always cyan, balance updates cyan for positive/pink for negative
+              const amountColor = (isMonthBalance || isInitialBalance || isCashBalance)
                 ? theme.dashboardColors.cyan
+                : (isManualBalanceUpdate || isCashBalanceUpdate)
+                ? (transaction.balanceChange >= 0 ? theme.dashboardColors.cyan : theme.dashboardColors.pink)
                 : (isIncome ? theme.dashboardColors.cyan : theme.dashboardColors.pink)
               
-              // Prefix logic: initial/month/cash balance = +, manual balance = +/-, income/expense = +/-
+              // Prefix logic: initial/month/cash balance = +, manual balance/cash balance update = +/-, income/expense = +/-
               const amountPrefix = (isMonthBalance || isInitialBalance || isCashBalance)
                 ? '+'
-                : isManualBalanceUpdate
+                : (isManualBalanceUpdate || isCashBalanceUpdate)
                 ? ((transaction.balanceChange >= 0) ? '+' : '-')
                 : (isIncome ? '+' : '-')
               
-              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance)
+              const amountToShow = (isBalanceUpdate || isMonthBalance || isInitialBalance || isCashBalance || isCashBalanceUpdate)
                 ? Math.abs(transaction.balanceChange || transaction.amount)
                 : transaction.amount
               
