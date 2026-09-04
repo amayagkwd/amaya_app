@@ -1,80 +1,50 @@
-import { v4 as uuidv4 } from 'uuid'
+/**
+ * Store Module
+ * 
+ * Thin wrapper around the data repository layer.
+ * Maintains backward compatibility with existing code while delegating
+ * all data access to the repository layer.
+ * 
+ * This layer will remain unchanged during Supabase migration.
+ */
 
-const STORAGE_KEY = 'amaya_data'
+import * as DataRepository from '../repositories/dataRepository'
 
-const initialState = {
-  profile: {
-    name: '',
-    dob: '',
-    country: ''
-  },
-  payments: {
-    categories: [],
-    transactions: [],
-    previousCategories: [],
-    cashBalance: 0,
-    creditCardBalance: 0
-  },
-  settings: {
-    carryBalanceToNextMonth: false,
-    lastCheckedMonth: null, // Format: "YYYY-MM"
-    budget: {
-      enabled: false,
-      mode: 'spend', // 'spend' or 'keep'
-      amount: 0
-    },
-    initialBalanceSkipped: false,
-    addTransactionTipSeen: false,
-    isCashEnabled: false,
-    isCreditEnabled: false
-  }
-}
-
+/**
+ * Load store data (synchronous for backward compatibility)
+ * @returns {Object} User data
+ */
 export function loadStore() {
-  const stored = localStorage.getItem(STORAGE_KEY)
+  // Note: This is currently synchronous for backward compatibility
+  // During Supabase migration, we'll need to update useStore to handle async loading
+  const stored = localStorage.getItem('amaya_data')
   if (!stored) {
-    const state = { ...initialState }
-    saveStore(state)
+    const state = DataRepository.loadData()
     return state
   }
-  
-  const parsed = JSON.parse(stored)
-  
-  // Merge with initialState to ensure all new fields exist
-  return {
-    ...initialState,
-    ...parsed,
-    profile: { ...initialState.profile, ...parsed.profile },
-    payments: { ...initialState.payments, ...parsed.payments },
-    settings: { ...initialState.settings, ...parsed.settings }
-  }
+  return JSON.parse(stored)
 }
 
+/**
+ * Save store data (synchronous for backward compatibility)
+ * @param {Object} data - Complete user data
+ */
 export function saveStore(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  DataRepository.saveData(data)
 }
 
+/**
+ * Export data to JSON file
+ */
 export function exportData() {
-  const data = localStorage.getItem(STORAGE_KEY)
-  const blob = new Blob([data], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'amaya_backup.json'
-  a.click()
-  URL.revokeObjectURL(url)
+  DataRepository.exportData()
 }
 
+/**
+ * Import data from JSON file
+ * @param {File} file - JSON file
+ * @param {Function} callback - Callback(success, data)
+ */
 export function importData(file, callback) {
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    try {
-      const importedData = JSON.parse(e.target.result)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(importedData))
-      callback(true, importedData)
-    } catch (error) {
-      callback(false, null)
-    }
-  }
-  reader.readAsText(file)
+  DataRepository.importData(file, callback)
 }

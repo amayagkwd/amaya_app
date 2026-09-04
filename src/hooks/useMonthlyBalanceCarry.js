@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import uuidv4 from '../utils/uuid'
+import * as FinancialCalcs from '../services/financialCalculations'
 
 export function useMonthlyBalanceCarry(data, updateStore) {
   const hasRunRef = useRef(false)
@@ -10,6 +11,9 @@ export function useMonthlyBalanceCarry(data, updateStore) {
   const lastTransactionsHashRef = useRef('')
   
   useEffect(() => {
+    // Don't run if data is not loaded yet
+    if (!data || !data.payments || !data.settings) return
+    
     // Prevent multiple runs in the same render cycle
     if (hasRunRef.current) return
     
@@ -106,7 +110,7 @@ export function useMonthlyBalanceCarry(data, updateStore) {
           const prevYear = month === 0 ? year - 1 : year
           const prevMonthString = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`
           
-          const correctBalance = calculateEndOfMonthBalance(data, prevMonthString)
+          const correctBalance = FinancialCalcs.calculateEndOfMonthBalance(data.payments.transactions, prevMonthString, 'bank')
           
           if (correctBalance !== monthBalanceTxn.balanceChange) {
             hasChanges = true
@@ -168,7 +172,7 @@ export function useMonthlyBalanceCarry(data, updateStore) {
           const prevMonthString = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`
           
           // Calculate what the balance SHOULD be
-          const correctBalance = calculateEndOfMonthBalance(data, prevMonthString)
+          const correctBalance = FinancialCalcs.calculateEndOfMonthBalance(data.payments.transactions, prevMonthString, 'bank')
           
           // If it's different, update it
           if (correctBalance !== monthBalanceTxn.balanceChange) {
@@ -322,8 +326,8 @@ export function useMonthlyBalanceCarry(data, updateStore) {
     if (lastCheckedMonth !== currentMonth) {
       hasRunRef.current = true
       
-      // Get previous month's ending balance
-      const previousMonthBalance = calculateEndOfMonthBalance(data, lastCheckedMonth)
+      // Get previous month's ending balance using centralized calculation
+      const previousMonthBalance = FinancialCalcs.calculateEndOfMonthBalance(data.payments.transactions, lastCheckedMonth, 'bank')
       
       // Check if balance transaction already exists for current month
       const balanceTransactionExists = data.payments.transactions.some(t => {
@@ -386,54 +390,6 @@ export function useMonthlyBalanceCarry(data, updateStore) {
   }, [data, updateStore])
 }
 
-function calculateEndOfMonthBalance(data, monthString) {
-  // Calculate cumulative balance up to the end of the specified month (BANK ONLY)
-  const [year, month] = monthString.split('-').map(Number)
-  const endOfMonth = new Date(year, month, 0, 23, 59, 59) // Last day of the month
-  
-  let balance = 0
-  
-  data.payments.transactions.forEach(transaction => {
-    if (!transaction.date) return
-    const tDate = new Date(transaction.date)
-    
-    if (isNaN(tDate.getTime())) return
-    
-    // Include all transactions up to and including the last day of the specified month
-    if (tDate <= endOfMonth) {
-      // Get transaction payment mode (default to 'bank' for old transactions)
-      const paymentMode = transaction.paymentMode || 'bank'
-      
-      // Skip month-balance carry-forward transactions to avoid double-counting
-      // These are balance transactions from PREVIOUS months carried forward
-      // We only want: initial balance (once), manual balance updates, and regular income/expenses
-      if (transaction.categoryId === 'month-balance') {
-        // Skip ALL month-balance transactions - they should never be included in calculations
-        return
-      }
-      
-      if (transaction.isBalanceUpdate || transaction.categoryId === 'initial-balance' || transaction.categoryId === 'balance-update') {
-        // Only include bank balance updates
-        if (paymentMode === 'bank') {
-          balance += transaction.balanceChange || transaction.amount
-        }
-      } else if (transaction.type === 'income') {
-        // Only include bank income
-        if (paymentMode === 'bank') {
-          balance += transaction.amount
-        }
-      } else if (transaction.type === 'expense') {
-        // Only include bank expenses
-        if (paymentMode === 'bank') {
-          balance -= transaction.amount
-        }
-      }
-    }
-  })
-  
-  return balance
-}
-
 function generateHistoricalBalanceTransactions(data) {
   const transactions = data.payments.transactions || []
   
@@ -475,8 +431,8 @@ function generateHistoricalBalanceTransactions(data) {
     
     if (alreadyExists) continue
     
-    // Calculate balance at end of previous month
-    const balance = calculateEndOfMonthBalance(data, previousMonth)
+    // Calculate balance at end of previous month using centralized calculation
+    const balance = FinancialCalcs.calculateEndOfMonthBalance(data.payments.transactions, previousMonth, 'bank')
     
     if (balance === 0) continue
     

@@ -2,8 +2,8 @@ import { useMemo, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getGreeting, getTodayDate } from '../../utils/formatDate'
 import { formatCurrency } from '../../utils/formatCurrency'
-import { getMonthTransactions, calculateMonthStats } from '../../hooks/usePayments'
-import { calculateMedianDailySpend, calculateHistoricalMedianDailySpend } from '../../utils/medianCalculator'
+import { useFinancials } from '../../hooks/useFinancials'
+import * as FinancialCalcs from '../../services/financialCalculations'
 import { useBudget } from '../../hooks/useBudget'
 import AddTransactionButton from '../common/AddTransactionButton'
 import { showToast } from '../common/Toast'
@@ -35,51 +35,36 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
   const isBudgetEnabled = data.settings?.budget?.enabled || false
   const isPredictMonthEndEnabled = data.settings?.predictMonthEnd || false
 
-  // Calculate cash stats separately
-  const cashStats = useMemo(() => {
-    const now = new Date()
-    let cashTransactions
-    
-    if (isYearly) {
-      const currentYear = now.getFullYear()
-      cashTransactions = data.payments.transactions.filter(t => {
-        if (!t.date) return false
-        const txnDate = new Date(t.date)
-        return txnDate.getFullYear() === currentYear
-      })
-    } else {
-      cashTransactions = getMonthTransactions(
-        data.payments.transactions,
-        now.getFullYear(),
-        now.getMonth()
-      )
-    }
+  // Get current date info
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
 
-    return calculateMonthStats(cashTransactions, 'cash')
-  }, [data.payments.transactions, isYearly])
+  // Calculate bank stats using centralized service
+  const { stats, currentBalance } = useFinancials(data.payments.transactions, {
+    year: isYearly ? currentYear : currentYear,
+    month: isYearly ? undefined : currentMonth,
+    isYearly: isYearly,
+    paymentMode: 'bank'
+  })
+
+  // Calculate cash stats separately
+  const cashFinancials = useFinancials(data.payments.transactions, {
+    year: isYearly ? currentYear : currentYear,
+    month: isYearly ? undefined : currentMonth,
+    isYearly: isYearly,
+    paymentMode: 'cash'
+  })
+  const cashStats = cashFinancials.stats
 
   // Calculate credit stats separately
-  const creditStats = useMemo(() => {
-    const now = new Date()
-    let creditTransactions
-    
-    if (isYearly) {
-      const currentYear = now.getFullYear()
-      creditTransactions = data.payments.transactions.filter(t => {
-        if (!t.date) return false
-        const txnDate = new Date(t.date)
-        return txnDate.getFullYear() === currentYear
-      })
-    } else {
-      creditTransactions = getMonthTransactions(
-        data.payments.transactions,
-        now.getFullYear(),
-        now.getMonth()
-      )
-    }
-
-    return calculateMonthStats(creditTransactions, 'credit')
-  }, [data.payments.transactions, isYearly])
+  const creditFinancials = useFinancials(data.payments.transactions, {
+    year: isYearly ? currentYear : currentYear,
+    month: isYearly ? undefined : currentMonth,
+    isYearly: isYearly,
+    paymentMode: 'credit'
+  })
+  const creditStats = creditFinancials.stats
 
   const handleForecastScroll = () => {
     if (forecastCarouselRef.current) {
@@ -119,42 +104,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     }
   }
 
-  const stats = useMemo(() => {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-
-    let transactions
-    if (isYearly) {
-      transactions = data.payments.transactions.filter(t => {
-        if (!t.date) return false
-        const txnDate = new Date(t.date)
-        return txnDate.getFullYear() === currentYear && t.categoryId !== 'month-balance'
-      })
-    } else {
-      transactions = getMonthTransactions(
-        data.payments.transactions,
-        now.getFullYear(),
-        now.getMonth()
-      )
-    }
-
-    // Calculate bank-only stats (default payment mode or explicitly 'bank')
-    return calculateMonthStats(transactions, 'bank')
-  }, [data.payments.transactions, isYearly])
-  
-  // Always calculate current real balance for budget and forecast (regardless of view) - BANK ONLY
-  const currentBalance = useMemo(() => {
-    const now = new Date()
-    const currentMonthTransactions = getMonthTransactions(
-      data.payments.transactions,
-      now.getFullYear(),
-      now.getMonth()
-    )
-    return calculateMonthStats(currentMonthTransactions, 'bank').balance
-  }, [data.payments.transactions])
-
   const forecast = useMemo(() => {
-    const now = new Date()
     const currentDay = now.getDate()
     const daysElapsed = currentDay
 
@@ -163,10 +113,10 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     
     // Auto-set hasSeenForecast to true if user has transactions from previous months
     if (!hasSeenForecast) {
-      const currentMonth = now.toISOString().slice(0, 7) // "YYYY-MM"
+      const currentMonthStr = now.toISOString().slice(0, 7) // "YYYY-MM"
       const hasPreviousMonthData = data.payments.transactions.some(t => {
         if (!t.date) return false
-        return t.date < currentMonth + '-01'
+        return t.date < currentMonthStr + '-01'
       })
       
       if (hasPreviousMonthData) {
@@ -200,27 +150,17 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
       }))
     }
 
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    const totalDaysInMonth = new Date(year, month + 1, 0).getDate()
-    const daysRemaining = totalDaysInMonth - daysElapsed
-
-    // Calculate median daily spend using ALL historical transactions
-    const medianDailySpend = calculateHistoricalMedianDailySpend(data.payments.transactions)
-
-    const projectedRemainingSpend = medianDailySpend * daysRemaining
-    
-    // Use the current real balance (not the view-filtered balance)
-    const projectedMonthEndBalance = currentBalance - projectedRemainingSpend
+    // Calculate forecast using centralized service
+    const projection = FinancialCalcs.calculateMonthEndProjection(
+      data.payments.transactions,
+      currentBalance
+    )
 
     return {
       isCountdown: false,
-      dailySpendForecast: medianDailySpend,
-      monthEndProjection: projectedMonthEndBalance,
-      // Flag if we have very limited data (first few days)
-      isEarlyMonth: daysElapsed < 5
+      ...projection
     }
-  }, [data.payments.transactions, data.settings?.hasSeenForecast, currentBalance, updateStore])
+  }, [data.payments.transactions, data.settings?.hasSeenForecast, currentBalance, updateStore, now])
 
   const showForecast = forecast !== null
 

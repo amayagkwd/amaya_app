@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { useStore } from './hooks/useStore'
 import { usePayments } from './hooks/usePayments'
 import { useMonthlyBalanceCarry } from './hooks/useMonthlyBalanceCarry'
+import AuthScreen from './features/auth/AuthScreen'
 import TopBar from './features/common/TopBar'
 import BottomNav from './features/common/BottomNav'
 import BottomSheet from './features/common/BottomSheet'
@@ -11,6 +13,7 @@ import NavigationHandler from './features/common/NavigationHandler'
 import OnboardingModal from './features/onboarding/OnboardingModal'
 import InitialBalanceModal from './features/onboarding/InitialBalanceModal'
 import AddTransactionTip from './features/onboarding/AddTransactionTip'
+import MigrationModal from './features/onboarding/MigrationModal'
 import InstallBanner from './features/standalone/InstallBanner'
 import Dashboard from './features/dashboard/Dashboard'
 import Payments from './features/payments/Payments'
@@ -23,9 +26,11 @@ import BudgetSetup from './features/settings/BudgetSetup'
 import Reminders from './features/settings/Reminders'
 import theme from './theme'
 import uuidv4 from './utils/uuid'
+import * as DataRepository from './repositories/dataRepository'
 
 function AppContent() {
-  const [data, updateStore] = useStore()
+  const { user, loading: authLoading } = useAuth()
+  const [data, updateStore, dataLoading] = useStore()
   const { addTransaction, deleteTransaction } = usePayments(data, updateStore)
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [bottomSheetMode, setBottomSheetMode] = useState('transaction')
@@ -33,19 +38,103 @@ function AppContent() {
   const [bottomSheetInitialPaymentMode, setBottomSheetInitialPaymentMode] = useState(null)
   const [showInitialBalance, setShowInitialBalance] = useState(false)
   const [showAddTransactionTip, setShowAddTransactionTip] = useState(false)
+  const [showMigration, setShowMigration] = useState(false)
+  const [needsMigrationCheck, setNeedsMigrationCheck] = useState(true)
   
-  // Handle monthly balance carry-over
+  // Handle monthly balance carry-over (only when data is loaded)
   useMonthlyBalanceCarry(data, updateStore)
+  
+  // Show loading screen while auth or data is loading
+  if (authLoading || dataLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: theme.colors.bgPrimary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ color: theme.colors.textSecondary }}>Loading...</div>
+      </div>
+    )
+  }
+  
+  // Show auth screen if not authenticated
+  if (!user) {
+    return <AuthScreen />
+  }
+  
+  // Wait for data to be loaded before checking profile
+  if (!data || !data.profile) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: theme.colors.bgPrimary,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ color: theme.colors.textSecondary }}>Loading data...</div>
+      </div>
+    )
+  }
   
   const needsOnboarding = !data.profile.name || !data.profile.dob || !data.profile.country
   const hasExistingData = data.payments.transactions.length > 0 || data.payments.categories.length > 0
   const hasInitialBalance = data.payments.transactions.some(t => t.categoryId === 'initial-balance')
   
+  // Check if user has localStorage data to migrate
+  const hasLocalStorageData = needsMigrationCheck && DataRepository.hasLocalStorageData()
+  
+  // Skip onboarding entirely - profile is created during signup/login
   // Only show initial balance prompt for brand new users (no existing data)
-  const needsInitialBalancePrompt = !needsOnboarding && !hasExistingData && !hasInitialBalance && !data.settings.initialBalanceSkipped
+  const needsInitialBalancePrompt = !hasExistingData && !hasInitialBalance && !data.settings.initialBalanceSkipped
   
   // Show tip after initial balance is handled and user hasn't seen it yet
-  const needsAddTransactionTip = !needsOnboarding && !needsInitialBalancePrompt && !data.settings.addTransactionTipSeen && !hasExistingData
+  const needsAddTransactionTip = !needsInitialBalancePrompt && !data.settings.addTransactionTipSeen && !hasExistingData
+  
+  const handleMigration = async () => {
+    try {
+      console.log('Starting migration...')
+      const result = await DataRepository.migrateLocalStorageToSupabase()
+      console.log('Migration result:', result)
+      
+      if (result.success) {
+        console.log('Migration successful, reloading data...')
+        // Reload data after migration
+        const migratedData = await DataRepository.loadData()
+        console.log('Migrated data loaded:', migratedData)
+        updateStore(migratedData)
+        setShowMigration(false)
+        setNeedsMigrationCheck(false)
+      } else {
+        console.error('Migration failed:', result.message)
+        alert('Migration failed: ' + result.message)
+        setShowMigration(false)
+        setNeedsMigrationCheck(false)
+      }
+    } catch (error) {
+      console.error('Migration error:', error)
+      alert('Migration failed: ' + error.message)
+      setShowMigration(false)
+      setNeedsMigrationCheck(false)
+    }
+  }
+  
+  const handleSkipMigration = () => {
+    // Mark that we've checked for migration (don't ask again)
+    setShowMigration(false)
+    setNeedsMigrationCheck(false)
+    // Update settings to mark initial balance as skipped so we don't ask again
+    updateStore(current => ({
+      ...current,
+      settings: {
+        ...current.settings,
+        initialBalanceSkipped: true
+      }
+    }))
+    // Note: Not actually deleting localStorage data, just skipping migration
+  }
   
   const handleOnboardingComplete = (profileData) => {
     updateStore(current => ({
@@ -130,11 +219,26 @@ function AppContent() {
     // Reminder functionality coming soon
   }
   
-  if (needsOnboarding) {
-    return <OnboardingModal onComplete={handleOnboardingComplete} />
+  // Onboarding is no longer needed - profile created during signup
+  // if (needsOnboarding) {
+  //   return <OnboardingModal onComplete={handleOnboardingComplete} />
+  // }
+  
+  // Check for localStorage data migration
+  if (hasLocalStorageData && !showMigration && needsMigrationCheck) {
+    setShowMigration(true)
   }
   
-  if (showInitialBalance || (needsInitialBalancePrompt && data.profile.name)) {
+  if (showMigration) {
+    return (
+      <MigrationModal
+        onMigrate={handleMigration}
+        onSkip={handleSkipMigration}
+      />
+    )
+  }
+  
+  if (showInitialBalance || needsInitialBalancePrompt) {
     return (
       <InitialBalanceModal 
         onComplete={handleInitialBalanceComplete}
@@ -201,8 +305,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

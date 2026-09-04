@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
 import theme, { componentStyles } from '../../theme'
 
 export default function Profile({ data, updateStore }) {
+  const { signOut, user } = useAuth()
   const [saved, setSaved] = useState({})
   const [editing, setEditing] = useState(null)
   const [editValues, setEditValues] = useState({})
+  const [loggingOut, setLoggingOut] = useState(false)
   
   const handleEdit = (field) => {
     setEditing(field)
@@ -26,9 +29,46 @@ export default function Profile({ data, updateStore }) {
     setEditValues({})
   }
   
+  const handleLogout = async () => {
+    if (!confirm('Are you sure you want to logout?')) return
+    
+    setLoggingOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Logout error:', error)
+      alert('Failed to logout. Please try again.')
+      setLoggingOut(false)
+    }
+  }
+  
   return (
     <div style={componentStyles.pageContainer}>
       <h2 style={componentStyles.pageHeader}>Profile</h2>
+      
+      {user && (
+        <div style={{
+          padding: theme.spacing.md,
+          marginBottom: theme.spacing.lg,
+          background: theme.colors.bgCardDark,
+          borderRadius: theme.borderRadius.md,
+          border: `1px solid ${theme.colors.borderSubtle}`
+        }}>
+          <div style={{
+            fontSize: theme.typography.bodySmall,
+            color: theme.colors.textSecondary,
+            marginBottom: theme.spacing.xs
+          }}>
+            Logged in as
+          </div>
+          <div style={{
+            fontSize: theme.typography.body,
+            color: theme.colors.textPrimary
+          }}>
+            {user.email}
+          </div>
+        </div>
+      )}
       
       <ProfileField
         label="Name"
@@ -67,6 +107,30 @@ export default function Profile({ data, updateStore }) {
         onCancel={handleCancel}
         saved={saved.country}
       />
+      
+      {/* Logout Button */}
+      <div style={{ marginTop: theme.spacing.xxl }}>
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          style={{
+            width: '100%',
+            padding: theme.spacing.lg,
+            background: '#ff6b9d',
+            color: theme.colors.textPrimary,
+            border: 'none',
+            borderRadius: theme.borderRadius.md,
+            fontSize: theme.typography.body,
+            fontWeight: theme.typography.medium,
+            cursor: loggingOut ? 'not-allowed' : 'pointer',
+            opacity: loggingOut ? 0.6 : 1,
+            transition: 'opacity 0.2s',
+            fontFamily: theme.typography.fontFamily
+          }}
+        >
+          {loggingOut ? 'Logging out...' : 'Logout'}
+        </button>
+      </div>
     </div>
   )
 }

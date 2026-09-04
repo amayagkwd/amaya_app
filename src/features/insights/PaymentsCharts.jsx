@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '../../utils/formatCurrency'
+import * as FinancialCalcs from '../../services/financialCalculations'
 import theme from '../../theme'
 
 const COLORS = ['#10b981', '#4f46e5', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16']
@@ -305,91 +306,21 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
     }
   }, [isYearly, weeklyData.weeks, monthlyData.halfYears])
   
-  const incomeBreakdown = useMemo(() => {
-    const incomeTxns = allTransactions.filter(t => t.type === 'income')
-    const total = incomeTxns.reduce((sum, t) => sum + t.amount, 0)
-    
-    const byCategory = {}
-    incomeTxns.forEach(t => {
-      const category = categories.find(c => c.id === t.categoryId)
-      const isBalanceTransaction = t.note?.startsWith('Balance of ')
-      const isBalanceUpdate = t.isBalanceUpdate || false
-      const isMonthBalance = t.categoryId === 'month-balance'
-      
-      let name
-      if (isMonthBalance) {
-        name = t.category || 'Balance'
-      } else if (isBalanceTransaction) {
-        name = 'Balance Transaction'
-      } else if (isBalanceUpdate) {
-        name = 'Balance Updated'
-      } else {
-        name = category?.name || 'Unknown'
-      }
-      
-      byCategory[name] = (byCategory[name] || 0) + t.amount
-    })
-    
-    const result = Object.entries(byCategory).map(([name, value]) => ({
-      name,
-      value,
-      percentage: total > 0 ? Math.round((value / total) * 100) : 0
-    }))
-    
-    return result.length > 0 ? { data: result, total } : null
-  }, [allTransactions, categories])
+  // Use centralized calculation service for breakdowns
+  const incomeBreakdown = useMemo(() => 
+    FinancialCalcs.calculateCategoryBreakdown(allTransactions, categories, 'income'),
+    [allTransactions, categories]
+  )
   
-  const expenseBreakdown = useMemo(() => {
-    const expenseTxns = allTransactions.filter(t => t.type === 'expense')
-    const total = expenseTxns.reduce((sum, t) => sum + t.amount, 0)
-    
-    const byCategory = {}
-    expenseTxns.forEach(t => {
-      const category = categories.find(c => c.id === t.categoryId)
-      const isBalanceTransaction = t.note?.startsWith('Balance of ')
-      const isBalanceUpdate = t.isBalanceUpdate || false
-      const isMonthBalance = t.categoryId === 'month-balance'
-      
-      let name
-      if (isMonthBalance) {
-        name = t.category || 'Balance'
-      } else if (isBalanceTransaction) {
-        name = 'Balance Transaction'
-      } else if (isBalanceUpdate) {
-        name = 'Balance Updated'
-      } else {
-        name = category?.name || 'Unknown'
-      }
-      
-      byCategory[name] = (byCategory[name] || 0) + t.amount
-    })
-    
-    const result = Object.entries(byCategory).map(([name, value]) => ({
-      name,
-      value,
-      percentage: total > 0 ? Math.round((value / total) * 100) : 0
-    }))
-    
-    return result.length > 0 ? { data: result, total } : null
-  }, [allTransactions, categories])
+  const expenseBreakdown = useMemo(() => 
+    FinancialCalcs.calculateCategoryBreakdown(allTransactions, categories, 'expense'),
+    [allTransactions, categories]
+  )
   
-  const needsVsWants = useMemo(() => {
-    const expenseTxns = allTransactions.filter(t => t.type === 'expense')
-    const total = expenseTxns.reduce((sum, t) => sum + t.amount, 0)
-    
-    const needs = expenseTxns.filter(t => t.classification === 'need').reduce((sum, t) => sum + t.amount, 0)
-    const wants = expenseTxns.filter(t => t.classification === 'want').reduce((sum, t) => sum + t.amount, 0)
-    
-    if (needs === 0 && wants === 0) return null
-    
-    return {
-      data: [
-        { name: 'Needs', value: needs, percentage: total > 0 ? Math.round((needs / total) * 100) : 0 },
-        { name: 'Wants', value: wants, percentage: total > 0 ? Math.round((wants / total) * 100) : 0 }
-      ],
-      total
-    }
-  }, [allTransactions])
+  const needsVsWants = useMemo(() =>
+    FinancialCalcs.calculateNeedsVsWants(allTransactions),
+    [allTransactions]
+  )
   
   return (
     <div>
@@ -818,7 +749,7 @@ export default function PaymentsCharts({ allTransactions, categories, country, i
                       justifyContent: 'space-between',
                       alignItems: 'center'
                     }}
-                  >         >
+                  >
                     <div style={{ flex: 1 }}>
                       <div style={{ 
                         fontWeight: theme.typography.medium, 

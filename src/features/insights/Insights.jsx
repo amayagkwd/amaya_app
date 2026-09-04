@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AddTransactionButton from '../common/AddTransactionButton'
 import PeriodSelector from '../payments/PeriodSelector'
 import PaymentsCharts from './PaymentsCharts'
-import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '../../hooks/usePayments'
+import { useFinancials } from '../../hooks/useFinancials'
 import { formatLargeNumber } from '../../utils/formatLargeNumber'
 import theme, { componentStyles } from '../../theme'
 
@@ -13,25 +13,25 @@ export default function Insights({ data, onOpenBottomSheet }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [isYearly, setIsYearly] = useState(false)
   
+  // Use centralized financial calculations
+  const financials = useFinancials(data.payments.transactions, {
+    year: isYearly ? selectedYear : selectedDate.getFullYear(),
+    month: isYearly ? undefined : selectedDate.getMonth(),
+    isYearly: isYearly,
+    paymentMode: 'bank',
+    categories: data.payments.categories
+  })
+
+  // For yearly view, exclude month-balance from the filtered transactions
   const allTransactions = useMemo(() => {
+    const filtered = financials.filteredTransactions
     if (isYearly) {
-      return getYearTransactions(data.payments.transactions, selectedYear)
+      return filtered.filter(t => t.categoryId !== 'month-balance')
     }
-    return getMonthTransactions(
-      data.payments.transactions,
-      selectedDate.getFullYear(),
-      selectedDate.getMonth()
-    )
-  }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
-  
-  const stats = useMemo(() => {
-    // For yearly view, exclude month-balance from stats calculation to avoid double-counting
-    const txnsForStats = isYearly 
-      ? allTransactions.filter(t => t.categoryId !== 'month-balance')
-      : allTransactions
-    // Calculate bank-only stats
-    return calculateMonthStats(txnsForStats, 'bank')
-  }, [allTransactions, isYearly])
+    return filtered
+  }, [financials.filteredTransactions, isYearly])
+
+  const stats = financials.stats
   
   return (
     <>

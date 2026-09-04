@@ -5,7 +5,7 @@ import EditTransactionModal from './EditTransactionModal'
 import AddTransactionButton from '../common/AddTransactionButton'
 import PeriodSelector from './PeriodSelector'
 import { formatLargeNumber } from '../../utils/formatLargeNumber'
-import { getMonthTransactions, getYearTransactions, calculateMonthStats } from '../../hooks/usePayments'
+import { useFinancials } from '../../hooks/useFinancials'
 import theme, { componentStyles } from '../../theme'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
@@ -67,35 +67,43 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     }
   }, [location.state, location.key]) // Add location.key to trigger on every navigation
   
+  // Use centralized financial calculations
+  const bankFinancials = useFinancials(data.payments.transactions, {
+    year: isYearly ? selectedYear : selectedDate.getFullYear(),
+    month: isYearly ? undefined : selectedDate.getMonth(),
+    isYearly: isYearly,
+    paymentMode: 'bank',
+    categories: data.payments.categories
+  })
+
+  const cashFinancials = useFinancials(data.payments.transactions, {
+    year: isYearly ? selectedYear : selectedDate.getFullYear(),
+    month: isYearly ? undefined : selectedDate.getMonth(),
+    isYearly: isYearly,
+    paymentMode: 'cash',
+    categories: data.payments.categories
+  })
+
+  const creditFinancials = useFinancials(data.payments.transactions, {
+    year: isYearly ? selectedYear : selectedDate.getFullYear(),
+    month: isYearly ? undefined : selectedDate.getMonth(),
+    isYearly: isYearly,
+    paymentMode: 'credit',
+    categories: data.payments.categories
+  })
+
+  // For yearly view, exclude month-balance from the filtered transactions
   const allTransactions = useMemo(() => {
+    const filtered = bankFinancials.filteredTransactions
     if (isYearly) {
-      return getYearTransactions(data.payments.transactions, selectedYear)
+      return filtered.filter(t => t.categoryId !== 'month-balance')
     }
-    return getMonthTransactions(
-      data.payments.transactions,
-      selectedDate.getFullYear(),
-      selectedDate.getMonth()
-    )
-  }, [data.payments.transactions, selectedDate, selectedYear, isYearly])
-  
-  const stats = useMemo(() => {
-    // For yearly view, exclude month-balance from stats calculation to avoid double-counting
-    const txnsForStats = isYearly 
-      ? allTransactions.filter(t => t.categoryId !== 'month-balance')
-      : allTransactions
-    // Calculate bank-only stats (transactions without paymentMode or with paymentMode='bank')
-    return calculateMonthStats(txnsForStats, 'bank')
-  }, [allTransactions, isYearly])
+    return filtered
+  }, [bankFinancials.filteredTransactions, isYearly])
 
-  // Calculate cash stats separately
-  const cashStats = useMemo(() => {
-    return calculateMonthStats(allTransactions, 'cash')
-  }, [allTransactions])
-
-  // Calculate credit stats separately
-  const creditStats = useMemo(() => {
-    return calculateMonthStats(allTransactions, 'credit')
-  }, [allTransactions])
+  const stats = bankFinancials.stats
+  const cashStats = cashFinancials.stats
+  const creditStats = creditFinancials.stats
 
   // Determine which payment methods to show
   const paymentMethods = useMemo(() => {
