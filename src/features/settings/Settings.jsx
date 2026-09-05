@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { exportData, importData } from '../../store'
 import theme, { componentStyles } from '../../theme'
+import * as DataRepository from '../../repositories/dataRepository'
 
 export default function Settings({ data, updateStore }) {
   const [showImportModal, setShowImportModal] = useState(false)
@@ -205,13 +206,22 @@ export default function Settings({ data, updateStore }) {
             <input
               type="checkbox"
               checked={data.settings?.predictMonthEnd || false}
-              onChange={(e) => {
+              onChange={async (e) => {
+                const updatedSettings = {
+                  ...data.settings,
+                  predictMonthEnd: e.target.checked
+                }
+                
+                // Save to Supabase
+                try {
+                  await DataRepository.updateSettings(updatedSettings)
+                } catch (error) {
+                  console.error('Error updating predictMonthEnd in Supabase:', error)
+                }
+                
                 updateStore(current => ({
                   ...current,
-                  settings: {
-                    ...current.settings,
-                    predictMonthEnd: e.target.checked
-                  }
+                  settings: updatedSettings
                 }))
               }}
               style={{ display: 'none' }}
@@ -263,17 +273,26 @@ export default function Settings({ data, updateStore }) {
             <input
               type="checkbox"
               checked={data.settings?.resetBalanceEachMonth || false}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const isEnabled = e.target.checked
                 const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
                 
+                const updatedSettings = {
+                  ...data.settings,
+                  resetBalanceEachMonth: isEnabled,
+                  lastCheckedMonth: !isEnabled ? currentMonth : data.settings?.lastCheckedMonth
+                }
+                
+                // Save to Supabase
+                try {
+                  await DataRepository.updateSettings(updatedSettings)
+                } catch (error) {
+                  console.error('Error updating resetBalanceEachMonth in Supabase:', error)
+                }
+                
                 updateStore(current => ({
                   ...current,
-                  settings: {
-                    ...current.settings,
-                    resetBalanceEachMonth: isEnabled,
-                    lastCheckedMonth: !isEnabled ? currentMonth : current.settings?.lastCheckedMonth
-                  }
+                  settings: updatedSettings
                 }))
               }}
               style={{ display: 'none' }}

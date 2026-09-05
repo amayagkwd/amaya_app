@@ -42,6 +42,7 @@ function AppContent() {
   const [showMigration, setShowMigration] = useState(false)
   const [needsMigrationCheck, setNeedsMigrationCheck] = useState(true)
   const [migrationCheckComplete, setMigrationCheckComplete] = useState(false)
+  const [categoryNameBackfillDone, setCategoryNameBackfillDone] = useState(false)
   
   // Handle monthly balance carry-over (only when data is loaded)
   useMonthlyBalanceCarry(data, updateStore)
@@ -142,6 +143,26 @@ function AppContent() {
       }
     })()
   }
+
+  // Backfill missing category names in transactions (one-time data fix)
+  if (user && migrationCheckComplete && !categoryNameBackfillDone && !dataLoading) {
+    ;(async () => {
+      try {
+        const result = await DataRepository.backfillTransactionCategoryNames()
+        console.log('Category name backfill:', result)
+        setCategoryNameBackfillDone(true)
+        
+        // Reload data if any updates were made
+        if (result.success && result.updated > 0) {
+          const refreshedData = await DataRepository.loadData()
+          updateStore(refreshedData)
+        }
+      } catch (error) {
+        console.error('Category name backfill error:', error)
+        setCategoryNameBackfillDone(true) // Mark as done even on error to prevent retry loops
+      }
+    })()
+  }
   
   const handleMigration = async () => {
     try {
@@ -199,13 +220,22 @@ function AppContent() {
     setShowMigration(false)
     setNeedsMigrationCheck(false)
     setMigrationCheckComplete(true)
+    
     // Update settings to mark initial balance as skipped so we don't ask again
+    const updatedSettings = {
+      ...data.settings,
+      initialBalanceSkipped: true
+    }
+    
+    try {
+      await DataRepository.updateSettings(updatedSettings)
+    } catch (error) {
+      console.error('Error updating initialBalanceSkipped in Supabase:', error)
+    }
+    
     updateStore(current => ({
       ...current,
-      settings: {
-        ...current.settings,
-        initialBalanceSkipped: true
-      }
+      settings: updatedSettings
     }))
     // Note: Not actually deleting localStorage data, just skipping migration
   }
@@ -221,15 +251,14 @@ function AppContent() {
     }
   }
   
-  const handleInitialBalanceComplete = (amount) => {
-    // Create special "Initial Balance" category if it doesn't exist
-    const initialBalanceCategory = {
-      id: 'initial-balance',
-      name: 'Initial Balance',
-      type: 'balance',
-      classification: null,
-      isDefault: true
-    }
+  const handleInitialBalanceComplete = async (amount) => {
+    console.log('=== Initial Balance Setup Started ===')
+    console.log('Amount:', amount)
+    
+    // NOTE: We don't create a category for 'initial-balance' because:
+    // 1. It's a system category with a special string ID, not a UUID
+    // 2. The categories table requires UUID primary keys
+    // 3. System categories are handled specially in the code
     
     // Add the initial balance transaction as a balance adjustment
     const initialTransaction = {
@@ -242,42 +271,77 @@ function AppContent() {
       note: null,
       classification: null,
       timestamp: Date.now(),
+      paymentMode: 'bank',
       isBalanceUpdate: true,
       balanceChange: amount
     }
     
+    console.log('Transaction to save:', initialTransaction)
+    
+    // Save to Supabase
+    try {
+      console.log('Saving transaction to Supabase...')
+      await DataRepository.addTransaction(initialTransaction)
+      console.log('Transaction saved successfully')
+      
+      console.log('Initial balance saved to Supabase successfully')
+    } catch (error) {
+      console.error('Error saving initial balance to Supabase:', error)
+      console.error('Error details:', error.message, error.code)
+      // Show error to user
+      alert(`Failed to save initial balance: ${error.message}. Please check console and try again.`)
+      return // Don't proceed if save failed
+    }
+    
+    console.log('Updating local store...')
     updateStore(current => ({
       ...current,
       payments: {
         ...current.payments,
-        categories: [...current.payments.categories, initialBalanceCategory],
         transactions: [...current.payments.transactions, initialTransaction]
       }
     }))
     
+    console.log('Initial balance setup complete')
     setShowInitialBalance(false)
     setShowAddTransactionTip(true)
   }
   
-  const handleInitialBalanceSkip = () => {
+  const handleInitialBalanceSkip = async () => {
+    const updatedSettings = {
+      ...data.settings,
+      initialBalanceSkipped: true
+    }
+    
+    try {
+      await DataRepository.updateSettings(updatedSettings)
+    } catch (error) {
+      console.error('Error updating initialBalanceSkipped in Supabase:', error)
+    }
+    
     updateStore(current => ({
       ...current,
-      settings: {
-        ...current.settings,
-        initialBalanceSkipped: true
-      }
+      settings: updatedSettings
     }))
     setShowInitialBalance(false)
     setShowAddTransactionTip(true)
   }
   
-  const handleDismissAddTransactionTip = () => {
+  const handleDismissAddTransactionTip = async () => {
+    const updatedSettings = {
+      ...data.settings,
+      addTransactionTipSeen: true
+    }
+    
+    try {
+      await DataRepository.updateSettings(updatedSettings)
+    } catch (error) {
+      console.error('Error updating addTransactionTipSeen in Supabase:', error)
+    }
+    
     updateStore(current => ({
       ...current,
-      settings: {
-        ...current.settings,
-        addTransactionTipSeen: true
-      }
+      settings: updatedSettings
     }))
     setShowAddTransactionTip(false)
   }

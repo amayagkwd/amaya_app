@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import theme, { componentStyles } from '../../theme'
+import * as DataRepository from '../../repositories/dataRepository'
 
 export default function BudgetSetup({ data, updateStore }) {
   const navigate = useNavigate()
@@ -11,17 +12,26 @@ export default function BudgetSetup({ data, updateStore }) {
   const [amount, setAmount] = useState(existingBudget?.amount?.toString() || '')
   const [isEnabled, setIsEnabled] = useState(existingBudget?.enabled || false)
 
-  const saveBudget = (enabled, budgetMode, budgetAmount) => {
+  const saveBudget = async (enabled, budgetMode, budgetAmount) => {
+    const updatedSettings = {
+      ...data.settings,
+      budget: {
+        enabled: enabled,
+        mode: budgetMode,
+        amount: parseFloat(budgetAmount) || 0
+      }
+    }
+    
+    // Save to Supabase
+    try {
+      await DataRepository.updateSettings(updatedSettings)
+    } catch (error) {
+      console.error('Error updating budget in Supabase:', error)
+    }
+    
     updateStore(current => ({
       ...current,
-      settings: {
-        ...current.settings,
-        budget: {
-          enabled: enabled,
-          mode: budgetMode,
-          amount: parseFloat(budgetAmount) || 0
-        }
-      }
+      settings: updatedSettings
     }))
   }
 

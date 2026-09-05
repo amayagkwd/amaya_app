@@ -8,6 +8,7 @@ import { formatLargeNumber } from '../../utils/formatLargeNumber'
 import { useFinancials } from '../../hooks/useFinancials'
 import { calculateStats } from '../../services/financialCalculations'
 import theme, { componentStyles } from '../../theme'
+import * as DataRepository from '../../repositories/dataRepository'
 
 export default function Payments({ data, updateStore, onDelete, onOpenBottomSheet }) {
   const location = useLocation()
@@ -156,7 +157,14 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     setEditingTransaction(transaction)
   }
   
-  const handleSaveEdit = (updatedTransaction) => {
+  const handleSaveEdit = async (updatedTransaction) => {
+    // Save to Supabase
+    try {
+      await DataRepository.updateTransaction(updatedTransaction.id, updatedTransaction)
+    } catch (error) {
+      console.error('Error updating transaction in Supabase:', error)
+    }
+    
     updateStore(current => ({
       ...current,
       payments: {

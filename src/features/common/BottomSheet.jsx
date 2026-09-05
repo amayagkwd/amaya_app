@@ -4,6 +4,7 @@ import { showToast } from './Toast'
 import { getCurrencyByCountry } from '../../utils/countries'
 import uuidv4 from '../../utils/uuid'
 import theme from '../../theme'
+import * as DataRepository from '../../repositories/dataRepository'
 
 export default function BottomSheet({ isOpen, onClose, categories, onSave, data, updateStore, mode = 'transaction', initialType = null, initialPaymentMode = null }) {
   const navigate = useNavigate()
@@ -95,6 +96,7 @@ export default function BottomSheet({ isOpen, onClose, categories, onSave, data,
         type,
         amount: parseFloat(amount),
         categoryId,
+        category: category?.name || null,
         date,
         note: note.trim() || null,
         classification: category?.classification || null
@@ -717,7 +719,7 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
     inputRef.current?.focus()
   }, [])
   
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newName.trim()) return
     
     const newCategory = {
@@ -728,6 +730,13 @@ function AddCategoryForm({ onClose, onSelect, type, updateStore }) {
       isDefault: false
     }
     
+    // Save to Supabase
+    try {
+      await DataRepository.addCategory(newCategory)
+    } catch (error) {
+      console.error('Error adding category to Supabase:', error)
+    }
+
     updateStore(current => ({
       ...current,
       payments: {

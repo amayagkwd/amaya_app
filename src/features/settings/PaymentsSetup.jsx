@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import uuidv4 from '../../utils/uuid'
 import theme from '../../theme'
+import * as DataRepository from '../../repositories/dataRepository'
 
 export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
   const [activeAddSection, setActiveAddSection] = useState(null)
@@ -25,10 +26,24 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
     setDeleteTransactions(null)
   }
   
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteWarning && deleteTransactions !== null) {
       const categoryToDelete = deleteWarning
       
+      // Delete from Supabase
+      try {
+        await DataRepository.deleteCategory(categoryToDelete.id)
+        if (deleteTransactions) {
+          // Delete each related transaction from Supabase
+          const relatedTxIds = data.payments.transactions
+            .filter(t => t.categoryId === categoryToDelete.id)
+            .map(t => t.id)
+          await Promise.all(relatedTxIds.map(id => DataRepository.deleteTransaction(id)))
+        }
+      } catch (error) {
+        console.error('Error deleting category from Supabase:', error)
+      }
+
       updateStore(current => {
         const updatedCategories = current.payments.categories.filter(c => c.id !== categoryToDelete.id)
         const updatedTransactions = deleteTransactions 
@@ -57,19 +72,17 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
     }
   }
   
-  const handleDelete = (id) => {
-    if (confirm('Delete this category?')) {
-      updateStore(current => ({
-        ...current,
-        payments: {
-          ...current.payments,
-          categories: current.payments.categories.filter(c => c.id !== id)
-        }
-      }))
+  const handleRename = async (id, newName) => {
+    // Update in Supabase
+    try {
+      const category = data.payments.categories.find(c => c.id === id)
+      if (category) {
+        await DataRepository.updateCategory(id, { ...category, name: newName })
+      }
+    } catch (error) {
+      console.error('Error renaming category in Supabase:', error)
     }
-  }
-  
-  const handleRename = (id, newName) => {
+
     updateStore(current => ({
       ...current,
       payments: {
@@ -81,13 +94,25 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
     }))
   }
   
-  const toggleClassification = (id) => {
+  const toggleClassification = async (id) => {
+    const category = data.payments.categories.find(c => c.id === id)
+    const newClassification = category?.classification === 'need' ? 'want' : 'need'
+
+    // Update in Supabase
+    try {
+      if (category) {
+        await DataRepository.updateCategory(id, { ...category, classification: newClassification })
+      }
+    } catch (error) {
+      console.error('Error updating category classification in Supabase:', error)
+    }
+
     updateStore(current => ({
       ...current,
       payments: {
         ...current.payments,
         categories: current.payments.categories.map(c =>
-          c.id === id ? { ...c, classification: c.classification === 'need' ? 'want' : 'need' } : c
+          c.id === id ? { ...c, classification: newClassification } : c
         )
       }
     }))
@@ -316,21 +341,30 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
   
   const previousCategories = (data.payments.previousCategories || []).filter(c => c.type === type)
   
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (newName.trim()) {
+      const newCategory = { 
+        id: uuidv4(), 
+        name: newName.trim(), 
+        type, 
+        classification: type === 'expense' ? newClassification : null, 
+        isDefault: false 
+      }
+
+      // Save to Supabase
+      try {
+        await DataRepository.addCategory(newCategory)
+      } catch (error) {
+        console.error('Error adding category to Supabase:', error)
+      }
+
       updateStore(current => ({
         ...current,
         payments: {
           ...current.payments,
           categories: [
             ...current.payments.categories,
-            { 
-              id: uuidv4(), 
-              name: newName.trim(), 
-              type, 
-              classification: type === 'expense' ? newClassification : null, 
-              isDefault: false 
-            }
+            newCategory
           ]
         }
       }))
@@ -340,7 +374,14 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
     }
   }
   
-  const handleRestoreCategory = (category) => {
+  const handleRestoreCategory = async (category) => {
+    // Re-add to Supabase (it was deleted when removed)
+    try {
+      await DataRepository.addCategory(category)
+    } catch (error) {
+      console.error('Error restoring category to Supabase:', error)
+    }
+
     updateStore(current => ({
       ...current,
       payments: {

@@ -8,6 +8,7 @@ import { useBudget } from '../../hooks/useBudget'
 import AddTransactionButton from '../common/AddTransactionButton'
 import { showToast } from '../common/Toast'
 import uuidv4 from '../../utils/uuid'
+import * as DataRepository from '../../repositories/dataRepository'
 import theme, { componentStyles } from '../../theme'
 import Cash from '../payments/Cash'
 
@@ -121,12 +122,18 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
       
       if (hasPreviousMonthData) {
         hasSeenForecast = true
+        const updatedSettings = {
+          ...data.settings,
+          hasSeenForecast: true
+        }
+        
+        DataRepository.updateSettings(updatedSettings).catch(error => {
+          console.error('Error updating hasSeenForecast in Supabase:', error)
+        })
+        
         updateStore(current => ({
           ...current,
-          settings: {
-            ...current.settings,
-            hasSeenForecast: true
-          }
+          settings: updatedSettings
         }))
       }
     }
@@ -141,12 +148,18 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     
     // Mark as seen once we're past day 10
     if (!hasSeenForecast && daysElapsed >= 10) {
+      const updatedSettings = {
+        ...data.settings,
+        hasSeenForecast: true
+      }
+      
+      DataRepository.updateSettings(updatedSettings).catch(error => {
+        console.error('Error updating hasSeenForecast in Supabase:', error)
+      })
+      
       updateStore(current => ({
         ...current,
-        settings: {
-          ...current.settings,
-          hasSeenForecast: true
-        }
+        settings: updatedSettings
       }))
     }
 
@@ -198,7 +211,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     setBalanceEditOpen(true)
   }
 
-  const handleBalanceSave = () => {
+  const handleBalanceSave = async () => {
     const newBalance = parseFloat(editedBalance)
     if (isNaN(newBalance)) return
 
@@ -216,6 +229,13 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
         timestamp: Date.now(),
         isBalanceUpdate: true,
         balanceChange: difference
+      }
+
+      // Save to Supabase
+      try {
+        await DataRepository.addTransaction(transaction)
+      } catch (error) {
+        console.error('Error saving balance update to Supabase:', error)
       }
 
       updateStore(current => ({
@@ -236,7 +256,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     setCashModalOpen(true)
   }
 
-  const handleCashSave = (amount) => {
+  const handleCashSave = async (amount) => {
     // Create initial cash balance transaction
     const transaction = {
       id: uuidv4(),
@@ -247,7 +267,16 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
       date: new Date().toISOString().split('T')[0],
       note: 'Initial cash balance',
       timestamp: Date.now(),
-      paymentMode: 'cash'
+      paymentMode: 'cash',
+      isBalanceUpdate: true,
+      balanceChange: amount
+    }
+
+    // Save to Supabase
+    try {
+      await DataRepository.addTransaction(transaction)
+    } catch (error) {
+      console.error('Error saving cash balance to Supabase:', error)
     }
 
     updateStore(current => ({
@@ -279,7 +308,7 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
     setCashBalanceEditOpen(true)
   }
 
-  const handleCashBalanceSave = () => {
+  const handleCashBalanceSave = async () => {
     const newBalance = parseFloat(editedCashBalance)
     if (isNaN(newBalance)) return
 
@@ -296,7 +325,15 @@ export default function Dashboard({ data, onOpenBottomSheet, updateStore }) {
         note: cashBalanceNote.trim() || null,
         timestamp: Date.now(),
         paymentMode: 'cash',
+        isBalanceUpdate: true,
         balanceChange: difference
+      }
+
+      // Save to Supabase
+      try {
+        await DataRepository.addTransaction(transaction)
+      } catch (error) {
+        console.error('Error saving cash balance update to Supabase:', error)
       }
 
       updateStore(current => ({

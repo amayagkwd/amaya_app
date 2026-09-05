@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import uuidv4 from '../utils/uuid'
 import * as FinancialCalcs from '../services/financialCalculations'
+import * as DataRepository from '../repositories/dataRepository'
 
 export function useMonthlyBalanceCarry(data, updateStore) {
   const hasRunRef = useRef(false)
@@ -359,6 +360,11 @@ export function useMonthlyBalanceCarry(data, updateStore) {
           isBalanceUpdate: true,
           balanceChange: previousMonthBalance
         }
+        
+        // Save to Supabase
+        DataRepository.addTransaction(balanceTransaction).catch(error => {
+          console.error('Error saving month-balance transaction to Supabase:', error)
+        })
         
         updateStore(current => ({
           ...current,

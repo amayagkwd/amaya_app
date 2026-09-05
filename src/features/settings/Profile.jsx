@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import theme, { componentStyles } from '../../theme'
+import * as DataRepository from '../../repositories/dataRepository'
 
 export default function Profile({ data, updateStore }) {
   const { signOut, user } = useAuth()
@@ -14,10 +15,19 @@ export default function Profile({ data, updateStore }) {
     setEditValues({ [field]: data.profile[field] })
   }
   
-  const handleSave = (field) => {
+  const handleSave = async (field) => {
+    const updatedProfile = { ...data.profile, [field]: editValues[field] }
+    
+    // Save to Supabase
+    try {
+      await DataRepository.updateProfile(updatedProfile)
+    } catch (error) {
+      console.error('Error updating profile in Supabase:', error)
+    }
+    
     updateStore(current => ({
       ...current,
-      profile: { ...current.profile, [field]: editValues[field] }
+      profile: updatedProfile
     }))
     setEditing(null)
     setSaved({ ...saved, [field]: true })

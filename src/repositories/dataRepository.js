@@ -710,3 +710,77 @@ export async function hasMigrated() {
     return false
   }
 }
+
+// ============================================================================
+// DATA CLEANUP / BACKFILL OPERATIONS
+// ============================================================================
+
+/**
+ * Backfill missing category names in transactions table from categories table
+ * Transactions have category_id but may have NULL category (name) from old code
+ * @returns {Promise<Object>} Result with count of updated rows
+ */
+export async function backfillTransactionCategoryNames() {
+  const user = await getCurrentUser()
+  
+  if (!user) {
+    return { success: false, message: 'User not authenticated' }
+  }
+
+  try {
+    // Get all transactions with NULL category but non-NULL category_id
+    const { data: transactionsToFix, error: fetchError } = await supabase
+      .from('transactions')
+      .select('id, category_id')
+      .eq('user_id', user.id)
+      .is('category', null)
+      .not('category_id', 'is', null)
+    
+    if (fetchError) throw fetchError
+    
+    if (!transactionsToFix || transactionsToFix.length === 0) {
+      return { success: true, message: 'No transactions need category name backfill', updated: 0 }
+    }
+
+    // Get all user's categories
+    const { data: categories, error: catError } = await supabase
+      .from('categories')
+      .select('id, name')
+      .eq('user_id', user.id)
+    
+    if (catError) throw catError
+
+    // Build a map of category_id -> name
+    const categoryMap = {}
+    categories.forEach(cat => {
+      categoryMap[cat.id] = cat.name
+    })
+
+    // Update each transaction with its category name
+    const updates = []
+    for (const transaction of transactionsToFix) {
+      const categoryName = categoryMap[transaction.category_id]
+      if (categoryName) {
+        updates.push(
+          supabase
+            .from('transactions')
+            .update({ category: categoryName })
+            .eq('id', transaction.id)
+            .eq('user_id', user.id)
+        )
+      }
+    }
+
+    // Execute all updates in parallel
+    await Promise.all(updates)
+
+    return { 
+      success: true, 
+      message: `Backfilled category names for ${updates.length} transactions`, 
+      updated: updates.length 
+    }
+  } catch (error) {
+    console.error('Error backfilling transaction category names:', error)
+    return { success: false, message: error.message, error }
+  }
+}
