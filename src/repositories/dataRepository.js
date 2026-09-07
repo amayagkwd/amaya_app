@@ -325,10 +325,7 @@ export async function addCategory(category) {
       name: category.name,
       type: category.type,
       classification: category.classification,
-      is_default: category.isDefault || false,
-      is_deleted: category.isDeleted || false,
-      keep_transactions_on_delete: category.keepTransactionsOnDelete !== undefined ? category.keepTransactionsOnDelete : true,
-      deleted_at: category.deletedAt || null
+      is_default: category.isDefault || false
     }]).select().single()
     
     if (error) throw error
@@ -352,10 +349,7 @@ export async function updateCategory(id, updates) {
       .update({
         name: updates.name,
         type: updates.type,
-        classification: updates.classification,
-        is_deleted: updates.isDeleted,
-        keep_transactions_on_delete: updates.keepTransactionsOnDelete,
-        deleted_at: updates.deletedAt
+        classification: updates.classification
       })
       .eq('id', id)
       .eq('user_id', user.id)
@@ -370,22 +364,16 @@ export async function updateCategory(id, updates) {
 }
 
 /**
- * Delete a category (soft delete)
+ * Delete a category (actual deletion, not soft delete)
  * @param {string} id - Category ID
- * @param {boolean} keepTransactions - Whether to keep transactions after deletion
  * @returns {Promise<void>}
  */
-export async function deleteCategory(id, keepTransactions = true) {
+export async function deleteCategory(id) {
   const user = await getCurrentUser()
   
   if (user) {
-    // Soft delete: mark as deleted instead of removing
     const { error } = await supabase.from('categories')
-      .update({
-        is_deleted: true,
-        keep_transactions_on_delete: keepTransactions,
-        deleted_at: new Date().toISOString()
-      })
+      .delete()
       .eq('id', id)
       .eq('user_id', user.id)
     
@@ -406,10 +394,7 @@ function transformCategory(dbCategory) {
     name: dbCategory.name,
     type: dbCategory.type,
     classification: dbCategory.classification,
-    isDefault: dbCategory.is_default,
-    isDeleted: dbCategory.is_deleted || false,
-    keepTransactionsOnDelete: dbCategory.keep_transactions_on_delete !== undefined ? dbCategory.keep_transactions_on_delete : true,
-    deletedAt: dbCategory.deleted_at
+    isDefault: dbCategory.is_default
   }
 }
 
