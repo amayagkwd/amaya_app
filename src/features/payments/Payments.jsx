@@ -179,6 +179,46 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
     setEditingTransaction(null)
   }
   
+  const handleAddCategory = async (categoryId, categoryName, transaction) => {
+    try {
+      // 1. Create category in categories table with the existing categoryId
+      const newCategory = {
+        id: categoryId,
+        name: categoryName,
+        type: transaction.type, // income or expense
+        classification: transaction.classification || null,
+        isDefault: false
+      }
+      
+      await DataRepository.addCategory(newCategory)
+      
+      // 2. Update transaction's category field with the name
+      await DataRepository.updateTransaction(transaction.id, {
+        ...transaction,
+        category: categoryName
+      })
+      
+      // 3. Update local store
+      updateStore(current => ({
+        ...current,
+        payments: {
+          ...current.payments,
+          categories: [...current.payments.categories, newCategory],
+          transactions: current.payments.transactions.map(t =>
+            t.id === transaction.id 
+              ? { ...t, category: categoryName }
+              : t
+          )
+        }
+      }))
+      
+      console.log('✅ Category created and transaction updated')
+    } catch (error) {
+      console.error('Error adding category:', error)
+      alert('Failed to add category: ' + error.message)
+    }
+  }
+  
   const handleStatCardClick = (filterType) => {
     setActiveFilter(activeFilter === filterType ? null : filterType)
   }
@@ -352,6 +392,7 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
           country={data.profile.country}
           onDelete={onDelete}
           onEdit={handleEdit}
+          onAddCategory={handleAddCategory}
           quickFilter={activeFilter}
           appliedCategoryFilter={appliedCategoryFilter}
           appliedClassificationFilter={appliedClassificationFilter}

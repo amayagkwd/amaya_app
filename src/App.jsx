@@ -225,14 +225,23 @@ function AppContent() {
       console.log('Migration result:', result)
       
       if (result.success) {
-        console.log('Migration successful, reloading data...')
-        // Reload data after migration
-        const migratedData = await DataRepository.loadData()
-        console.log('Migrated data loaded:', migratedData)
-        updateStore(migratedData)
+        console.log('Migration successful!')
+        console.log(`✅ Migrated ${result.categoriesCount} categories and ${result.transactionsCount} transactions`)
+        
+        // Show summary if there's a mismatch (system categories were filtered)
+        if (result.originalCategoriesCount && result.originalCategoriesCount > result.categoriesCount) {
+          const systemCategoriesCount = result.originalCategoriesCount - result.categoriesCount
+          console.log(`ℹ️ Note: ${systemCategoriesCount} system categories were not migrated (this is expected)`)
+        }
+        
+        // Don't call updateStore here - it would trigger a save that overwrites localStorage
+        // Instead, just reload the page to fetch fresh data from Supabase
         setShowMigration(false)
         setNeedsMigrationCheck(false)
         setMigrationCheckComplete(true)
+        
+        // Reload the page to fetch data from Supabase without overwriting localStorage yet
+        window.location.reload()
       } else {
         console.error('Migration failed:', result.message)
         alert('Migration failed: ' + result.message)

@@ -12,7 +12,8 @@ export default function PaymentsHistory({
   quickFilter,
   appliedCategoryFilter,
   appliedClassificationFilter,
-  appliedTypeFilter
+  appliedTypeFilter,
+  onAddCategory
 }) {
   const [showFilters, setShowFilters] = useState(false)
   const [typeFilter, setTypeFilter] = useState('all')
@@ -20,6 +21,7 @@ export default function PaymentsHistory({
   const [classificationFilter, setClassificationFilter] = useState('all')
   const [amountOperator, setAmountOperator] = useState('more')
   const [amountValue, setAmountValue] = useState('')
+  const [addCategoryModal, setAddCategoryModal] = useState(null) // { transaction, categoryId }
   
   // Update filters when navigation props change
   useEffect(() => {
@@ -744,6 +746,28 @@ export default function PaymentsHistory({
                 displayName = 'Balance Transaction'
               } else if (isBalanceUpdate) {
                 displayName = 'Balance Updated'
+              } else if (!category && t.categoryId) {
+                // Transaction has category_id but no category name - show "Add Category"
+                displayName = (
+                  <button
+                    onClick={() => setAddCategoryModal({ transaction: t, categoryId: t.categoryId })}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: theme.colors.accentPurple,
+                      fontSize: theme.typography.h6,
+                      fontWeight: theme.typography.medium,
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline',
+                      fontFamily: theme.typography.fontFamily,
+                      outline: 'none',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                  >
+                    + Add Category
+                  </button>
+                )
               } else {
                 displayName = category?.name || 'Unknown'
               }
@@ -893,6 +917,150 @@ export default function PaymentsHistory({
           </span>
         </div>
       )}
+      
+      {/* Add Category Modal */}
+      {addCategoryModal && (
+        <AddCategoryModal
+          categoryId={addCategoryModal.categoryId}
+          transaction={addCategoryModal.transaction}
+          onSave={(categoryName) => {
+            onAddCategory(addCategoryModal.categoryId, categoryName, addCategoryModal.transaction)
+            setAddCategoryModal(null)
+          }}
+          onClose={() => setAddCategoryModal(null)}
+        />
+      )}
     </div>
+  )
+}
+
+// Add Category Modal Component
+function AddCategoryModal({ categoryId, transaction, onSave, onClose }) {
+  const [categoryName, setCategoryName] = useState('')
+  
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (categoryName.trim()) {
+      onSave(categoryName.trim())
+    }
+  }
+  
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          zIndex: 999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: theme.spacing.xl
+        }}
+      />
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1000,
+        width: '90%',
+        maxWidth: '400px',
+        background: theme.colors.bgModal,
+        backdropFilter: theme.backdropFilter,
+        WebkitBackdropFilter: theme.backdropFilter,
+        borderRadius: theme.borderRadius.xl,
+        padding: theme.spacing.xxl,
+        border: `1px solid ${theme.colors.borderSubtle}`,
+        boxShadow: theme.shadows.card
+      }}>
+        <h2 style={{
+          fontSize: theme.typography.h3,
+          color: theme.colors.textPrimary,
+          marginBottom: theme.spacing.md,
+          fontWeight: theme.typography.semiBold
+        }}>
+          Add Category Name
+        </h2>
+        
+        <p style={{
+          fontSize: theme.typography.body,
+          color: theme.colors.textSecondary,
+          marginBottom: theme.spacing.lg,
+          lineHeight: 1.5
+        }}>
+          This transaction is missing a category name. Please enter a name for this category.
+        </p>
+        
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+            placeholder="Category name"
+            autoFocus
+            style={{
+              width: '100%',
+              padding: theme.spacing.md,
+              background: theme.colors.bgCard,
+              border: `1px solid ${theme.colors.borderSubtle}`,
+              borderRadius: theme.borderRadius.sm,
+              color: theme.colors.textPrimary,
+              fontSize: theme.typography.body,
+              fontFamily: theme.typography.fontFamily,
+              outline: 'none',
+              marginBottom: theme.spacing.lg
+            }}
+          />
+          
+          <div style={{
+            display: 'flex',
+            gap: theme.spacing.md
+          }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                flex: 1,
+                padding: theme.spacing.md,
+                border: `1px solid ${theme.colors.borderSubtle}`,
+                borderRadius: theme.borderRadius.sm,
+                background: theme.colors.bgCardDark,
+                color: theme.colors.textPrimary,
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
+                cursor: 'pointer',
+                outline: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!categoryName.trim()}
+              style={{
+                flex: 1,
+                padding: theme.spacing.md,
+                border: 'none',
+                borderRadius: theme.borderRadius.sm,
+                background: categoryName.trim() ? theme.colors.accentPurple : theme.colors.bgCardDark,
+                color: theme.colors.textPrimary,
+                fontSize: theme.typography.body,
+                fontWeight: theme.typography.medium,
+                cursor: categoryName.trim() ? 'pointer' : 'not-allowed',
+                outline: 'none',
+                opacity: categoryName.trim() ? 1 : 0.5,
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   )
 }

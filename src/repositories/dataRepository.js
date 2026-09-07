@@ -163,10 +163,10 @@ export async function saveData(data) {
   const user = await getCurrentUser()
   
   if (user) {
-    // Save to Supabase
+    // Save to Supabase only - localStorage is preserved as backup
     await saveToSupabase(user.id, data)
   } else {
-    // Save to localStorage
+    // For unauthenticated users, use localStorage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }
 }
@@ -210,12 +210,13 @@ async function saveToSupabase(userId, data) {
       month_balance_double_count_fixed: data.settings.monthBalanceDoubleCountFix || false
     })
 
-    // Also save to localStorage as backup
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    // NEVER overwrite localStorage - keep it as permanent backup
+    // Users can manually clear it if they want
+    console.log('✅ Data saved to Supabase (localStorage preserved)')
   } catch (error) {
     console.error('Error saving to Supabase:', error)
-    // Fallback to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    // Don't overwrite localStorage even on error - it's the backup!
+    throw error
   }
 }
 
@@ -523,6 +524,10 @@ export async function migrateLocalStorageToSupabase() {
   }
 
   try {
+    // Track what was actually migrated
+    let migratedCategoriesCount = 0
+    let migratedTransactionsCount = 0
+    
     // 1. Migrate profile
     await supabase.from('profiles').upsert({
       id: user.id,
@@ -536,6 +541,9 @@ export async function migrateLocalStorageToSupabase() {
       // Filter out system categories - they should never be in the categories table
       const SYSTEM_CATEGORY_IDS = ['initial-balance', 'month-balance', 'cash-balance', 'balance-update', 'cash-balance-update']
       
+      console.log('📋 Total categories in localStorage:', localData.payments.categories.length)
+      console.log('📋 Categories before filtering:', localData.payments.categories.map(c => ({ id: c.id, name: c.name })))
+      
       const categories = localData.payments.categories
         .filter(cat => !SYSTEM_CATEGORY_IDS.includes(cat.id))
         .map(cat => ({
@@ -547,18 +555,26 @@ export async function migrateLocalStorageToSupabase() {
           is_default: cat.isDefault || false
         }))
       
+      console.log(`📋 After filtering: ${categories.length} categories to migrate`)
       console.log('📋 Migrating categories:', categories)
-      const { data: insertedCategories, error: categoriesError } = await supabase
-        .from('categories')
-        .upsert(categories)
-        .select()
       
-      if (categoriesError) {
-        console.error('❌ Category migration failed:', categoriesError)
-        throw categoriesError
+      // Only attempt upsert if we have categories to migrate
+      if (categories.length > 0) {
+        const { data: insertedCategories, error: categoriesError } = await supabase
+          .from('categories')
+          .upsert(categories)
+          .select()
+        
+        if (categoriesError) {
+          console.error('❌ Category migration failed:', categoriesError)
+          throw categoriesError
+        }
+        
+        migratedCategoriesCount = insertedCategories?.length || 0
+        console.log(`✅ ${migratedCategoriesCount} categories migrated successfully`)
+      } else {
+        console.log('⚠️ No user categories to migrate (only system categories found)')
       }
-      
-      console.log('✅ Categories migrated successfully:', insertedCategories)
       
       // Verify that all categories have names
       const { data: verifyCategories } = await supabase
@@ -636,6 +652,7 @@ export async function migrateLocalStorageToSupabase() {
           console.error(`❌ Transaction migration failed for batch ${i}-${i+100}:`, txnError)
           throw txnError
         }
+        migratedTransactionsCount += batch.length
         console.log(`✅ Migrated transactions ${i}-${Math.min(i+100, transactions.length)}`)
       }
       
@@ -702,16 +719,21 @@ export async function migrateLocalStorageToSupabase() {
       user_id: user.id,
       migrated: true,
       migration_date: new Date().toISOString(),
-      transactions_count: localData.payments.transactions.length,
-      categories_count: localData.payments.categories.length,
+      transactions_count: migratedTransactionsCount,
+      categories_count: migratedCategoriesCount,
       source: 'localStorage'
     })
+
+    console.log('🎉 Migration complete!')
+    console.log(`📊 Summary: ${migratedCategoriesCount} categories, ${migratedTransactionsCount} transactions`)
 
     return {
       success: true,
       message: 'Migration completed successfully',
-      categoriesCount: localData.payments.categories.length,
-      transactionsCount: localData.payments.transactions.length
+      categoriesCount: migratedCategoriesCount,
+      transactionsCount: migratedTransactionsCount,
+      originalCategoriesCount: localData.payments.categories.length,
+      originalTransactionsCount: localData.payments.transactions.length
     }
   } catch (error) {
     console.error('Migration error:', error)

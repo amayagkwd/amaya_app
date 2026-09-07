@@ -27,11 +27,11 @@ export function useStore() {
   const updateStore = useCallback((updater) => {
     setData(current => {
       const updated = typeof updater === 'function' ? updater(current) : updater
-      // Save to both Supabase (if authenticated) and localStorage (backup)
+      // Save to Supabase (if authenticated) - localStorage is preserved as permanent backup
       DataRepository.saveData(updated).catch(error => {
         console.error('Error saving to Supabase:', error)
-        // Fallback to localStorage only
-        saveStore(updated)
+        // Don't fall back to overwriting localStorage - it's our backup!
+        // Just log the error and continue
       })
       return updated
     })
