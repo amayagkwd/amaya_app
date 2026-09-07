@@ -192,27 +192,25 @@ export default function Payments({ data, updateStore, onDelete, onOpenBottomShee
       
       await DataRepository.addCategory(newCategory)
       
-      // 2. Update transaction's category field with the name
-      await DataRepository.updateTransaction(transaction.id, {
-        ...transaction,
-        category: categoryName
-      })
+      // 2. Update ALL transactions with this category_id to have the category name (bulk update)
+      const updatedCount = await DataRepository.updateTransactionsCategoryName(categoryId, categoryName)
+      console.log(`✅ Updated ${updatedCount} transactions with category name "${categoryName}"`)
       
-      // 3. Update local store
+      // 3. Update local store - update ALL transactions with this categoryId
       updateStore(current => ({
         ...current,
         payments: {
           ...current.payments,
           categories: [...current.payments.categories, newCategory],
           transactions: current.payments.transactions.map(t =>
-            t.id === transaction.id 
+            t.categoryId === categoryId 
               ? { ...t, category: categoryName }
               : t
           )
         }
       }))
       
-      console.log('✅ Category created and transaction updated')
+      console.log('✅ Category created and all transactions updated')
     } catch (error) {
       console.error('Error adding category:', error)
       alert('Failed to add category: ' + error.message)

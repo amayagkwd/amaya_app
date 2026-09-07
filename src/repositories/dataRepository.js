@@ -381,6 +381,32 @@ export async function deleteCategory(id) {
   }
 }
 
+/**
+ * Update category name for all transactions with a specific categoryId
+ * @param {string} categoryId - Category ID
+ * @param {string} categoryName - Category name to set
+ * @returns {Promise<number>} Number of transactions updated
+ */
+export async function updateTransactionsCategoryName(categoryId, categoryName) {
+  const user = await getCurrentUser()
+  
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+  
+  // Update all transactions with this categoryId in one query
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({ category: categoryName })
+    .eq('user_id', user.id)
+    .eq('category_id', categoryId)
+    .select()
+  
+  if (error) throw error
+  
+  return data?.length || 0
+}
+
 // ============================================================================
 // TRANSFORMATION HELPERS
 // ============================================================================
