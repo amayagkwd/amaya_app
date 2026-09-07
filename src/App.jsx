@@ -43,6 +43,7 @@ function AppContent() {
   const [needsMigrationCheck, setNeedsMigrationCheck] = useState(true)
   const [migrationCheckComplete, setMigrationCheckComplete] = useState(false)
   const [categoryNameBackfillDone, setCategoryNameBackfillDone] = useState(false)
+  const [categoryBackfillFromLocalStorageDone, setCategoryBackfillFromLocalStorageDone] = useState(false)
   
   // Handle monthly balance carry-over (only when data is loaded)
   useMonthlyBalanceCarry(data, updateStore)
@@ -144,12 +145,34 @@ function AppContent() {
     })()
   }
 
+  // Backfill missing category names from localStorage (one-time data fix)
+  // This runs BEFORE transaction backfill to ensure categories have names first
+  if (user && migrationCheckComplete && !categoryBackfillFromLocalStorageDone && !dataLoading) {
+    ;(async () => {
+      try {
+        const result = await DataRepository.backfillCategoryNamesFromLocalStorage()
+        console.log('Category name backfill from localStorage:', result)
+        setCategoryBackfillFromLocalStorageDone(true)
+        
+        // Reload data if any updates were made
+        if (result.success && result.updated > 0) {
+          const refreshedData = await DataRepository.loadData()
+          updateStore(refreshedData)
+        }
+      } catch (error) {
+        console.error('Category name backfill from localStorage error:', error)
+        setCategoryBackfillFromLocalStorageDone(true) // Mark as done even on error to prevent retry loops
+      }
+    })()
+  }
+
   // Backfill missing category names in transactions (one-time data fix)
-  if (user && migrationCheckComplete && !categoryNameBackfillDone && !dataLoading) {
+  // This runs AFTER category backfill to ensure categories have names
+  if (user && categoryBackfillFromLocalStorageDone && !categoryNameBackfillDone && !dataLoading) {
     ;(async () => {
       try {
         const result = await DataRepository.backfillTransactionCategoryNames()
-        console.log('Category name backfill:', result)
+        console.log('Category name backfill in transactions:', result)
         setCategoryNameBackfillDone(true)
         
         // Reload data if any updates were made

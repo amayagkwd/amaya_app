@@ -716,6 +716,77 @@ export async function hasMigrated() {
 // ============================================================================
 
 /**
+ * Backfill missing category names in backend from localStorage
+ * If a category exists in backend with NULL name but has a name in localStorage, update it
+ * @returns {Promise<Object>} Result with count of updated categories
+ */
+export async function backfillCategoryNamesFromLocalStorage() {
+  const user = await getCurrentUser()
+  
+  if (!user) {
+    return { success: false, message: 'User not authenticated' }
+  }
+
+  try {
+    // Get categories from localStorage
+    const localData = loadFromLocalStorage()
+    const localCategories = localData.payments?.categories || []
+    
+    if (localCategories.length === 0) {
+      return { success: true, message: 'No local categories to backfill from', updated: 0 }
+    }
+
+    // Get backend categories with NULL names
+    const { data: backendCategories, error: fetchError } = await supabase
+      .from('categories')
+      .select('id, name')
+      .eq('user_id', user.id)
+      .is('name', null)
+    
+    if (fetchError) throw fetchError
+    
+    if (!backendCategories || backendCategories.length === 0) {
+      return { success: true, message: 'No backend categories need name backfill', updated: 0 }
+    }
+
+    // Build a map of local category_id -> name
+    const localCategoryMap = {}
+    localCategories.forEach(cat => {
+      if (cat.id && cat.name) {
+        localCategoryMap[cat.id] = cat.name
+      }
+    })
+
+    // Update backend categories that have NULL names
+    const updates = []
+    for (const backendCat of backendCategories) {
+      const localName = localCategoryMap[backendCat.id]
+      if (localName) {
+        updates.push(
+          supabase
+            .from('categories')
+            .update({ name: localName })
+            .eq('id', backendCat.id)
+            .eq('user_id', user.id)
+        )
+      }
+    }
+
+    // Execute all updates in parallel
+    await Promise.all(updates)
+
+    return { 
+      success: true, 
+      message: `Backfilled names for ${updates.length} categories from localStorage`, 
+      updated: updates.length 
+    }
+  } catch (error) {
+    console.error('Error backfilling category names from localStorage:', error)
+    return { success: false, message: error.message, error }
+  }
+}
+
+/**
  * Backfill missing category names in transactions table from categories table
  * Transactions have category_id but may have NULL category (name) from old code
  * @returns {Promise<Object>} Result with count of updated rows
