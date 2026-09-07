@@ -533,14 +533,19 @@ export async function migrateLocalStorageToSupabase() {
 
     // 2. Migrate categories (preserving IDs)
     if (localData.payments.categories.length > 0) {
-      const categories = localData.payments.categories.map(cat => ({
-        id: cat.id,
-        user_id: user.id,
-        name: cat.name,
-        type: cat.type,
-        classification: cat.classification,
-        is_default: cat.isDefault || false
-      }))
+      // Filter out system categories - they should never be in the categories table
+      const SYSTEM_CATEGORY_IDS = ['initial-balance', 'month-balance', 'cash-balance', 'balance-update', 'cash-balance-update']
+      
+      const categories = localData.payments.categories
+        .filter(cat => !SYSTEM_CATEGORY_IDS.includes(cat.id))
+        .map(cat => ({
+          id: cat.id,
+          user_id: user.id,
+          name: cat.name,
+          type: cat.type,
+          classification: cat.classification,
+          is_default: cat.isDefault || false
+        }))
       
       console.log('📋 Migrating categories:', categories)
       const { data: insertedCategories, error: categoriesError } = await supabase
@@ -564,10 +569,18 @@ export async function migrateLocalStorageToSupabase() {
       
       if (verifyCategories && verifyCategories.length > 0) {
         console.warn('⚠️ Found categories with NULL names after migration, fixing...')
-        // Build category map from original data
+        // Build category map from original data (skip system categories)
         const categoryMap = {}
         localData.payments.categories.forEach(cat => {
-          categoryMap[cat.id] = cat.name
+          // Skip system category IDs (they're not UUIDs)
+          if (cat.id && cat.name && 
+              cat.id !== 'initial-balance' && 
+              cat.id !== 'month-balance' && 
+              cat.id !== 'cash-balance' &&
+              cat.id !== 'balance-update' &&
+              cat.id !== 'cash-balance-update') {
+            categoryMap[cat.id] = cat.name
+          }
         })
         
         // Fix NULL categories
