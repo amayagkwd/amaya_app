@@ -109,9 +109,10 @@ async function loadFromSupabase(userId) {
       } : initialState.profile,
       
       payments: {
+        // Load ALL categories (including deleted ones)
         categories: categories.data ? categories.data.map(transformCategory) : [],
         transactions: transactions.data ? transactions.data.map(transformTransaction) : [],
-        previousCategories: [],
+        previousCategories: [], // Deprecated - now using isDeleted flag
         // Cash/credit balances are calculated from transactions, not stored separately
         cashBalance: 0,
         creditCardBalance: 0
@@ -323,7 +324,10 @@ export async function addCategory(category) {
       name: category.name,
       type: category.type,
       classification: category.classification,
-      is_default: category.isDefault || false
+      is_default: category.isDefault || false,
+      is_deleted: category.isDeleted || false,
+      keep_transactions_on_delete: category.keepTransactionsOnDelete !== undefined ? category.keepTransactionsOnDelete : true,
+      deleted_at: category.deletedAt || null
     }]).select().single()
     
     if (error) throw error
@@ -347,7 +351,10 @@ export async function updateCategory(id, updates) {
       .update({
         name: updates.name,
         type: updates.type,
-        classification: updates.classification
+        classification: updates.classification,
+        is_deleted: updates.isDeleted,
+        keep_transactions_on_delete: updates.keepTransactionsOnDelete,
+        deleted_at: updates.deletedAt
       })
       .eq('id', id)
       .eq('user_id', user.id)
@@ -362,16 +369,22 @@ export async function updateCategory(id, updates) {
 }
 
 /**
- * Delete a category
+ * Delete a category (soft delete)
  * @param {string} id - Category ID
+ * @param {boolean} keepTransactions - Whether to keep transactions after deletion
  * @returns {Promise<void>}
  */
-export async function deleteCategory(id) {
+export async function deleteCategory(id, keepTransactions = true) {
   const user = await getCurrentUser()
   
   if (user) {
+    // Soft delete: mark as deleted instead of removing
     const { error } = await supabase.from('categories')
-      .delete()
+      .update({
+        is_deleted: true,
+        keep_transactions_on_delete: keepTransactions,
+        deleted_at: new Date().toISOString()
+      })
       .eq('id', id)
       .eq('user_id', user.id)
     
@@ -392,7 +405,10 @@ function transformCategory(dbCategory) {
     name: dbCategory.name,
     type: dbCategory.type,
     classification: dbCategory.classification,
-    isDefault: dbCategory.is_default
+    isDefault: dbCategory.is_default,
+    isDeleted: dbCategory.is_deleted || false,
+    keepTransactionsOnDelete: dbCategory.keep_transactions_on_delete !== undefined ? dbCategory.keep_transactions_on_delete : true,
+    deletedAt: dbCategory.deleted_at
   }
 }
 
@@ -526,31 +542,125 @@ export async function migrateLocalStorageToSupabase() {
         is_default: cat.isDefault || false
       }))
       
-      await supabase.from('categories').upsert(categories)
+      console.log('📋 Migrating categories:', categories)
+      const { data: insertedCategories, error: categoriesError } = await supabase
+        .from('categories')
+        .upsert(categories)
+        .select()
+      
+      if (categoriesError) {
+        console.error('❌ Category migration failed:', categoriesError)
+        throw categoriesError
+      }
+      
+      console.log('✅ Categories migrated successfully:', insertedCategories)
+      
+      // Verify that all categories have names
+      const { data: verifyCategories } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .is('name', null)
+      
+      if (verifyCategories && verifyCategories.length > 0) {
+        console.warn('⚠️ Found categories with NULL names after migration, fixing...')
+        // Build category map from original data
+        const categoryMap = {}
+        localData.payments.categories.forEach(cat => {
+          categoryMap[cat.id] = cat.name
+        })
+        
+        // Fix NULL categories
+        for (const cat of verifyCategories) {
+          const correctName = categoryMap[cat.id]
+          if (correctName) {
+            await supabase
+              .from('categories')
+              .update({ name: correctName })
+              .eq('id', cat.id)
+              .eq('user_id', user.id)
+          }
+        }
+        console.log('✅ Fixed NULL category names')
+      }
     }
 
     // 3. Migrate transactions (preserving IDs and timestamps)
     if (localData.payments.transactions.length > 0) {
-      const transactions = localData.payments.transactions.map(txn => ({
-        id: txn.id,
-        user_id: user.id,
-        type: txn.type,
-        amount: txn.amount,
-        category_id: txn.categoryId,
-        category: txn.category,
-        date: txn.date || new Date().toISOString().split('T')[0],
-        note: txn.note,
-        classification: txn.classification,
-        payment_mode: txn.paymentMode || 'bank',
-        is_balance_update: txn.isBalanceUpdate || false,
-        balance_change: txn.balanceChange || null,
-        timestamp: txn.timestamp || Date.now()
-      }))
+      // Build category map for lookup
+      const categoryMap = {}
+      localData.payments.categories.forEach(cat => {
+        categoryMap[cat.id] = cat.name
+      })
+      
+      const transactions = localData.payments.transactions.map(txn => {
+        // Get category name from categoryId
+        const categoryName = txn.category || categoryMap[txn.categoryId] || null
+        
+        return {
+          id: txn.id,
+          user_id: user.id,
+          type: txn.type,
+          amount: txn.amount,
+          category_id: txn.categoryId,
+          category: categoryName,
+          date: txn.date || new Date().toISOString().split('T')[0],
+          note: txn.note,
+          classification: txn.classification,
+          payment_mode: txn.paymentMode || 'bank',
+          is_balance_update: txn.isBalanceUpdate || false,
+          balance_change: txn.balanceChange || null,
+          timestamp: txn.timestamp || Date.now()
+        }
+      })
       
       // Insert in batches of 100 to avoid payload limits
       for (let i = 0; i < transactions.length; i += 100) {
         const batch = transactions.slice(i, i + 100)
-        await supabase.from('transactions').upsert(batch)
+        const { error: txnError } = await supabase.from('transactions').upsert(batch)
+        
+        if (txnError) {
+          console.error(`❌ Transaction migration failed for batch ${i}-${i+100}:`, txnError)
+          throw txnError
+        }
+        console.log(`✅ Migrated transactions ${i}-${Math.min(i+100, transactions.length)}`)
+      }
+      
+      // Verify and fix transaction category names
+      console.log('🔍 Verifying transaction category names...')
+      const { data: nullTxns } = await supabase
+        .from('transactions')
+        .select('id, category_id')
+        .eq('user_id', user.id)
+        .is('category', null)
+        .not('category_id', 'is', null)
+      
+      if (nullTxns && nullTxns.length > 0) {
+        console.warn(`⚠️ Found ${nullTxns.length} transactions with NULL category names, fixing...`)
+        
+        // Get all categories to build map
+        const { data: allCategories } = await supabase
+          .from('categories')
+          .select('id, name')
+          .eq('user_id', user.id)
+        
+        const catMap = {}
+        allCategories.forEach(cat => {
+          catMap[cat.id] = cat.name
+        })
+        
+        // Fix each transaction
+        for (const txn of nullTxns) {
+          const categoryName = catMap[txn.category_id]
+          if (categoryName) {
+            await supabase
+              .from('transactions')
+              .update({ category: categoryName })
+              .eq('id', txn.id)
+              .eq('user_id', user.id)
+          }
+        }
+        console.log('✅ Fixed transaction category names')
       }
     }
 
@@ -716,6 +826,113 @@ export async function hasMigrated() {
 // ============================================================================
 
 /**
+ * Recover missing categories from transactions
+ * If transactions reference category_ids that don't exist in categories table,
+ * this function will recreate those categories from localStorage data
+ * @returns {Promise<Object>} Result with count of recovered categories
+ */
+export async function recoverMissingCategories() {
+  const user = await getCurrentUser()
+  
+  if (!user) {
+    return { success: false, message: 'User not authenticated' }
+  }
+
+  try {
+    console.log('🔍 Finding missing categories...')
+    
+    // Get all unique category_ids from transactions
+    const { data: transactions, error: txnError } = await supabase
+      .from('transactions')
+      .select('category_id')
+      .eq('user_id', user.id)
+      .not('category_id', 'is', null)
+    
+    if (txnError) throw txnError
+    
+    // Get unique category IDs
+    const uniqueCategoryIds = [...new Set(transactions.map(t => t.category_id))]
+    console.log(`Found ${uniqueCategoryIds.length} unique category IDs in transactions`)
+    
+    // Get existing categories
+    const { data: existingCategories, error: catError } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('user_id', user.id)
+    
+    if (catError) throw catError
+    
+    const existingIds = new Set(existingCategories.map(c => c.id))
+    console.log(`Found ${existingIds.size} categories in categories table`)
+    
+    // Find missing category IDs
+    const missingIds = uniqueCategoryIds.filter(id => 
+      !existingIds.has(id) && 
+      id !== 'initial-balance' && 
+      id !== 'month-balance' && 
+      id !== 'cash-balance' &&
+      id !== 'balance-update' &&
+      id !== 'cash-balance-update'
+    )
+    
+    console.log(`Found ${missingIds.length} missing categories:`, missingIds)
+    
+    if (missingIds.length === 0) {
+      return { success: true, message: 'No missing categories found', recovered: 0 }
+    }
+    
+    // Get category data from localStorage
+    const localData = loadFromLocalStorage()
+    const localCategories = localData.payments?.categories || []
+    
+    // Build map of id -> category data
+    const categoryMap = {}
+    localCategories.forEach(cat => {
+      categoryMap[cat.id] = cat
+    })
+    
+    // Create missing categories
+    const categoriesToInsert = []
+    for (const missingId of missingIds) {
+      const localCat = categoryMap[missingId]
+      if (localCat) {
+        categoriesToInsert.push({
+          id: localCat.id,
+          user_id: user.id,
+          name: localCat.name,
+          type: localCat.type,
+          classification: localCat.classification,
+          is_default: localCat.isDefault || false
+        })
+      } else {
+        console.warn(`⚠️ Category ${missingId} not found in localStorage`)
+      }
+    }
+    
+    if (categoriesToInsert.length > 0) {
+      console.log(`📝 Inserting ${categoriesToInsert.length} missing categories...`)
+      const { error: insertError } = await supabase
+        .from('categories')
+        .insert(categoriesToInsert)
+      
+      if (insertError) throw insertError
+      
+      console.log('✅ Missing categories inserted successfully')
+    }
+    
+    return {
+      success: true,
+      message: `Recovered ${categoriesToInsert.length} missing categories`,
+      recovered: categoriesToInsert.length,
+      missingIds
+    }
+  } catch (error) {
+    console.error('Error recovering missing categories:', error)
+    return { success: false, message: error.message, error }
+  }
+}
+
+/**
  * Backfill missing category names in backend from localStorage
  * If a category exists in backend with NULL name but has a name in localStorage, update it
  * @returns {Promise<Object>} Result with count of updated categories
@@ -728,14 +945,17 @@ export async function backfillCategoryNamesFromLocalStorage() {
   }
 
   try {
+    console.log('📋 Reading categories from localStorage...')
     // Get categories from localStorage
     const localData = loadFromLocalStorage()
     const localCategories = localData.payments?.categories || []
+    console.log(`Found ${localCategories.length} categories in localStorage`)
     
     if (localCategories.length === 0) {
       return { success: true, message: 'No local categories to backfill from', updated: 0 }
     }
 
+    console.log('🔍 Checking backend for categories with NULL names...')
     // Get backend categories with NULL names
     const { data: backendCategories, error: fetchError } = await supabase
       .from('categories')
@@ -744,6 +964,8 @@ export async function backfillCategoryNamesFromLocalStorage() {
       .is('name', null)
     
     if (fetchError) throw fetchError
+    
+    console.log(`Found ${backendCategories?.length || 0} categories with NULL names in backend`)
     
     if (!backendCategories || backendCategories.length === 0) {
       return { success: true, message: 'No backend categories need name backfill', updated: 0 }
@@ -756,12 +978,15 @@ export async function backfillCategoryNamesFromLocalStorage() {
         localCategoryMap[cat.id] = cat.name
       }
     })
+    
+    console.log(`Built category map with ${Object.keys(localCategoryMap).length} entries`)
 
     // Update backend categories that have NULL names
     const updates = []
     for (const backendCat of backendCategories) {
       const localName = localCategoryMap[backendCat.id]
       if (localName) {
+        console.log(`Will update category ${backendCat.id} → "${localName}"`)
         updates.push(
           supabase
             .from('categories')
@@ -772,6 +997,7 @@ export async function backfillCategoryNamesFromLocalStorage() {
       }
     }
 
+    console.log(`Updating ${updates.length} categories...`)
     // Execute all updates in parallel
     await Promise.all(updates)
 

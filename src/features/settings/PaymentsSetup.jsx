@@ -30,9 +30,10 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
     if (deleteWarning && deleteTransactions !== null) {
       const categoryToDelete = deleteWarning
       
-      // Delete from Supabase
+      // Soft delete category in Supabase
       try {
-        await DataRepository.deleteCategory(categoryToDelete.id)
+        await DataRepository.deleteCategory(categoryToDelete.id, !deleteTransactions)
+        
         if (deleteTransactions) {
           // Delete each related transaction from Supabase
           const relatedTxIds = data.payments.transactions
@@ -45,14 +46,16 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
       }
 
       updateStore(current => {
-        const updatedCategories = current.payments.categories.filter(c => c.id !== categoryToDelete.id)
+        // Mark category as deleted (soft delete)
+        const updatedCategories = current.payments.categories.map(c =>
+          c.id === categoryToDelete.id
+            ? { ...c, isDeleted: true, keepTransactionsOnDelete: !deleteTransactions, deletedAt: new Date().toISOString() }
+            : c
+        )
+        
         const updatedTransactions = deleteTransactions 
           ? current.payments.transactions.filter(t => t.categoryId !== categoryToDelete.id)
           : current.payments.transactions
-        
-        // Add to previous categories
-        const previousCategories = current.payments.previousCategories || []
-        const alreadyInPrevious = previousCategories.some(c => c.id === categoryToDelete.id)
         
         return {
           ...current,
@@ -60,9 +63,8 @@ export default function CategoriesPanel({ data, updateStore, autoOpenType }) {
             ...current.payments,
             categories: updatedCategories,
             transactions: updatedTransactions,
-            previousCategories: alreadyInPrevious 
-              ? previousCategories 
-              : [...previousCategories, categoryToDelete]
+            // previousCategories is now deprecated - using isDeleted flag
+            previousCategories: current.payments.previousCategories || []
           }
         }
       })
@@ -339,7 +341,11 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
   const [editName, setEditName] = useState('')
   const [showPrevious, setShowPrevious] = useState(false)
   
-  const previousCategories = (data.payments.previousCategories || []).filter(c => c.type === type)
+  // Filter active categories (not deleted)
+  const activeCategories = (data.payments.categories || []).filter(c => c.type === type && !c.isDeleted)
+  
+  // Filter deleted categories (previous categories)
+  const previousCategories = (data.payments.categories || []).filter(c => c.type === type && c.isDeleted)
   
   const handleAdd = async () => {
     if (newName.trim()) {
@@ -375,19 +381,27 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
   }
   
   const handleRestoreCategory = async (category) => {
-    // Re-add to Supabase (it was deleted when removed)
+    // Restore category by marking it as not deleted
     try {
-      await DataRepository.addCategory(category)
+      await DataRepository.updateCategory(category.id, {
+        ...category,
+        isDeleted: false,
+        deletedAt: null
+      })
     } catch (error) {
-      console.error('Error restoring category to Supabase:', error)
+      console.error('Error restoring category in Supabase:', error)
     }
 
     updateStore(current => ({
       ...current,
       payments: {
         ...current.payments,
-        categories: [...current.payments.categories, category],
-        previousCategories: current.payments.previousCategories.filter(c => c.id !== category.id)
+        categories: current.payments.categories.map(c =>
+          c.id === category.id
+            ? { ...c, isDeleted: false, deletedAt: null }
+            : c
+        ),
+        previousCategories: current.payments.previousCategories || []
       }
     }))
     setShowPrevious(false)
@@ -410,7 +424,7 @@ function CategorySection({ title, categories, onDeleteClick, onRename, hasTransa
     <div style={{ marginBottom: theme.spacing.xxxl }}>
       <h3 style={{ fontSize: theme.typography.body, marginBottom: theme.spacing.md, color: theme.colors.textSecondary, fontWeight: theme.typography.medium }}>{title}</h3>
       
-      {categories.map(category => (
+      {activeCategories.map(category => (
         <div
           key={category.id}
           style={{

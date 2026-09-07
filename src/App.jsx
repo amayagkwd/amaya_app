@@ -42,6 +42,7 @@ function AppContent() {
   const [showMigration, setShowMigration] = useState(false)
   const [needsMigrationCheck, setNeedsMigrationCheck] = useState(true)
   const [migrationCheckComplete, setMigrationCheckComplete] = useState(false)
+  const [categoryRecoveryDone, setCategoryRecoveryDone] = useState(false)
   const [categoryNameBackfillDone, setCategoryNameBackfillDone] = useState(false)
   const [categoryBackfillFromLocalStorageDone, setCategoryBackfillFromLocalStorageDone] = useState(false)
   
@@ -145,43 +146,73 @@ function AppContent() {
     })()
   }
 
-  // Backfill missing category names from localStorage (one-time data fix)
-  // This runs BEFORE transaction backfill to ensure categories have names first
-  if (user && migrationCheckComplete && !categoryBackfillFromLocalStorageDone && !dataLoading) {
+  // Recover missing categories (one-time data fix)
+  // This runs FIRST to recreate categories that are referenced in transactions but don't exist in categories table
+  if (user && migrationCheckComplete && !categoryRecoveryDone && !dataLoading) {
     ;(async () => {
       try {
+        console.log('🔄 Starting category recovery...')
+        const result = await DataRepository.recoverMissingCategories()
+        console.log('✅ Category recovery:', result)
+        setCategoryRecoveryDone(true)
+        
+        // Reload data if any categories were recovered
+        if (result.success && result.recovered > 0) {
+          console.log('🔄 Reloading data after category recovery...')
+          const refreshedData = await DataRepository.loadData()
+          updateStore(refreshedData)
+          console.log('✅ Data reloaded successfully')
+        }
+      } catch (error) {
+        console.error('❌ Category recovery error:', error)
+        setCategoryRecoveryDone(true)
+      }
+    })()
+  }
+
+  // Backfill missing category names from localStorage (one-time data fix)
+  // This runs AFTER recovery to ensure categories have names
+  if (user && categoryRecoveryDone && !categoryBackfillFromLocalStorageDone && !dataLoading) {
+    ;(async () => {
+      try {
+        console.log('🔄 Starting category name backfill from localStorage...')
         const result = await DataRepository.backfillCategoryNamesFromLocalStorage()
-        console.log('Category name backfill from localStorage:', result)
+        console.log('✅ Category name backfill from localStorage:', result)
         setCategoryBackfillFromLocalStorageDone(true)
         
         // Reload data if any updates were made
         if (result.success && result.updated > 0) {
+          console.log('🔄 Reloading data after category backfill...')
           const refreshedData = await DataRepository.loadData()
           updateStore(refreshedData)
+          console.log('✅ Data reloaded successfully')
         }
       } catch (error) {
-        console.error('Category name backfill from localStorage error:', error)
+        console.error('❌ Category name backfill from localStorage error:', error)
         setCategoryBackfillFromLocalStorageDone(true) // Mark as done even on error to prevent retry loops
       }
     })()
   }
 
   // Backfill missing category names in transactions (one-time data fix)
-  // This runs AFTER category backfill to ensure categories have names
+  // This runs LAST to update transaction category names from categories table
   if (user && categoryBackfillFromLocalStorageDone && !categoryNameBackfillDone && !dataLoading) {
     ;(async () => {
       try {
+        console.log('🔄 Starting transaction category name backfill...')
         const result = await DataRepository.backfillTransactionCategoryNames()
-        console.log('Category name backfill in transactions:', result)
+        console.log('✅ Transaction category name backfill:', result)
         setCategoryNameBackfillDone(true)
         
         // Reload data if any updates were made
         if (result.success && result.updated > 0) {
+          console.log('🔄 Reloading data after transaction backfill...')
           const refreshedData = await DataRepository.loadData()
           updateStore(refreshedData)
+          console.log('✅ Data reloaded successfully - all category names fixed!')
         }
       } catch (error) {
-        console.error('Category name backfill error:', error)
+        console.error('❌ Category name backfill error:', error)
         setCategoryNameBackfillDone(true) // Mark as done even on error to prevent retry loops
       }
     })()
