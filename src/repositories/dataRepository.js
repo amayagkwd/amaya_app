@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Data Repository Layer
  * 
  * This is the single source of truth for ALL data access operations.
@@ -212,7 +212,7 @@ async function saveToSupabase(userId, data) {
 
     // NEVER overwrite localStorage - keep it as permanent backup
     // Users can manually clear it if they want
-    console.log('✅ Data saved to Supabase (localStorage preserved)')
+    console.log('âœ… Data saved to Supabase (localStorage preserved)')
   } catch (error) {
     console.error('Error saving to Supabase:', error)
     // Don't overwrite localStorage even on error - it's the backup!
@@ -552,8 +552,8 @@ export async function migrateLocalStorageToSupabase() {
       // Filter out system categories - they should never be in the categories table
       const SYSTEM_CATEGORY_IDS = ['initial-balance', 'month-balance', 'cash-balance', 'balance-update', 'cash-balance-update']
       
-      console.log('📋 Total categories in localStorage:', localData.payments.categories.length)
-      console.log('📋 Categories before filtering:', localData.payments.categories.map(c => ({ id: c.id, name: c.name })))
+      console.log('ðŸ“‹ Total categories in localStorage:', localData.payments.categories.length)
+      console.log('ðŸ“‹ Categories before filtering:', localData.payments.categories.map(c => ({ id: c.id, name: c.name })))
       
       const categories = localData.payments.categories
         .filter(cat => !SYSTEM_CATEGORY_IDS.includes(cat.id))
@@ -566,8 +566,8 @@ export async function migrateLocalStorageToSupabase() {
           is_default: cat.isDefault || false
         }))
       
-      console.log(`📋 After filtering: ${categories.length} categories to migrate`)
-      console.log('📋 Migrating categories:', categories)
+      console.log(`ðŸ“‹ After filtering: ${categories.length} categories to migrate`)
+      console.log('ðŸ“‹ Migrating categories:', categories)
       
       // Only attempt upsert if we have categories to migrate
       if (categories.length > 0) {
@@ -577,14 +577,14 @@ export async function migrateLocalStorageToSupabase() {
           .select()
         
         if (categoriesError) {
-          console.error('❌ Category migration failed:', categoriesError)
+          console.error('âŒ Category migration failed:', categoriesError)
           throw categoriesError
         }
         
         migratedCategoriesCount = insertedCategories?.length || 0
-        console.log(`✅ ${migratedCategoriesCount} categories migrated successfully`)
+        console.log(`âœ… ${migratedCategoriesCount} categories migrated successfully`)
       } else {
-        console.log('⚠️ No user categories to migrate (only system categories found)')
+        console.log('âš ï¸ No user categories to migrate (only system categories found)')
       }
       
       // Verify that all categories have names
@@ -595,7 +595,7 @@ export async function migrateLocalStorageToSupabase() {
         .is('name', null)
       
       if (verifyCategories && verifyCategories.length > 0) {
-        console.warn('⚠️ Found categories with NULL names after migration, fixing...')
+        console.warn('âš ï¸ Found categories with NULL names after migration, fixing...')
         // Build category map from original data (skip system categories)
         const categoryMap = {}
         localData.payments.categories.forEach(cat => {
@@ -621,7 +621,7 @@ export async function migrateLocalStorageToSupabase() {
               .eq('user_id', user.id)
           }
         }
-        console.log('✅ Fixed NULL category names')
+        console.log('âœ… Fixed NULL category names')
       }
     }
 
@@ -660,15 +660,15 @@ export async function migrateLocalStorageToSupabase() {
         const { error: txnError } = await supabase.from('transactions').upsert(batch)
         
         if (txnError) {
-          console.error(`❌ Transaction migration failed for batch ${i}-${i+100}:`, txnError)
+          console.error(`âŒ Transaction migration failed for batch ${i}-${i+100}:`, txnError)
           throw txnError
         }
         migratedTransactionsCount += batch.length
-        console.log(`✅ Migrated transactions ${i}-${Math.min(i+100, transactions.length)}`)
+        console.log(`âœ… Migrated transactions ${i}-${Math.min(i+100, transactions.length)}`)
       }
       
       // Verify and fix transaction category names
-      console.log('🔍 Verifying transaction category names...')
+      console.log('ðŸ” Verifying transaction category names...')
       const { data: nullTxns } = await supabase
         .from('transactions')
         .select('id, category_id')
@@ -677,7 +677,7 @@ export async function migrateLocalStorageToSupabase() {
         .not('category_id', 'is', null)
       
       if (nullTxns && nullTxns.length > 0) {
-        console.warn(`⚠️ Found ${nullTxns.length} transactions with NULL category names, fixing...`)
+        console.warn(`âš ï¸ Found ${nullTxns.length} transactions with NULL category names, fixing...`)
         
         // Get all categories to build map
         const { data: allCategories } = await supabase
@@ -701,7 +701,7 @@ export async function migrateLocalStorageToSupabase() {
               .eq('user_id', user.id)
           }
         }
-        console.log('✅ Fixed transaction category names')
+        console.log('âœ… Fixed transaction category names')
       }
     }
 
@@ -735,8 +735,8 @@ export async function migrateLocalStorageToSupabase() {
       source: 'localStorage'
     })
 
-    console.log('🎉 Migration complete!')
-    console.log(`📊 Summary: ${migratedCategoriesCount} categories, ${migratedTransactionsCount} transactions`)
+    console.log('ðŸŽ‰ Migration complete!')
+    console.log(`ðŸ“Š Summary: ${migratedCategoriesCount} categories, ${migratedTransactionsCount} transactions`)
 
     return {
       success: true,
@@ -867,263 +867,3 @@ export async function hasMigrated() {
   }
 }
 
-// ============================================================================
-// DATA CLEANUP / BACKFILL OPERATIONS
-// ============================================================================
-
-/**
- * Recover missing categories from transactions
- * If transactions reference category_ids that don't exist in categories table,
- * this function will recreate those categories from localStorage data
- * @returns {Promise<Object>} Result with count of recovered categories
- */
-export async function recoverMissingCategories() {
-  const user = await getCurrentUser()
-  
-  if (!user) {
-    return { success: false, message: 'User not authenticated' }
-  }
-
-  try {
-    console.log('🔍 Finding missing categories...')
-    
-    // Get all unique category_ids from transactions
-    const { data: transactions, error: txnError } = await supabase
-      .from('transactions')
-      .select('category_id')
-      .eq('user_id', user.id)
-      .not('category_id', 'is', null)
-    
-    if (txnError) throw txnError
-    
-    // Get unique category IDs
-    const uniqueCategoryIds = [...new Set(transactions.map(t => t.category_id))]
-    console.log(`Found ${uniqueCategoryIds.length} unique category IDs in transactions`)
-    
-    // Get existing categories
-    const { data: existingCategories, error: catError } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('user_id', user.id)
-    
-    if (catError) throw catError
-    
-    const existingIds = new Set(existingCategories.map(c => c.id))
-    console.log(`Found ${existingIds.size} categories in categories table`)
-    
-    // Find missing category IDs
-    const missingIds = uniqueCategoryIds.filter(id => 
-      !existingIds.has(id) && 
-      id !== 'initial-balance' && 
-      id !== 'month-balance' && 
-      id !== 'cash-balance' &&
-      id !== 'balance-update' &&
-      id !== 'cash-balance-update'
-    )
-    
-    console.log(`Found ${missingIds.length} missing categories:`, missingIds)
-    
-    if (missingIds.length === 0) {
-      return { success: true, message: 'No missing categories found', recovered: 0 }
-    }
-    
-    // Get category data from localStorage
-    const localData = loadFromLocalStorage()
-    const localCategories = localData.payments?.categories || []
-    
-    // Build map of id -> category data
-    const categoryMap = {}
-    localCategories.forEach(cat => {
-      categoryMap[cat.id] = cat
-    })
-    
-    // Create missing categories
-    const categoriesToInsert = []
-    for (const missingId of missingIds) {
-      const localCat = categoryMap[missingId]
-      if (localCat) {
-        categoriesToInsert.push({
-          id: localCat.id,
-          user_id: user.id,
-          name: localCat.name,
-          type: localCat.type,
-          classification: localCat.classification,
-          is_default: localCat.isDefault || false
-        })
-      } else {
-        console.warn(`⚠️ Category ${missingId} not found in localStorage`)
-      }
-    }
-    
-    if (categoriesToInsert.length > 0) {
-      console.log(`📝 Inserting ${categoriesToInsert.length} missing categories...`)
-      const { error: insertError } = await supabase
-        .from('categories')
-        .insert(categoriesToInsert)
-      
-      if (insertError) throw insertError
-      
-      console.log('✅ Missing categories inserted successfully')
-    }
-    
-    return {
-      success: true,
-      message: `Recovered ${categoriesToInsert.length} missing categories`,
-      recovered: categoriesToInsert.length,
-      missingIds
-    }
-  } catch (error) {
-    console.error('Error recovering missing categories:', error)
-    return { success: false, message: error.message, error }
-  }
-}
-
-/**
- * Backfill missing category names in backend from localStorage
- * If a category exists in backend with NULL name but has a name in localStorage, update it
- * @returns {Promise<Object>} Result with count of updated categories
- */
-export async function backfillCategoryNamesFromLocalStorage() {
-  const user = await getCurrentUser()
-  
-  if (!user) {
-    return { success: false, message: 'User not authenticated' }
-  }
-
-  try {
-    console.log('📋 Reading categories from localStorage...')
-    // Get categories from localStorage
-    const localData = loadFromLocalStorage()
-    const localCategories = localData.payments?.categories || []
-    console.log(`Found ${localCategories.length} categories in localStorage`)
-    
-    if (localCategories.length === 0) {
-      return { success: true, message: 'No local categories to backfill from', updated: 0 }
-    }
-
-    console.log('🔍 Checking backend for categories with NULL names...')
-    // Get backend categories with NULL names
-    const { data: backendCategories, error: fetchError } = await supabase
-      .from('categories')
-      .select('id, name')
-      .eq('user_id', user.id)
-      .is('name', null)
-    
-    if (fetchError) throw fetchError
-    
-    console.log(`Found ${backendCategories?.length || 0} categories with NULL names in backend`)
-    
-    if (!backendCategories || backendCategories.length === 0) {
-      return { success: true, message: 'No backend categories need name backfill', updated: 0 }
-    }
-
-    // Build a map of local category_id -> name
-    const localCategoryMap = {}
-    localCategories.forEach(cat => {
-      if (cat.id && cat.name) {
-        localCategoryMap[cat.id] = cat.name
-      }
-    })
-    
-    console.log(`Built category map with ${Object.keys(localCategoryMap).length} entries`)
-
-    // Update backend categories that have NULL names
-    const updates = []
-    for (const backendCat of backendCategories) {
-      const localName = localCategoryMap[backendCat.id]
-      if (localName) {
-        console.log(`Will update category ${backendCat.id} → "${localName}"`)
-        updates.push(
-          supabase
-            .from('categories')
-            .update({ name: localName })
-            .eq('id', backendCat.id)
-            .eq('user_id', user.id)
-        )
-      }
-    }
-
-    console.log(`Updating ${updates.length} categories...`)
-    // Execute all updates in parallel
-    await Promise.all(updates)
-
-    return { 
-      success: true, 
-      message: `Backfilled names for ${updates.length} categories from localStorage`, 
-      updated: updates.length 
-    }
-  } catch (error) {
-    console.error('Error backfilling category names from localStorage:', error)
-    return { success: false, message: error.message, error }
-  }
-}
-
-/**
- * Backfill missing category names in transactions table from categories table
- * Transactions have category_id but may have NULL category (name) from old code
- * @returns {Promise<Object>} Result with count of updated rows
- */
-export async function backfillTransactionCategoryNames() {
-  const user = await getCurrentUser()
-  
-  if (!user) {
-    return { success: false, message: 'User not authenticated' }
-  }
-
-  try {
-    // Get all transactions with NULL category but non-NULL category_id
-    const { data: transactionsToFix, error: fetchError } = await supabase
-      .from('transactions')
-      .select('id, category_id')
-      .eq('user_id', user.id)
-      .is('category', null)
-      .not('category_id', 'is', null)
-    
-    if (fetchError) throw fetchError
-    
-    if (!transactionsToFix || transactionsToFix.length === 0) {
-      return { success: true, message: 'No transactions need category name backfill', updated: 0 }
-    }
-
-    // Get all user's categories
-    const { data: categories, error: catError } = await supabase
-      .from('categories')
-      .select('id, name')
-      .eq('user_id', user.id)
-    
-    if (catError) throw catError
-
-    // Build a map of category_id -> name
-    const categoryMap = {}
-    categories.forEach(cat => {
-      categoryMap[cat.id] = cat.name
-    })
-
-    // Update each transaction with its category name
-    const updates = []
-    for (const transaction of transactionsToFix) {
-      const categoryName = categoryMap[transaction.category_id]
-      if (categoryName) {
-        updates.push(
-          supabase
-            .from('transactions')
-            .update({ category: categoryName })
-            .eq('id', transaction.id)
-            .eq('user_id', user.id)
-        )
-      }
-    }
-
-    // Execute all updates in parallel
-    await Promise.all(updates)
-
-    return { 
-      success: true, 
-      message: `Backfilled category names for ${updates.length} transactions`, 
-      updated: updates.length 
-    }
-  } catch (error) {
-    console.error('Error backfilling transaction category names:', error)
-    return { success: false, message: error.message, error }
-  }
-}
