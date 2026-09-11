@@ -77,11 +77,30 @@ export async function loadData() {
   const user = await getCurrentUser()
   
   if (user) {
-    // Load from Supabase
+    // Load from Supabase and update cache
     return await loadFromSupabase(user.id)
   } else {
     // Fallback to localStorage
     return loadFromLocalStorage()
+  }
+}
+
+/**
+ * Refresh localStorage cache with current Supabase data
+ * Call this periodically or after important operations
+ * @returns {Promise<void>}
+ */
+export async function refreshCache() {
+  const user = await getCurrentUser()
+  if (!user) return
+  
+  try {
+    const freshData = await loadFromSupabase(user.id)
+    // loadFromSupabase already updates cache, but we return the data
+    // in case caller wants to use it
+    return freshData
+  } catch (error) {
+    console.error('Failed to refresh cache:', error)
   }
 }
 
@@ -121,10 +140,20 @@ async function loadFromSupabase(userId) {
       settings: settings.data ? transformSettings(settings.data) : initialState.settings
     }
 
+    // Update localStorage cache with fresh data for faster next load
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+      console.log('✅ Cache updated with fresh data from Supabase')
+    } catch (cacheError) {
+      console.warn('⚠️ Failed to update cache:', cacheError)
+      // Continue anyway - cache is optional
+    }
+
     return data
   } catch (error) {
     console.error('Error loading from Supabase:', error)
-    // Fallback to localStorage on error
+    // Fallback to localStorage cache on error
+    console.log('⚠️ Using cached data due to network error')
     return loadFromLocalStorage()
   }
 }
@@ -163,7 +192,9 @@ export async function saveData(data) {
   const user = await getCurrentUser()
   
   if (user) {
-    // Save to Supabase only - localStorage is preserved as backup
+    // Save to Supabase only
+    // DO NOT update localStorage here - it can corrupt the cache
+    // Cache is only updated during loadFromSupabase()
     await saveToSupabase(user.id, data)
   } else {
     // For unauthenticated users, use localStorage
@@ -210,12 +241,9 @@ async function saveToSupabase(userId, data) {
       month_balance_double_count_fixed: data.settings.monthBalanceDoubleCountFix || false
     })
 
-    // NEVER overwrite localStorage - keep it as permanent backup
-    // Users can manually clear it if they want
-    console.log('âœ… Data saved to Supabase (localStorage preserved)')
+    console.log('Data saved to Supabase')
   } catch (error) {
     console.error('Error saving to Supabase:', error)
-    // Don't overwrite localStorage even on error - it's the backup!
     throw error
   }
 }

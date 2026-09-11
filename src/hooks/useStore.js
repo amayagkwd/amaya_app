@@ -24,14 +24,26 @@ export function useStore() {
     loadData()
   }, [])
   
+  // Refresh cache every 30 seconds to keep it in sync
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        await DataRepository.refreshCache()
+        console.log('Cache refreshed in background')
+      } catch (error) {
+        console.error('Background cache refresh failed:', error)
+      }
+    }, 30000) // 30 seconds
+    
+    return () => clearInterval(interval)
+  }, [])
+  
   const updateStore = useCallback((updater) => {
     setData(current => {
       const updated = typeof updater === 'function' ? updater(current) : updater
-      // Save to Supabase (if authenticated) - localStorage is preserved as permanent backup
+      // Save to Supabase (cache will be refreshed by background interval)
       DataRepository.saveData(updated).catch(error => {
         console.error('Error saving to Supabase:', error)
-        // Don't fall back to overwriting localStorage - it's our backup!
-        // Just log the error and continue
       })
       return updated
     })
