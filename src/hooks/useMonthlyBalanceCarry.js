@@ -101,6 +101,8 @@ export function useMonthlyBalanceCarry(data, updateStore) {
         const fixedTransactions = [...data.payments.transactions]
         let hasChanges = false
         
+        const updatesToSave = []
+        
         monthBalanceTransactions.forEach(monthBalanceTxn => {
           const txnDate = new Date(monthBalanceTxn.date)
           if (isNaN(txnDate.getTime())) return
@@ -122,11 +124,19 @@ export function useMonthlyBalanceCarry(data, updateStore) {
                 balanceChange: correctBalance,
                 amount: Math.abs(correctBalance)
               }
+              
+              // Track this transaction for Supabase update
+              updatesToSave.push({
+                id: monthBalanceTxn.id,
+                balanceChange: correctBalance,
+                amount: Math.abs(correctBalance)
+              })
             }
           }
         })
         
         if (hasChanges) {
+          // Update local store
           updateStore(current => ({
             ...current,
             payments: {
@@ -134,6 +144,33 @@ export function useMonthlyBalanceCarry(data, updateStore) {
               transactions: fixedTransactions
             }
           }))
+          
+          // Save updates to Supabase and reload fresh data
+          Promise.all(
+            updatesToSave.map(update => 
+              DataRepository.updateTransaction(update.id, {
+                amount: update.amount,
+                balanceChange: update.balanceChange,
+                categoryId: 'month-balance',
+                category: fixedTransactions.find(t => t.id === update.id)?.category,
+                date: fixedTransactions.find(t => t.id === update.id)?.date,
+                note: fixedTransactions.find(t => t.id === update.id)?.note,
+                classification: fixedTransactions.find(t => t.id === update.id)?.classification,
+                paymentMode: fixedTransactions.find(t => t.id === update.id)?.paymentMode || 'bank'
+              })
+            )
+          ).then(() => {
+            // Refresh cache and reload data into store after updates complete
+            return DataRepository.refreshCache()
+          }).then(freshData => {
+            if (freshData) {
+              // Update store with fresh data from Supabase
+              updateStore(freshData)
+              console.log('✅ Month-balance transactions updated and cache refreshed')
+            }
+          }).catch(error => {
+            console.error('Error updating month-balance transactions:', error)
+          })
           
           setTimeout(() => {
             hasRunRef.current = false
@@ -158,6 +195,7 @@ export function useMonthlyBalanceCarry(data, updateStore) {
       
       if (monthBalanceTransactions.length > 0) {
         const fixedTransactions = [...data.payments.transactions]
+        const updatesToSave = []
         let hasChanges = false
         
         // For each month-balance transaction, recalculate the correct balance
@@ -185,11 +223,19 @@ export function useMonthlyBalanceCarry(data, updateStore) {
                 balanceChange: correctBalance,
                 amount: Math.abs(correctBalance)
               }
+              
+              // Track for Supabase update
+              updatesToSave.push({
+                id: monthBalanceTxn.id,
+                balanceChange: correctBalance,
+                amount: Math.abs(correctBalance)
+              })
             }
           }
         })
         
         if (hasChanges) {
+          // Update local store
           updateStore(current => ({
             ...current,
             payments: {
@@ -201,6 +247,34 @@ export function useMonthlyBalanceCarry(data, updateStore) {
               monthBalanceDoubleCountFixed: true
             }
           }))
+          
+          // Save updates to Supabase and reload fresh data
+          Promise.all(
+            updatesToSave.map(update => 
+              DataRepository.updateTransaction(update.id, {
+                amount: update.amount,
+                balanceChange: update.balanceChange,
+                categoryId: 'month-balance',
+                category: fixedTransactions.find(t => t.id === update.id)?.category,
+                date: fixedTransactions.find(t => t.id === update.id)?.date,
+                note: fixedTransactions.find(t => t.id === update.id)?.note,
+                classification: fixedTransactions.find(t => t.id === update.id)?.classification,
+                paymentMode: fixedTransactions.find(t => t.id === update.id)?.paymentMode || 'bank'
+              })
+            )
+          ).then(() => {
+            // Refresh cache and reload data into store after updates complete
+            return DataRepository.refreshCache()
+          }).then(freshData => {
+            if (freshData) {
+              // Update store with fresh data from Supabase
+              updateStore(freshData)
+              console.log('✅ Month-balance transactions updated and cache refreshed (migration)')
+            }
+          }).catch(error => {
+            console.error('Error updating month-balance transactions:', error)
+          })
+          
           return
         } else {
           // No changes needed, just mark as done

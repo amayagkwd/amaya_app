@@ -294,16 +294,23 @@ export async function updateTransaction(id, updates) {
   const user = await getCurrentUser()
   
   if (user) {
+    const updatePayload = {
+      amount: updates.amount,
+      category_id: updates.categoryId,
+      category: updates.category,
+      date: updates.date,
+      note: updates.note,
+      classification: updates.classification,
+      payment_mode: updates.paymentMode
+    }
+    
+    // Include balance_change if it's provided (for month-balance transactions)
+    if (updates.balanceChange !== undefined) {
+      updatePayload.balance_change = updates.balanceChange
+    }
+    
     const { data, error } = await supabase.from('transactions')
-      .update({
-        amount: updates.amount,
-        category_id: updates.categoryId,
-        category: updates.category,
-        date: updates.date,
-        note: updates.note,
-        classification: updates.classification,
-        payment_mode: updates.paymentMode
-      })
+      .update(updatePayload)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
